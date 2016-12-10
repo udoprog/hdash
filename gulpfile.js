@@ -82,11 +82,7 @@ function scripts(doWatch) {
   }
 
   bundler = bundler
-    .plugin(tsify, {
-      jsx: 'react',
-      target: 'es5',
-      baseUrl: './src'
-    });
+    .plugin(tsify);
 
   rebundle = function(files) {
     if (files) {
