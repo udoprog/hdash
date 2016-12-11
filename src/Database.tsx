@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import MockBackend from './backends/MockBackend';
-import RealBackend from './backends/RealBackend';
 
 import {Backend, PagesContext} from 'interfaces';
 
@@ -24,11 +23,7 @@ export default class Database extends React.Component<Props, {}> {
   }
 
   db(): Backend {
-    if (this.props.mock) {
-      return new MockBackend();
-    }
-
-    return new RealBackend();
+    return new MockBackend();
   }
 
   getChildContext(): PagesContext {
