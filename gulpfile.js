@@ -1,6 +1,5 @@
 var source = require('vinyl-source-stream');
 var gulp = require('gulp');
-var babelify = require('babelify');
 var less = require('gulp-less');
 var cssnano = require('gulp-cssnano');
 var del = require('del');

@@ -1,8 +1,7 @@
-import {Promise} from 'es6-promise';
-import {Backend, Dashboard} from 'interfaces';
+import {Backend, DashboardResult} from 'interfaces';
 
 export default class RealBackend implements Backend {
-  public search(): Promise<[Dashboard]> {
+  public search(): Promise<DashboardResult[]> {
     return Promise.resolve([
       {id: 'hello', title: "Hello"},
       {id: 'world', title: "World"}

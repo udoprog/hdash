@@ -1,16 +1,19 @@
-import {Promise} from 'es6-promise';
-
 // services
 declare namespace interfaces {
   interface Backend {
-    search(): Promise<Dashboard[]>;
+    search(): Promise<DashboardResult[]>;
   }
 }
 
 declare namespace interfaces {
-  interface Dashboard {
+  interface Filter {
+    render(): any;
+  }
+
+  interface DashboardResult {
     id: string,
-    title: string
+    title: string,
+    metadata: { [key:string]:string; }
   }
 
   interface PagesContext {
