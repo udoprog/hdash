@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import {DashboardData} from 'interfaces';
-import {PagesContext, RouterContext} from 'interfaces';
+import { DashboardData } from 'api/interfaces';
+import { PagesContext } from 'api/interfaces';
 
 interface DashboardProps {
   params: {
@@ -20,7 +20,7 @@ export default class Dashboard extends React.Component<DashboardProps, Dashboard
     db: React.PropTypes.object
   };
 
-  constructor(props) {
+  constructor(props: any) {
     super(props);
 
     this.state = {
@@ -30,7 +30,7 @@ export default class Dashboard extends React.Component<DashboardProps, Dashboard
 
   public componentDidMount(): void {
     this.context.db.get(this.props.params.id).then(dashboard => {
-      this.setState({dashboard: dashboard});
+      this.setState({ dashboard: dashboard });
     });
   }
 

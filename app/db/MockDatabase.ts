@@ -1,13 +1,13 @@
-import {Backend, Filter} from 'interfaces';
-import {DashboardPage, DashboardEntry, DashboardData} from 'interfaces';
+import { Database, Filter } from 'api/interfaces';
+import { DashboardPage, DashboardEntry, DashboardData } from 'api/interfaces';
 
-var store = {
-  "hello": {id: "hello", title: "Simple Title", metadata: {owner: "simple"}},
-  "world": {id: "world", title: "Complex Title", metadata: {owner: "complex"}},
-  "foo": {id: "foo", title: "Foo Title", metadata: {owner: "simple"}},
+var store: { [s: string]: DashboardData } = {
+  "hello": { id: "hello", title: "Simple Title", metadata: { owner: "simple" } },
+  "world": { id: "world", title: "Complex Title", metadata: { owner: "complex" } },
+  "foo": { id: "foo", title: "Foo Title", metadata: { owner: "simple" } },
 };
 
-export default class MockBackend implements Backend {
+export default class MockDatabase implements Database {
   public get(id: string): Promise<DashboardData | null> {
     let d = store[id];
 
@@ -45,6 +45,6 @@ export default class MockBackend implements Backend {
       newPageToken = JSON.stringify(startIndex + limit);
     }
 
-    return Promise.resolve({results: sliced, pageToken: newPageToken});
+    return Promise.resolve({ results: sliced, pageToken: newPageToken });
   }
 };

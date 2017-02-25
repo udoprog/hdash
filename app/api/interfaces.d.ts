@@ -2,14 +2,12 @@ import {InjectedRouter} from 'react-router';
 
 // services
 declare namespace interfaces {
-  interface Backend {
+  interface Database {
     search(filter: Filter<any>, limit: number, pageToken?: string): Promise<DashboardPage>;
 
     get(id: string): Promise<DashboardData | null>;
   }
-}
 
-declare namespace interfaces {
   interface Filter<JSON> {
     render(): any;
 
@@ -40,7 +38,7 @@ declare namespace interfaces {
   }
 
   interface PagesContext {
-    db: Backend;
+    db: Database;
   }
 }
 

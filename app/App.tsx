@@ -1,14 +1,14 @@
 import * as React from 'react';
 
-import {Grid, Row, Col, Nav, NavItem} from 'react-bootstrap';
-import {Router, Route, IndexRoute, Link, browserHistory} from 'react-router';
-import {LinkContainer} from 'react-router-bootstrap';
+import { Grid, Row, Col, Nav, NavItem } from 'react-bootstrap';
+import { Router, Route, IndexRoute, browserHistory } from 'react-router';
+import { LinkContainer } from 'react-router-bootstrap';
 
 import Dashboards from './page/Dashboards';
 import Dashboard from './page/Dashboard';
 import Alerting from './page/Alerting';
 import Main from './page/Main';
-import Database from './Database';
+import DatabaseProvider from './db/DatabaseProvider';
 
 class Index extends React.Component<any, {}> {
   render() {
@@ -40,7 +40,7 @@ class Index extends React.Component<any, {}> {
 export default class App extends React.Component<{}, {}> {
   public render() {
     return (
-      <Database mock={true}>
+      <DatabaseProvider>
         <Router history={browserHistory}>
           <Route path="/" component={Index}>
             <IndexRoute component={Main} />
@@ -49,7 +49,7 @@ export default class App extends React.Component<{}, {}> {
             <Route path="alerting" component={Alerting} />
           </Route>
         </Router>
-      </Database>
+      </DatabaseProvider>
     );
   }
 };

@@ -6,14 +6,13 @@ React/TypeScript application.
 Run the server with:
 
 ```
-#> gulp serve
+#> ./server.js
 ```
 
 ## Features
 
-* gulp w/
-  * Webserver
-  * Browserify
+* webpack
+  * run `ENV=production webpack` to build minified version.
 * react
 * react-router
 * react-bootstrap

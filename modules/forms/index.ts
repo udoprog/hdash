@@ -103,16 +103,13 @@ const buildValidator = <T>(
   })();
 }
 
-interface ValueTypeProxy<T> {
-}
-
 const BOOLEAN_FAIL = {
   type: "general",
   message: "Validation failed"
 } as ValidationError;
 
 export namespace validators {
-  export const Integer = {} as ValueTypeProxy<number>;
+  export const Integer = 'Integer';
 
   export function integer(config: ValidatorConfig<number>): Validator<number> {
     return validator(Integer, config);
@@ -235,7 +232,7 @@ export class BoundValidator<T> {
       this.$errors = EMPTY;
       this.$valid = true;
     } else {
-      const errors = this.$errors = {};
+      const errors: any = this.$errors = {};
       this.$valid = false;
 
       results.forEach(result => {
@@ -245,9 +242,9 @@ export class BoundValidator<T> {
   }
 }
 
-export function validator<T>(type: ValueTypeProxy<T>, config: ValidatorConfig<T>): Validator<T> {
+export function validator<T>(type: string, config: ValidatorConfig<T>): Validator<T> {
   const check: ArrayValidator<any> = (() => {
-    let checks;
+    let checks: any;
 
     if (!(config.checks instanceof Array)) {
       checks = [config.checks];
@@ -255,8 +252,8 @@ export function validator<T>(type: ValueTypeProxy<T>, config: ValidatorConfig<T>
       checks = config.checks as Check<T>[];
     }
 
-    return value => {
-      return checks.map(check => {
+    return (value: any) => {
+      return checks.map((check: any) => {
         const result = check(value);
 
         if (typeof(result) === "boolean") {
@@ -265,8 +262,8 @@ export function validator<T>(type: ValueTypeProxy<T>, config: ValidatorConfig<T>
 
         return result as ValidationResult;
       })
-      .filter(result => result !== OK)
-      .map(result => result as ValidationError);
+      .filter((result: any) => result !== OK)
+      .map((result: any) => result as ValidationError);
     };
   })();
 

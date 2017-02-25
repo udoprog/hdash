@@ -1,15 +1,15 @@
 import * as React from 'react';
 
-import MockBackend from './backends/MockBackend';
+import MockDatabase from './MockDatabase';
+import RealDatabase from './MockDatabase';
 
-import {Backend, PagesContext} from 'interfaces';
+import { Database, PagesContext } from 'api/interfaces';
 
 interface Props {
-  mock: boolean;
-  hello?: string;
+  mock?: boolean;
 }
 
-export default class Database extends React.Component<Props, {}> {
+export default class DatabaseProvider extends React.Component<Props, {}> {
   public static defaultProps: Props = {
     mock: false
   };
@@ -22,8 +22,12 @@ export default class Database extends React.Component<Props, {}> {
     super(props);
   }
 
-  db(): Backend {
-    return new MockBackend();
+  db(): Database {
+    if (this.props.mock) {
+      return new MockDatabase();
+    }
+
+    return new RealDatabase();
   }
 
   getChildContext(): PagesContext {

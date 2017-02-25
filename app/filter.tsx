@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import {Filter, DashboardEntry} from 'interfaces';
+import { Filter, DashboardEntry } from 'api/interfaces';
 
 interface TitleFilterJSON {
   value: string;
@@ -22,7 +22,7 @@ export class TitleFilter implements Filter<TitleFilterJSON> {
   }
 
   public toJSON(): any {
-    return {value: this.value};
+    return { value: this.value };
   }
 
   static fromJSON(json: TitleFilterJSON): TitleFilter {
@@ -59,7 +59,7 @@ export class MetadataFilter implements Filter<MetadataFilterJSON> {
   }
 
   public toJSON(): any {
-    return {key: this.key, value: this.value};
+    return { key: this.key, value: this.value };
   }
 
   static fromJSON(json: MetadataFilterJSON): MetadataFilter {
@@ -89,7 +89,7 @@ export class AndFilter implements Filter<AndFilterJSON> {
   }
 
   public toJSON(): any {
-    return {filters: this.filters.map(f => f.toJSON())};
+    return { filters: this.filters.map(f => f.toJSON()) };
   }
 
   static fromJSON(json: AndFilterJSON): AndFilter {
