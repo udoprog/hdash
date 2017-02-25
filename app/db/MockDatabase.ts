@@ -1,6 +1,6 @@
 import { Filter } from 'api/filter';
 import { Database } from 'api/interfaces';
-import { DashboardPage, DashboardEntry, DashboardData } from 'api/interfaces';
+import { DashboardPage, DashboardEntry, DashboardData, User } from 'api/interfaces';
 import { Optional, absent, of, ofNullable } from 'optional';
 
 var store: { [s: string]: DashboardData } = {
@@ -10,7 +10,13 @@ var store: { [s: string]: DashboardData } = {
   "d": { id: "foo", title: "Foo Title", metadata: { owner: "bar", relation: "loose" } },
 };
 
+const user = {name: "John Doe", email: "john@doe.com"};
+
 export default class MockDatabase implements Database {
+  public me(): Promise<Optional<User>> {
+    return Promise.resolve(of(user as User));
+  }
+
   public get(id: string): Promise<Optional<DashboardData>> {
     return Promise.resolve(ofNullable(store[id]));
   }

@@ -18,7 +18,7 @@ export default class DashboardList extends React.PureComponent<Props, {}> {
           return (
             <ListGroupItem key={i}>
               <h4>
-                <Link to={`/dashboard/${d.id}`}>{d.title}</Link>
+                <Link to={`/dashboards/${d.id}`}>{d.title}</Link>
 
                 <div className="pull-right">
                   {Object.keys(d.metadata).map((k, ki) => {

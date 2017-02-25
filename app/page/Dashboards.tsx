@@ -85,34 +85,40 @@ export default class Dashboards extends React.PureComponent<Props, State> {
 
     return (
       <Row>
-        <Col sm={6}>
-          <h4>Favorites</h4>
+        <Col sm={12}>
+          <h1>Dashboards</h1>
 
-          <Typeahead onChange={(selection: string) => this.handleTypeahead(selection)}
-            options={["foo", "bar", "baz"]} />
-        </Col>
+          <Row>
+            <Col sm={6}>
+              <h4>Favorites</h4>
 
-        <Col sm={6}>
-          <h4>Search</h4>
+              <Typeahead onChange={(selection: string) => this.handleTypeahead(selection)}
+                options={["foo", "bar", "baz"]} />
+            </Col>
 
-          <DashboardSearchForm
-            limit={limit}
-            filters={filters}
-            onRemoveFilter={f => this.removeFilter(f)}
-            onAddFilter={f => this.addFilter(f)}
-            onChangeLimit={limit => this.setLimit(limit)} />
+            <Col sm={6}>
+              <h4>Search</h4>
 
-          <DashboardList dashboards={dashboards} onAddMetadataFilter={this.addMetadataFilter.bind(this)} />
+              <DashboardSearchForm
+                limit={limit}
+                filters={filters}
+                onRemoveFilter={f => this.removeFilter(f)}
+                onAddFilter={f => this.addFilter(f)}
+                onChangeLimit={limit => this.setLimit(limit)} />
 
-          <Pager>
-            {pageToken.map(_ => {
-              return <Pager.Item previous href="#" onClick={this.reset.bind(this)}>Reset</Pager.Item>
-            }).get()}
+              <DashboardList dashboards={dashboards} onAddMetadataFilter={this.addMetadataFilter.bind(this)} />
 
-            {nextPageToken.map(nextToken => {
-              return <Pager.Item next href="#" onClick={() => this.setPageToken(nextToken)}>Next Page &rarr;</Pager.Item>;
-            }).get()}
-          </Pager>
+              <Pager>
+                {pageToken.map(_ => {
+                  return <Pager.Item previous href="#" onClick={this.reset.bind(this)}>Reset</Pager.Item>
+                }).get()}
+
+                {nextPageToken.map(nextToken => {
+                  return <Pager.Item next href="#" onClick={() => this.setPageToken(nextToken)}>Next Page &rarr;</Pager.Item>;
+                }).get()}
+              </Pager>
+            </Col>
+          </Row>
         </Col>
       </Row>
     );
