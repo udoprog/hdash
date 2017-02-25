@@ -1,15 +1,16 @@
 import * as React from 'react';
 import { Row, Col, Grid } from 'react-bootstrap';
 import { Pager } from 'react-bootstrap';
-import { Typeahead } from 'react-bootstrap-typeahead';
 import { Optional, absent, of, ofNullable } from 'optional';
-import { AndFilter, MetadataFilter } from 'api/filter';
+import { AndFilter, MetadataFilter, TitleFilter } from 'api/filter';
 import { PagesContext, RouterContext, DashboardEntry } from 'api/interfaces';
 import { Filter } from 'api/filter';
 import * as shallowEqual from 'is-equal-shallow';
 import DashboardSearchForm from 'components/DashboardSearchForm';
 import DashboardList from 'components/DashboardList';
 
+const META_PREFIX = "m_";
+const TITLE_PREFIX = "t_";
 const DEFAULT_LIMIT = 20;
 
 interface Props {
@@ -53,7 +54,7 @@ export default class Dashboards extends React.PureComponent<Props, State> {
       starredDashboards: [],
       starredNextPageToken: absent<string>(),
       starredPageToken: absent<string>(),
-      filters: [],
+      filters: this.filtersFromQuery(query),
       limit: of(ofNullable(query.limit).map(parseInt).orElse(DEFAULT_LIMIT))
     } as State;
 
@@ -157,6 +158,21 @@ export default class Dashboards extends React.PureComponent<Props, State> {
     );
   }
 
+  private filtersFromQuery(query: {[key: string]: string}): Filter<any>[] {
+    const filters: Filter<any>[] = [];
+
+    Object.keys(query).forEach(key => {
+      if (key.startsWith(META_PREFIX)) {
+        var k = key.substring(2);
+        filters.push(new MetadataFilter(k, query[key]));
+      } else if (key.startsWith(TITLE_PREFIX)) {
+        filters.push(new TitleFilter(query[key]));
+      }
+    });
+
+    return filters;
+  }
+
   private setLimit(limit: number): void {
     this.setState({ limit: of(limit) }, () => {
       this.updateDashboards();
@@ -232,7 +248,7 @@ export default class Dashboards extends React.PureComponent<Props, State> {
   private updateUrl(): void {
     const {router} = this.context;
     const {pathname, query} = this.props.location;
-    const {pageToken} = this.state;
+    const {pageToken, filters} = this.state;
 
     let nextQuery: any = {};
 
@@ -240,6 +256,16 @@ export default class Dashboards extends React.PureComponent<Props, State> {
 
     pageToken.ifPresent(pageToken => {
       nextQuery.pageToken = pageToken;
+    });
+
+    var titleIndex = 0;
+
+    filters.forEach(filter => {
+      if (filter instanceof MetadataFilter) {
+        nextQuery[META_PREFIX + filter.key] = filter.value;
+      } else if (filter instanceof TitleFilter) {
+        nextQuery[TITLE_PREFIX + titleIndex++] = filter.value;
+      }
     });
 
     const q = Object.assign({}, query);
