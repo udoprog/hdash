@@ -1,17 +1,18 @@
 import { InjectedRouter } from 'react-router';
 import { Filter } from 'api/filter';
+import { Optional } from 'optional';
 
 // services
 declare namespace interfaces {
   interface Database {
-    search(filter: Filter<any>, limit: number, pageToken?: string): Promise<DashboardPage>;
+    search(filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage>;
 
-    get(id: string): Promise<DashboardData | null>;
+    get(id: string): Promise<Optional<DashboardData>>;
   }
 
   interface DashboardPage {
     results: DashboardEntry[];
-    pageToken?: string;
+    pageToken: Optional<string>;
   }
 
   interface DashboardEntry {

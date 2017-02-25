@@ -1,4 +1,4 @@
-import {Optional, absent, of} from 'optional';
+import { Optional, absent, of } from 'optional';
 
 /**
  * Function that handles an event as a numeric value.
@@ -44,13 +44,13 @@ interface ValidatorBindConfig<T> {
 }
 
 interface ValidatorBind<T> {
-  (accessor: () => T, config: ValidatorBindConfig<T>): BoundValidator<T>;
+  (accessor: () => Optional<T>, config: ValidatorBindConfig<T>): BoundValidator<T>;
 }
 
 interface Validator<T> {
-  (value: T | null, defaultValue: T): T;
+  (value: T | null): Optional<T>;
 
-  parse(value: string | null, defaultValue: T): T;
+  parse(value: string | null): Optional<T>;
 
   bind: ValidatorBind<T>;
 }
@@ -76,31 +76,31 @@ const EMPTY: any = {};
 const buildValidator = <T>(
   parser: Parser<T>,
   encoder: Encoder<T>,
-  defaultFormValue: string,
-  check: ArrayValidator<T>
+  check: ArrayValidator<T>,
+  defaultValue: T
 ): Validator<T> => {
   return ((): Validator<T> => {
-    let validator: any = function (value: number, defaultValue: number) {
-      return value === null ? defaultValue : value;
+    let validator: any = function (value: number): Optional<number> {
+      return value === null ? absent<number>() : of(value);
     };
 
-    validator.parse = (value: string, defaultValue: T): T => {
+    validator.parse = (value: string): Optional<T> => {
       const v = parser(value);
 
       if (v === null) {
-        return defaultValue;
+        return absent<T>();
       }
 
       if (check(v).length !== 0) {
-        return defaultValue;
+        return absent<T>();
       }
 
-      return v;
+      return of(v);
     };
 
-    validator.bind = (accessor: () => T, config: ValidatorBindConfig<T>) => {
+    validator.bind = (accessor: () => Optional<T>, config: ValidatorBindConfig<T>) => {
       const onChange = config.onChange ? config.onChange : noop;
-      const validator = new BoundValidator(onChange, accessor, parser, encoder, defaultFormValue, check);
+      const validator = new BoundValidator(onChange, accessor, parser, encoder, check, defaultValue);
       validator.checkCurrent();
       return validator;
     };
@@ -115,7 +115,8 @@ const BOOLEAN_FAIL = {
 } as ValidationError;
 
 export namespace validators {
-  export const Integer = 'Integer';
+  export const Integer = 'integer';
+  export const String = 'string';
 
   export function integer(config: ValidatorConfig<number>): Validator<number> {
     return validator(Integer, config);
@@ -179,19 +180,19 @@ export class BoundValidator<T> {
   $validationState?: "success" | "warning" | "error";
 
   private readonly _onChange: (value: T) => any;
-  private readonly _accessor: () => T;
+  private readonly _accessor: () => Optional<T>;
   private readonly _parser: Parser<T>;
   private readonly _encoder: Encoder<T>;
-  private readonly _defaultFormValue: string;
   private readonly _check: ArrayValidator<T>;
+  private readonly _defaultValue: T;
 
   constructor(
     onChange: (value: T) => any,
-    accessor: () => T,
+    accessor: () => Optional<T>,
     parser: Parser<T>,
     encoder: Encoder<T>,
-    defaultFormValue: string,
     check: ArrayValidator<T>,
+    defaultValue: T
   ) {
     this.$errors = EMPTY;
     this.$feedback = null;
@@ -202,31 +203,20 @@ export class BoundValidator<T> {
     this._accessor = accessor;
     this._parser = parser;
     this._encoder = encoder;
-    this._defaultFormValue = defaultFormValue;
     this._check = check;
+    this._defaultValue = defaultValue;
 
     this.onChange = this.onChange.bind(this);
   }
 
   public get(): Optional<T> {
-    const v = this._accessor();
-
-    if (v === null) {
-      return absent<T>();
-    }
-
-    const results = this._check(v);
-
-    if (results.length !== 0) {
-      return absent<T>();
-    }
-
-    return of<T>(v);
+    return this._accessor().flatMap(v => {
+      return this._check(v).length !== 0 ? absent<T>() : of(v);
+    });
   }
 
   public value(): string {
-    const v = this._accessor();
-    return v === null ? this._defaultFormValue : this._encoder(v);
+    return this._encoder(this._accessor().orElse(this._defaultValue));
   }
 
   /**
@@ -242,7 +232,9 @@ export class BoundValidator<T> {
    * Check the current value provided by the accessor.
    */
   public checkCurrent() {
-    this.check(this._accessor());
+    this._accessor().ifPresent(v => {
+      this.check(v);
+    });
   }
 
   public check(v: T) {
@@ -296,7 +288,11 @@ export function validator<T>(type: string, config: ValidatorConfig<T>): Validato
   })();
 
   if (type === validators.Integer) {
-    return buildValidator(integerParser, integerEncoder, "0", check) as Validator<any>;
+    return buildValidator(integerParser, integerEncoder, check, 0) as Validator<any>;
+  }
+
+  if (type === validators.String) {
+    return buildValidator(s => s, s => s, check, "") as Validator<any>;
   }
 
   throw new Error("Illegal type: " + type);

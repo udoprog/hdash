@@ -2,29 +2,30 @@ import * as React from 'react';
 
 import { DashboardData } from 'api/interfaces';
 import { PagesContext } from 'api/interfaces';
+import { Optional, absent } from 'optional';
 
-interface DashboardProps {
+interface Props {
   params: {
     id: string
   }
 }
 
-interface DashboardState {
-  dashboard?: DashboardData
+interface State {
+  dashboard: Optional<DashboardData>
 }
 
-export default class Dashboard extends React.Component<DashboardProps, DashboardState> {
+export default class Dashboard extends React.Component<Props, State> {
   context: PagesContext;
 
   public static contextTypes: any = {
     db: React.PropTypes.object
   };
 
-  constructor(props: any) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
-      dashboard: null
+      dashboard: absent<DashboardData>()
     };
   }
 
@@ -37,7 +38,9 @@ export default class Dashboard extends React.Component<DashboardProps, Dashboard
   public render() {
     const {dashboard} = this.state;
 
-    let title = dashboard === null ? `Dashboard w/ id ${this.props.params.id}` : dashboard.title;
+    let title = dashboard
+      .map(dashboard => dashboard.title)
+      .orElse(`Dashboard with ID '${this.props.params.id}' does not exist`);
 
     return (
       <div>

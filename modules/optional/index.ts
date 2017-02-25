@@ -5,6 +5,11 @@ export interface Optional<T> {
     map<U>(fn: (input: T) => U): Optional<U>;
 
     /**
+     * Flat map the value if present.
+     */
+    flatMap<U>(fn: (input: T) => Optional<U>): Optional<U>;
+
+    /**
      * Unwrap the value if present, or provide another value instead.
      */
     orElse(provided: T): T;
@@ -18,7 +23,16 @@ export interface Optional<T> {
      * Run the given consumer if the value is present.
      */
     ifPresent(consumer: (value: T) => void): void;
+
+    /**
+     * Get the value if present, or null if absent.
+     */
+    get(): T | null;
 };
+
+export function ofNullable<T>(value: T | null | undefined): Optional<T> {
+    return (value === null || value === undefined) ? absent<T>() : of(value);
+}
 
 export function of<T>(value: T): Optional<T> {
     return new Present<T>(value);
@@ -35,8 +49,12 @@ class Present<T> implements Optional<T> {
         this.value = value;
     }
 
-    public map<U>(fn: (input: T) => U) {
+    public map<U>(fn: (input: T) => U): Optional<U> {
         return new Present<U>(fn(this.value));
+    }
+
+    public flatMap<U>(fn: (input: T) => Optional<U>): Optional<U> {
+        return fn(this.value);
     }
 
     public orElse(_value: T): T {
@@ -50,10 +68,18 @@ class Present<T> implements Optional<T> {
     public ifPresent(consumer: (value: T) => void): void {
         consumer(this.value);
     }
+
+    public get(): T | null {
+        return this.value;
+    }
 }
 
 class Absent<T> implements Optional<T> {
     public map<U>(_fn: (input: T) => U): Optional<U> {
+        return this as any as Absent<U>;
+    }
+
+    public flatMap<U>(_fn: (input: T) => Optional<U>): Optional<U> {
         return this as any as Absent<U>;
     }
 
@@ -67,5 +93,9 @@ class Absent<T> implements Optional<T> {
 
     public ifPresent(_consumer: (value: T) => void): void {
         /* do nothing */
+    }
+
+    public get(): T | null {
+        return null;
     }
 }
