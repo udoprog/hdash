@@ -8,14 +8,6 @@ declare namespace interfaces {
     get(id: string): Promise<DashboardData | null>;
   }
 
-  interface Filter<JSON> {
-    render(): any;
-
-    apply(result: DashboardEntry): boolean;
-
-    toJSON(): JSON;
-  }
-
   interface DashboardPage {
     results: DashboardEntry[];
     pageToken?: string;

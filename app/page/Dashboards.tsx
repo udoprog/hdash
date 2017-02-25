@@ -6,7 +6,7 @@ import { Typeahead } from 'react-bootstrap-typeahead';
 import { Pager } from 'react-bootstrap';
 import { If, Then, Else } from 'react-if';
 
-import { AndFilter, MetadataFilter, TitleFilter } from '../filter';
+import { AndFilter, MetadataFilter, TitleFilter } from 'api/filter';
 import { BoundValidator, validators } from 'forms';
 
 import { PagesContext, RouterContext } from 'api/interfaces';

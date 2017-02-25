@@ -1,6 +1,14 @@
 import * as React from 'react';
 
-import { Filter, DashboardEntry } from 'api/interfaces';
+import { DashboardEntry } from 'api/interfaces';
+
+interface Filter<JSON> {
+  render(): any;
+
+  apply(result: DashboardEntry): boolean;
+
+  toJSON(): JSON;
+}
 
 interface TitleFilterJSON {
   value: string;

@@ -66,17 +66,19 @@ const integerEncoder = (value: number): string => {
   return value.toString();
 };
 
-const noop = function(): void {
+const noop = function (): void {
 }
 
 const EMPTY: any = {};
 
 const buildValidator = <T>(
-  parser: Parser<T>, encoder: Encoder<T>, defaultFormValue: string,
+  parser: Parser<T>,
+  encoder: Encoder<T>,
+  defaultFormValue: string,
   check: ArrayValidator<T>
 ): Validator<T> => {
   return ((): Validator<T> => {
-    let validator: any = function(value: number, defaultValue: number) {
+    let validator: any = function (value: number, defaultValue: number) {
       return value === null ? defaultValue : value;
     };
 
@@ -121,7 +123,7 @@ export namespace validators {
   export function min(expected: number): Check<number> {
     return value => {
       if (value < expected) {
-        return {type: "min", message: "Value too small"} as ValidationError;
+        return { type: "min", message: "Value too small" } as ValidationError;
       }
 
       return OK;
@@ -134,7 +136,7 @@ export namespace validators {
   export function max(expected: number): Check<number> {
     return value => {
       if (value > expected) {
-        return {type: "min", message: "Value too large"} as ValidationError;
+        return { type: "min", message: "Value too large" } as ValidationError;
       }
 
       return OK;
@@ -256,14 +258,14 @@ export function validator<T>(type: string, config: ValidatorConfig<T>): Validato
       return checks.map((check: any) => {
         const result = check(value);
 
-        if (typeof(result) === "boolean") {
+        if (typeof (result) === "boolean") {
           return result ? OK : BOOLEAN_FAIL;
         }
 
         return result as ValidationResult;
       })
-      .filter((result: any) => result !== OK)
-      .map((result: any) => result as ValidationError);
+        .filter((result: any) => result !== OK)
+        .map((result: any) => result as ValidationError);
     };
   })();
 
