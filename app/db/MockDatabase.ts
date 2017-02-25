@@ -3,14 +3,18 @@ import { Database } from 'api/interfaces';
 import { DashboardPage, DashboardEntry, DashboardData, User } from 'api/interfaces';
 import { Optional, absent, of, ofNullable } from 'optional';
 
-var store: { [s: string]: DashboardData } = {
+const store: { [s: string]: DashboardData } = {
   "a": { id: "hello", title: "Simple Title", metadata: { owner: "foo" } },
   "b": { id: "world", title: "Complex Title", metadata: { owner: "foo", relation: "tough" } },
   "c": { id: "foo", title: "Foo Title", metadata: { owner: "bar" } },
   "d": { id: "foo", title: "Foo Title", metadata: { owner: "bar", relation: "loose" } },
 };
 
-const user = {name: "John Doe", email: "john@doe.com"};
+const starredStore: { [s: string]: boolean } = {
+  "a": true
+};
+
+const user = { name: "John Doe", email: "john@doe.com" };
 
 export default class MockDatabase implements Database {
   public me(): Promise<Optional<User>> {
@@ -28,22 +32,52 @@ export default class MockDatabase implements Database {
       return {
         id: key,
         title: value.title,
-        metadata: value.metadata
+        metadata: value.metadata,
+        starred: starredStore[key]
       };
     });
 
+    return this.pageResult(result, filter, limit, pageToken);
+  }
+
+  public searchStarred(filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage> {
+    let result: DashboardEntry[] = Object.keys(starredStore).map(key => {
+      let value = store[key];
+
+      return {
+        id: key,
+        title: value.title,
+        metadata: value.metadata,
+        starred: true
+      };
+    });
+
+    return this.pageResult(result, filter, limit, pageToken);
+  }
+
+  public pageResult(source: DashboardEntry[], filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage> {
     const startIndex = pageToken.map(start => JSON.parse(start)).orElse(0);
 
-    result = result.filter(filter.apply.bind(filter));
-    result.sort((a, b) => a.id.localeCompare(b.id));
-    let sliced = result.slice(startIndex, startIndex + limit);
+    source = source.filter(filter.apply.bind(filter));
+    source.sort((a, b) => a.id.localeCompare(b.id));
+    let sliced = source.slice(startIndex, startIndex + limit);
 
     let newPageToken = absent<string>();
 
-    if (startIndex + limit < result.length) {
+    if (startIndex + limit < source.length) {
       newPageToken = of(JSON.stringify(startIndex + limit));
     }
 
     return Promise.resolve({ results: sliced, pageToken: newPageToken });
+  }
+
+  public setStarred(dashboardId: string, starred: boolean): Promise<{}> {
+    if (starred) {
+      starredStore[dashboardId] = starred;
+    } else {
+      delete starredStore[dashboardId];
+    }
+
+    return Promise.resolve({});
   }
 };

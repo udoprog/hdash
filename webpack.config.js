@@ -62,8 +62,7 @@ module.exports = {
         fallback: 'style-loader',
         use: ['css-loader', 'less-loader']
       })
-    },
-    {
+    }, {
       test: /\.(png|woff|woff2|eot|ttf|svg)$/,
       use: 'url-loader?limit=100000'
     }]

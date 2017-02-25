@@ -15,4 +15,12 @@ export default class RealDatabase implements Database {
   public search(_filter: Filter<any>, _limit: number, _pageToken: Optional<string>): Promise<DashboardPage> {
     return Promise.reject(new Error("not implemented"));
   }
+
+  public searchStarred(_filter: Filter<any>, _limit: number, _pageToken: Optional<string>): Promise<DashboardPage> {
+    return Promise.reject(new Error("not implemented"));
+  }
+
+  public setStarred(_dashboardId: string, _started: boolean): Promise<{}> {
+    return Promise.reject(new Error("not implemented"));
+  }
 };

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, Grid } from 'react-bootstrap';
 import { Pager } from 'react-bootstrap';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import { Optional, absent, of, ofNullable } from 'optional';
@@ -21,16 +21,20 @@ interface Props {
 
 interface State {
   dashboards: DashboardEntry[];
-  filters: Filter<any>[];
   nextPageToken: Optional<string>;
-  limit: Optional<number>;
   pageToken: Optional<string>;
+  starredDashboards: DashboardEntry[];
+  starredNextPageToken: Optional<string>;
+  starredPageToken: Optional<string>;
+  filters: Filter<any>[];
+  limit: Optional<number>;
 }
 
 export default class Dashboards extends React.PureComponent<Props, State> {
   context: PagesContext & RouterContext;
 
   readonly setPageToken: (pageToken: string) => void;
+  readonly setStarredPageToken: (pageToken: string) => void;
 
   public static contextTypes: any = {
     db: React.PropTypes.object,
@@ -44,14 +48,24 @@ export default class Dashboards extends React.PureComponent<Props, State> {
 
     this.state = {
       dashboards: [],
-      filters: [],
       nextPageToken: absent<string>(),
-      limit: of(ofNullable(query.limit).map(parseInt).orElse(DEFAULT_LIMIT)),
-      pageToken: ofNullable(query.pageToken)
+      pageToken: ofNullable(query.pageToken),
+      starredDashboards: [],
+      starredNextPageToken: absent<string>(),
+      starredPageToken: absent<string>(),
+      filters: [],
+      limit: of(ofNullable(query.limit).map(parseInt).orElse(DEFAULT_LIMIT))
     } as State;
 
     this.setPageToken = nextPageToken => {
       this.setState({ pageToken: of(nextPageToken), nextPageToken: absent<string>() }, () => {
+        this.updateUrl();
+        this.updateDashboards();
+      });
+    };
+
+    this.setStarredPageToken = nextPageToken => {
+      this.setState({ starredPageToken: of(nextPageToken), starredNextPageToken: absent<string>() }, () => {
         this.updateUrl();
         this.updateDashboards();
       });
@@ -80,47 +94,66 @@ export default class Dashboards extends React.PureComponent<Props, State> {
   }
 
   public render() {
-    const {limit, filters, pageToken, nextPageToken} = this.state;
-    const {dashboards} = this.state;
+    const {limit, filters} = this.state;
+    const {starredDashboards, dashboards} = this.state;
+    const {pageToken, nextPageToken} = this.state;
+    const {starredPageToken, starredNextPageToken} = this.state;
 
     return (
-      <Row>
-        <Col sm={12}>
-          <h1>Dashboards</h1>
+      <Grid>
+        <Row>
+          <Col sm={12}>
+            <h4>Search</h4>
 
-          <Row>
-            <Col sm={6}>
-              <h4>Favorites</h4>
+            <DashboardSearchForm
+              limit={limit}
+              filters={filters}
+              onRemoveFilter={f => this.removeFilter(f)}
+              onAddFilter={f => this.addFilter(f)}
+              onChangeLimit={limit => this.setLimit(limit)} />
+          </Col>
+        </Row>
 
-              <Typeahead onChange={(selection: string) => this.handleTypeahead(selection)}
-                options={["foo", "bar", "baz"]} />
-            </Col>
+        <Row>
+          <Col sm={6}>
+            <h4>All Dashboards</h4>
 
-            <Col sm={6}>
-              <h4>Search</h4>
+            <DashboardList
+              dashboards={dashboards}
+              onAddMetadataFilter={(key, value) => this.addMetadataFilter(key, value)}
+              onToggleStarred={(dashboard) => this.toggleStarred(dashboard)} />
 
-              <DashboardSearchForm
-                limit={limit}
-                filters={filters}
-                onRemoveFilter={f => this.removeFilter(f)}
-                onAddFilter={f => this.addFilter(f)}
-                onChangeLimit={limit => this.setLimit(limit)} />
+            <Pager>
+              {pageToken.map(_ => {
+                return <Pager.Item previous href="#" onClick={() => this.reset()}>Reset</Pager.Item>
+              }).get()}
 
-              <DashboardList dashboards={dashboards} onAddMetadataFilter={this.addMetadataFilter.bind(this)} />
+              {nextPageToken.map(nextToken => {
+                return <Pager.Item next href="#" onClick={() => this.setPageToken(nextToken)}>Next Page &rarr;</Pager.Item>;
+              }).get()}
+            </Pager>
+          </Col>
 
-              <Pager>
-                {pageToken.map(_ => {
-                  return <Pager.Item previous href="#" onClick={this.reset.bind(this)}>Reset</Pager.Item>
-                }).get()}
+          <Col sm={6}>
+            <h4>Favorites</h4>
 
-                {nextPageToken.map(nextToken => {
-                  return <Pager.Item next href="#" onClick={() => this.setPageToken(nextToken)}>Next Page &rarr;</Pager.Item>;
-                }).get()}
-              </Pager>
-            </Col>
-          </Row>
-        </Col>
-      </Row>
+            <DashboardList
+              dashboards={starredDashboards}
+              onAddMetadataFilter={(key, value) => this.addMetadataFilter(key, value)}
+              onToggleStarred={(dashboard) => this.toggleStarred(dashboard)} />
+
+            <Pager>
+              {starredPageToken.map(_ => {
+                return <Pager.Item previous href="#" onClick={() => this.resetStarred()}>Reset</Pager.Item>
+              }).get()}
+
+              {starredNextPageToken.map(nextToken => {
+                return <Pager.Item next href="#" onClick={() => this.setStarredPageToken(nextToken)}>Next Page &rarr;</Pager.Item>;
+              }).get()}
+            </Pager>
+          </Col>
+        </Row>
+      </Grid>
     );
   }
 
@@ -147,8 +180,35 @@ export default class Dashboards extends React.PureComponent<Props, State> {
     });
   }
 
+  private resetStarred(): void {
+    this.setState({ starredPageToken: absent<string>() }, () => {
+      this.updateUrl();
+      this.updateDashboards();
+    });
+  }
+
   private addMetadataFilter(key: string, value: string): void {
     this.addFilter(new MetadataFilter(key, value));
+  }
+
+  private toggleStarred(dashboard: DashboardEntry): void {
+    this.context.db.setStarred(dashboard.id, !dashboard.starred).then(() => {
+      this.setState((prev, _) => {
+        const dashboards = prev.dashboards.map(d => {
+          if (d.id === dashboard.id) {
+            return Object.assign({}, d, { starred: !dashboard.starred });
+          }
+
+          return d;
+        });
+
+        const starredDashboards = dashboards.filter(d => {
+          return d.starred;
+        });
+
+        return { dashboards: dashboards, starredDashboards: starredDashboards };
+      });
+    });
   }
 
   private addFilter(filter: Filter<any>): boolean {
@@ -194,16 +254,16 @@ export default class Dashboards extends React.PureComponent<Props, State> {
 
   private updateDashboards(): void {
     let filter = new AndFilter(this.state.filters);
-    let {pageToken} = this.state as State;
+    let {pageToken, starredPageToken} = this.state;
 
-    this.state.limit.ifPresent(limit => {
-      let p = this.context.db.search(filter, limit, pageToken);
+    const limit = this.state.limit.orElse(DEFAULT_LIMIT);
 
-      p.then(page => {
-        this.setState({ dashboards: page.results, nextPageToken: page.pageToken });
-      }, reason => {
-        console.log(reason);
-      });
+    this.context.db.searchStarred(filter, limit, starredPageToken).then(page => {
+      this.setState({ starredDashboards: page.results, starredNextPageToken: page.pageToken });
+    });
+
+    this.context.db.search(filter, limit, pageToken).then(page => {
+      this.setState({ dashboards: page.results, nextPageToken: page.pageToken });
     });
   }
 };

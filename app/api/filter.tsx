@@ -28,7 +28,7 @@ export class TitleFilter implements Filter<TitleFilterJSON> {
   }
 
   public render(): any {
-    return <span><em>title</em>: {this.value}</span>;
+    return <span><b>title</b>: {this.value}</span>;
   }
 
   public apply(result: DashboardEntry): boolean {
