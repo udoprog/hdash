@@ -1,4 +1,5 @@
-import {InjectedRouter} from 'react-router';
+import { InjectedRouter } from 'react-router';
+import { Filter } from 'api/filter';
 
 // services
 declare namespace interfaces {
@@ -16,13 +17,13 @@ declare namespace interfaces {
   interface DashboardEntry {
     id: string;
     title: string;
-    metadata: { [key:string]:string; };
+    metadata: { [key: string]: string; };
   }
 
   interface DashboardData {
     id: string;
     title: string;
-    metadata: { [key:string]:string; };
+    metadata: { [key: string]: string; };
   }
 
   interface RouterContext {

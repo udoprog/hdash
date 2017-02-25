@@ -9,9 +9,8 @@ import { If, Then, Else } from 'react-if';
 import { AndFilter, MetadataFilter, TitleFilter } from 'api/filter';
 import { BoundValidator, validators } from 'forms';
 
-import { PagesContext, RouterContext } from 'api/interfaces';
-import { Filter } from 'api/interfaces';
-import { DashboardEntry } from 'api/interfaces';
+import { PagesContext, RouterContext, DashboardEntry } from 'api/interfaces';
+import { Filter } from 'api/filter';
 
 import * as shallowEqual from 'is-equal-shallow';
 

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { DashboardEntry } from 'api/interfaces';
 
-interface Filter<JSON> {
+export interface Filter<JSON> {
   render(): any;
 
   apply(result: DashboardEntry): boolean;

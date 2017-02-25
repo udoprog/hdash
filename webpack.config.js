@@ -72,7 +72,7 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
     modules: [
-      path.resolve(__dirname, "modules"), "node_modules"
+      path.resolve(__dirname, "app"), path.resolve(__dirname, "modules"), "node_modules"
     ]
   },
   devtool: 'source-map'

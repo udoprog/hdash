@@ -1,4 +1,5 @@
-import { Database, Filter } from 'api/interfaces';
+import { Filter } from 'api/filter';
+import { Database } from 'api/interfaces';
 import { DashboardPage, DashboardEntry, DashboardData } from 'api/interfaces';
 
 var store: { [s: string]: DashboardData } = {
