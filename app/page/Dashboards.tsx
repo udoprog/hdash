@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router';
 import { Row, Col } from 'react-bootstrap';
-import { InputGroup, Form, FormGroup, Button, ControlLabel, FormControl } from 'react-bootstrap';
+import { Pager, InputGroup, Form, FormGroup, Button, ControlLabel, FormControl } from 'react-bootstrap';
 import { Typeahead } from 'react-bootstrap-typeahead';
-import { Pager } from 'react-bootstrap';
 import { If, Then, Else } from 'react-if';
 
 import { AndFilter, MetadataFilter, TitleFilter } from 'api/filter';
@@ -17,7 +16,7 @@ import * as shallowEqual from 'is-equal-shallow';
 const DEFAULT_LIMIT = 20;
 
 const validateLimit = validators.integer({
-  checks: validators.min(1)
+  checks: [validators.min(1), validators.max(50)]
 });
 
 interface DashboardListProps {
@@ -105,12 +104,13 @@ class SearchForm extends React.PureComponent<SearchFormProps, SearchFormState | 
 
     if (index >= 1) {
       const key = addFilterValue.substring(0, index);
-      const value = addFilterValue.substring(index);
+      const value = addFilterValue.substring(index + 1);
       this.props.onAddFilter(new MetadataFilter(key, value));
     } else {
       this.props.onAddFilter(new TitleFilter(addFilterValue));
     }
 
+    this.setState({addFilterValue: ""});
     return false;
   }
 
@@ -119,9 +119,7 @@ class SearchForm extends React.PureComponent<SearchFormProps, SearchFormState | 
     const {filters} = this.props;
 
     return <Form onSubmit={this.addFilterEvent.bind(this)}>
-      {JSON.stringify(this.limit.$errors)}
-
-      <FormGroup controlId="formLimit">
+      <FormGroup controlId="formLimit" validationState={this.limit.$validationState}>
         <ControlLabel>Limit:</ControlLabel>
 
         <FormControl
@@ -129,8 +127,9 @@ class SearchForm extends React.PureComponent<SearchFormProps, SearchFormState | 
           value={this.limit.value()}
           onChange={this.limit.onChange}
           componentClass="input"
-          placeholder="select">
-        </FormControl>
+          placeholder="select" />
+
+        <ControlLabel>{this.limit.$feedback}</ControlLabel>
       </FormGroup>
 
       <FormGroup controlId="formAddFilter">
@@ -148,6 +147,8 @@ class SearchForm extends React.PureComponent<SearchFormProps, SearchFormState | 
             <Button>Add Filter</Button>
           </InputGroup.Button>
         </InputGroup>
+
+        <FormControl.Feedback />
       </FormGroup>
 
       <FormGroup>
@@ -157,7 +158,7 @@ class SearchForm extends React.PureComponent<SearchFormProps, SearchFormState | 
           <Then>
             <InputGroup>
               {filters.map((f, i) => {
-                return <Button onClick={() => this.removeFilter(f)} bsStyle="primary" bsSize="xs" key={i}>{f.render()}</Button>;
+                return <Button className="btn-space" onClick={() => this.removeFilter(f)} bsStyle="default" bsSize="xs" key={i}>{f.render()}</Button>;
               })}
             </InputGroup>
           </Then>
@@ -185,14 +186,11 @@ interface DashboardsState {
   pageToken: string | null;
 }
 
-export default class Dashboards extends React.PureComponent<DashboardsProps, DashboardsState | any> {
+export default class Dashboards extends React.PureComponent<DashboardsProps, DashboardsState> {
   context: PagesContext & RouterContext;
 
-  readonly update: () => void;
-  readonly updateWithUrl: () => void;
   readonly setPageToken: (pageToken: string) => void;
   readonly limit: BoundValidator<number>;
-  readonly $handleTypeahead: (selection?: string) => void;
 
   public static contextTypes: any = {
     db: React.PropTypes.object,
@@ -212,26 +210,18 @@ export default class Dashboards extends React.PureComponent<DashboardsProps, Das
       pageToken: query.pageToken || null
     } as DashboardsState;
 
-    this.updateWithUrl = () => {
-      this.updateUrl();
-      this.update();
-    };
-
-    this.update = () => {
-      this.updateDashboards();
-    };
-
     this.setPageToken = nextPageToken => {
-      this.setState({ pageToken: nextPageToken, nextPageToken: null }, this.updateWithUrl);
+      this.setState({ pageToken: nextPageToken, nextPageToken: null }, () => {
+        this.updateUrl();
+        this.updateDashboards();
+      });
     };
 
     this.limit = validateLimit.bind(() => this.state.limit, {});
-
-    this.$handleTypeahead = this.handleTypeahead.bind(this);
   }
 
   public componentDidMount(): void {
-    this.update();
+    this.updateDashboards();
   }
 
   public componentDidUpdate(prevProps: DashboardsProps): void {
@@ -241,7 +231,10 @@ export default class Dashboards extends React.PureComponent<DashboardsProps, Das
       const limit = parseInt(query.limit) || null;
       const pageToken = query.pageToken || null;
 
-      this.setState({ limit: limit, pageToken: pageToken }, this.update);
+      this.setState({ limit: limit, pageToken: pageToken }, () => {
+        this.updateDashboards();
+      });
+
       return;
     }
   }
@@ -259,7 +252,7 @@ export default class Dashboards extends React.PureComponent<DashboardsProps, Das
         <Col sm={6}>
           <h4>Favorites</h4>
 
-          <Typeahead onChange={this.$handleTypeahead}
+          <Typeahead onChange={(selection: string) => this.handleTypeahead(selection)}
             options={["foo", "bar", "baz"]} />
         </Col>
 
@@ -269,9 +262,9 @@ export default class Dashboards extends React.PureComponent<DashboardsProps, Das
           <SearchForm
             limit={limit}
             filters={filters}
-            onRemoveFilter={this.removeFilter.bind(this)}
-            onAddFilter={this.addFilter.bind(this)}
-            onChangeLimit={this.setLimit.bind(this)} />
+            onRemoveFilter={f => this.removeFilter(f)}
+            onAddFilter={f => this.addFilter(f)}
+            onChangeLimit={limit => this.setLimit(limit)} />
 
           <DashboardList dashboards={dashboards} onAddMetadataFilter={this.addMetadataFilter.bind(this)} />
 
@@ -289,25 +282,26 @@ export default class Dashboards extends React.PureComponent<DashboardsProps, Das
   }
 
   private setLimit(limit: number | null): void {
-    this.setState({ limit: limit }, this.updateWithUrl)
+    this.setState({ limit: limit }, () => {
+      this.updateDashboards();
+      this.updateUrl();
+    });
   }
 
   private removeFilter(filter: Filter<any>): void {
     this.setState((prev, _) => {
-      let data = [].concat(prev.filters);
-      let index = data.indexOf(filter);
-
-      if (index < 0) {
-        return prev;
-      }
-
-      data.splice(index, 1);
-      return { filters: data };
-    }, this.updateWithUrl)
+      return { filters: prev.filters.filter(f => !f.equals(filter)) };
+    }, () => {
+      this.updateUrl();
+      this.updateDashboards();
+    })
   }
 
   private reset(): void {
-    this.setState({ pageToken: null }, this.updateWithUrl);
+    this.setState({ pageToken: null }, () => {
+      this.updateUrl();
+      this.updateDashboards();
+    });
   }
 
   private addMetadataFilter(key: string, value: string): void {
@@ -316,11 +310,18 @@ export default class Dashboards extends React.PureComponent<DashboardsProps, Das
 
   private addFilter(filter: Filter<any>): boolean {
     this.setState((prev, _) => {
+      if (prev.filters.some(f => f.equals(filter))) {
+        return prev;
+      }
+
       return {
         filters: prev.filters.concat([filter]),
         pageToken: null
       }
-    }, this.updateWithUrl)
+    }, () => {
+      this.updateUrl();
+      this.updateDashboards();
+    })
 
     return false;
   }
@@ -328,13 +329,11 @@ export default class Dashboards extends React.PureComponent<DashboardsProps, Das
   private updateUrl(): void {
     const {router} = this.context;
     const {pathname, query} = this.props.location;
-    const {limit, pageToken} = this.state;
+    const {pageToken} = this.state;
 
     let nextQuery: any = {};
 
-    if (limit !== null && limit > 0) {
-      nextQuery.limit = limit.toString();
-    }
+    nextQuery.limit = this.limit.get().map(value => value.toString()).orElse(query.limit);
 
     if (pageToken !== null) {
       nextQuery.pageToken = pageToken;
@@ -354,7 +353,7 @@ export default class Dashboards extends React.PureComponent<DashboardsProps, Das
     let filter = new AndFilter(this.state.filters);
     let {pageToken} = this.state as DashboardsState;
 
-    this.limit.ifValid(limit => {
+    this.limit.get().ifPresent(limit => {
       let p = this.context.db.search(filter, limit, pageToken);
 
       p.then(page => {

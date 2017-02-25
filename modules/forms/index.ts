@@ -1,3 +1,5 @@
+import {Optional, absent, of} from 'optional';
+
 /**
  * Function that handles an event as a numeric value.
  */
@@ -98,7 +100,9 @@ const buildValidator = <T>(
 
     validator.bind = (accessor: () => T, config: ValidatorBindConfig<T>) => {
       const onChange = config.onChange ? config.onChange : noop;
-      return new BoundValidator(onChange, accessor, parser, encoder, defaultFormValue, check);
+      const validator = new BoundValidator(onChange, accessor, parser, encoder, defaultFormValue, check);
+      validator.checkCurrent();
+      return validator;
     };
 
     return validator;
@@ -123,7 +127,10 @@ export namespace validators {
   export function min(expected: number): Check<number> {
     return value => {
       if (value < expected) {
-        return { type: "min", message: "Value too small" } as ValidationError;
+        return {
+          type: "min",
+          message: "Value too small, expected at least: " + expected
+        } as ValidationError;
       }
 
       return OK;
@@ -136,7 +143,10 @@ export namespace validators {
   export function max(expected: number): Check<number> {
     return value => {
       if (value > expected) {
-        return { type: "min", message: "Value too large" } as ValidationError;
+        return {
+          type: "max",
+          message: "Value too large, expected at most: " + expected
+        } as ValidationError;
       }
 
       return OK;
@@ -153,9 +163,20 @@ export class BoundValidator<T> {
   $errors: { [s: string]: ValidationError; };
 
   /**
+   * Feedback string.
+   */
+  $feedback?: string;
+
+  /**
    * Check if the given keys are valid or not.
    */
   $valid: boolean;
+
+  /**
+   * The state of the current vallidation.
+   * Suitable for providing as validationState to react-bootstrap forms.
+   */
+  $validationState?: "success" | "warning" | "error";
 
   private readonly _onChange: (value: T) => any;
   private readonly _accessor: () => T;
@@ -173,7 +194,9 @@ export class BoundValidator<T> {
     check: ArrayValidator<T>,
   ) {
     this.$errors = EMPTY;
+    this.$feedback = null;
     this.$valid = true;
+    this.$validationState = null;
 
     this._onChange = onChange;
     this._accessor = accessor;
@@ -185,20 +208,20 @@ export class BoundValidator<T> {
     this.onChange = this.onChange.bind(this);
   }
 
-  public get(defaultValue: T): T {
+  public get(): Optional<T> {
     const v = this._accessor();
 
     if (v === null) {
-      return defaultValue;
+      return absent<T>();
     }
 
     const results = this._check(v);
 
     if (results.length !== 0) {
-      return defaultValue;
+      return absent<T>();
     }
 
-    return v;
+    return of<T>(v);
   }
 
   public value(): string {
@@ -207,39 +230,42 @@ export class BoundValidator<T> {
   }
 
   /**
-   * Call the given consumer if the encapsulated value is valid.
-   */
-  public ifValid(consumer: (value: T) => void): void {
-    const v = this._accessor();
-
-    if (v === null) {
-      return;
-    }
-
-    if (this._check(v).length === 0) {
-      consumer(v);
-    }
-  }
-
-  /**
    * Bind an onChange handler that will only fire child handler if the value is valid.
    */
   public onChange(e: any): void {
     const v = this._parser(e.target.value);
-    const results = this._check(v);
-
+    this.check(v);
     this._onChange(v);
+  }
+
+  /**
+   * Check the current value provided by the accessor.
+   */
+  public checkCurrent() {
+    this.check(this._accessor());
+  }
+
+  public check(v: T) {
+    const results = this._check(v);
 
     if (results.length === 0) {
       this.$errors = EMPTY;
       this.$valid = true;
+      this.$feedback = null;
+      this.$validationState = 'success';
     } else {
       const errors: any = this.$errors = {};
-      this.$valid = false;
+
+      var feedback: Array<string> = [];
 
       results.forEach(result => {
+        feedback.push(result.message);
         errors[result.type] = result;
       });
+
+      this.$feedback = feedback.join(', ');
+      this.$valid = false;
+      this.$validationState = 'error';
     }
   }
 }

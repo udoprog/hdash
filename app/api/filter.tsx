@@ -8,6 +8,10 @@ export interface Filter<JSON> {
   apply(result: DashboardEntry): boolean;
 
   toJSON(): JSON;
+
+  type(): string;
+
+  equals(other: Filter<any>): boolean;
 }
 
 interface TitleFilterJSON {
@@ -15,6 +19,8 @@ interface TitleFilterJSON {
 }
 
 export class TitleFilter implements Filter<TitleFilterJSON> {
+  static TYPE = 'title';
+
   readonly value: string;
 
   constructor(value: string) {
@@ -30,7 +36,20 @@ export class TitleFilter implements Filter<TitleFilterJSON> {
   }
 
   public toJSON(): any {
-    return { value: this.value };
+    return { type: TitleFilter.TYPE, value: this.value };
+  }
+
+  public type(): string {
+    return TitleFilter.TYPE;
+  }
+
+  public equals(other: Filter<any>): boolean {
+    if (TitleFilter.TYPE !== other.type()) {
+      return false;
+    }
+
+    const o = other as TitleFilter;
+    return this.value === o.value;
   }
 
   static fromJSON(json: TitleFilterJSON): TitleFilter {
@@ -44,6 +63,8 @@ interface MetadataFilterJSON {
 }
 
 export class MetadataFilter implements Filter<MetadataFilterJSON> {
+  static TYPE = 'metadata';
+
   readonly key: string;
   readonly value: string;
 
@@ -67,7 +88,21 @@ export class MetadataFilter implements Filter<MetadataFilterJSON> {
   }
 
   public toJSON(): any {
-    return { key: this.key, value: this.value };
+    return { type: MetadataFilter.TYPE, key: this.key, value: this.value };
+  }
+
+  public type(): string {
+    return MetadataFilter.TYPE;
+  }
+
+  public equals(other: Filter<any>): boolean {
+    if (MetadataFilter.TYPE !== other.type()) {
+      return false;
+    }
+
+    const o = other as MetadataFilter;
+
+    return this.key === o.key && this.value === o.value;
   }
 
   static fromJSON(json: MetadataFilterJSON): MetadataFilter {
@@ -80,6 +115,8 @@ interface AndFilterJSON {
 }
 
 export class AndFilter implements Filter<AndFilterJSON> {
+  static TYPE = "and";
+
   readonly filters: Filter<any>[];
 
   constructor(filters: Filter<any>[]) {
@@ -97,7 +134,25 @@ export class AndFilter implements Filter<AndFilterJSON> {
   }
 
   public toJSON(): any {
-    return { filters: this.filters.map(f => f.toJSON()) };
+    return { type: AndFilter.TYPE, filters: this.filters.map(f => f.toJSON()) };
+  }
+
+  public type(): string {
+    return AndFilter.TYPE;
+  }
+
+  public equals(other: Filter<any>): boolean {
+    if (AndFilter.TYPE !== other.type()) {
+      return false;
+    }
+
+    const o = other as AndFilter;
+
+    if (this.filters.length !== o.filters.length) {
+      return false;
+    }
+
+    return this.filters.every((f, index) => f.equals(o.filters[index]));
   }
 
   static fromJSON(json: AndFilterJSON): AndFilter {
@@ -105,13 +160,13 @@ export class AndFilter implements Filter<AndFilterJSON> {
   }
 }
 
-export function fromJSON(json: any) {
+export function fromJSON(json: any): Filter<any> {
   switch (json.type) {
-    case "metadata":
+    case MetadataFilter.TYPE:
       return MetadataFilter.fromJSON(json as MetadataFilterJSON);
-    case "title":
+    case TitleFilter.TYPE:
       return TitleFilter.fromJSON(json as TitleFilterJSON);
-    case "and":
+    case AndFilter.TYPE:
       return AndFilter.fromJSON(json as AndFilterJSON);
   }
 }
