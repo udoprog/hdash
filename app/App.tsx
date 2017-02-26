@@ -5,7 +5,8 @@ import { Router, Route, IndexRoute, browserHistory } from 'react-router';
 import Index from './page/Index';
 import Dashboards from './page/Dashboards';
 import Dashboard from './page/Dashboard';
-import Alerting from './page/Alerting';
+import Alerts from './page/Alerts';
+import Visualizations from './page/Visualizations';
 import Main from './page/Main';
 import DatabaseProvider from './db/DatabaseProvider';
 
@@ -18,7 +19,8 @@ export default class App extends React.Component<{}, {}> {
             <IndexRoute component={Main} />
             <Route path="dashboards" component={Dashboards} />
             <Route path="dashboards/:id" component={Dashboard} />
-            <Route path="alerting" component={Alerting} />
+            <Route path="alerts" component={Alerts} />
+            <Route path="visualizations" component={Visualizations} />
             <Route path="me" component={Main} />
           </Route>
         </Router>

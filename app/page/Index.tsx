@@ -26,16 +26,22 @@ export default class Index extends React.Component<any, {}> {
                   <span>&nbsp;&nbsp;Main</span>
                 </NavItem>
               </IndexLinkContainer>
+              <LinkContainer to="/visualizations">
+                <NavItem>
+                  <Glyphicon glyph="eye-open" />
+                  <span>&nbsp;&nbsp;Visualizations</span>
+                </NavItem>
+              </LinkContainer>
               <LinkContainer to="/dashboards">
                 <NavItem>
                   <Glyphicon glyph="th" />
                   <span>&nbsp;&nbsp;Dashboards</span>
                 </NavItem>
               </LinkContainer>
-              <LinkContainer to="/alerting">
+              <LinkContainer to="/alerts">
                 <NavItem>
                   <Glyphicon glyph="bell" />
-                  <span>&nbsp;&nbsp;Alerting</span>
+                  <span>&nbsp;&nbsp;Alerts</span>
                 </NavItem>
               </LinkContainer>
             </Nav>
