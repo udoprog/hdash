@@ -77,23 +77,6 @@ export default class Dashboards extends React.PureComponent<Props, State> {
     this.updateDashboards();
   }
 
-  public componentDidUpdate(prevProps: Props): void {
-    const {query, key} = this.props.location;
-
-    if (prevProps.location.key !== key) {
-      const limit = parseInt(query.limit) || DEFAULT_LIMIT;
-      const pageToken = ofNullable(query.pageToken);
-
-      this.setState({ limit: of(limit), pageToken: pageToken }, () => {
-        this.updateDashboards();
-      });
-    }
-  }
-
-  public handleTypeahead(selection?: string) {
-    console.log(selection);
-  }
-
   public render() {
     const {limit, filters} = this.state;
     const {starredDashboards, dashboards} = this.state;
@@ -158,7 +141,7 @@ export default class Dashboards extends React.PureComponent<Props, State> {
     );
   }
 
-  private filtersFromQuery(query: {[key: string]: string}): Filter<any>[] {
+  private filtersFromQuery(query: { [key: string]: string }): Filter<any>[] {
     const filters: Filter<any>[] = [];
 
     Object.keys(query).forEach(key => {
@@ -254,7 +237,7 @@ export default class Dashboards extends React.PureComponent<Props, State> {
 
     nextQuery.limit = this.state.limit.orElse(query.limit);
 
-    pageToken.ifPresent(pageToken => {
+    pageToken.accept(pageToken => {
       nextQuery.pageToken = pageToken;
     });
 

@@ -11,7 +11,7 @@ export function numberEvent<T>(fn: (value: number | null) => T): (e: any) => T {
 }
 
 interface Parser<T> {
-  (value: string): T;
+  (value: string): Optional<T>;
 }
 
 interface Encoder<T> {
@@ -25,6 +25,8 @@ interface ValidationError {
   type: string;
   message: string;
 }
+
+const INVALID_ERROR = { type: 'invalid', message: 'Value not valid' } as ValidationError;
 
 type ValidationResult = ValidationSuccess | ValidationError;
 
@@ -59,9 +61,9 @@ interface ValidatorConfig<T> {
   checks?: Array<Check<T>> | Check<T>;
 }
 
-const integerParser = (value: string): number => {
+const integerParser = (value: string): Optional<number> => {
   const v = parseInt(value);
-  return isNaN(v) ? null : v;
+  return isFinite(v) ? of(v) : absent<number>();
 };
 
 const integerEncoder = (value: number): string => {
@@ -85,17 +87,13 @@ const buildValidator = <T>(
     };
 
     validator.parse = (value: string): Optional<T> => {
-      const v = parser(value);
+      return parser(value).flatMap(v => {
+        if (check(v).length !== 0) {
+          return absent<T>();
+        }
 
-      if (v === null) {
-        return absent<T>();
-      }
-
-      if (check(v).length !== 0) {
-        return absent<T>();
-      }
-
-      return of(v);
+        return of(v);
+      });
     };
 
     validator.bind = (accessor: () => Optional<T>, config: ValidatorBindConfig<T>) => {
@@ -225,40 +223,46 @@ export class BoundValidator<T> {
   public onChange(e: any): void {
     const v = this._parser(e.target.value);
     this.check(v);
-    this._onChange(v);
+    this._onChange(v.orElse(this._defaultValue));
   }
 
   /**
    * Check the current value provided by the accessor.
    */
   public checkCurrent() {
-    this._accessor().ifPresent(v => {
-      this.check(v);
-    });
+    this.check(this._accessor());
   }
 
-  public check(v: T) {
-    const results = this._check(v);
+  public check(v: Optional<T>) {
+    v.accept(v => {
+      const results = this._check(v);
 
-    if (results.length === 0) {
-      this.$errors = EMPTY;
-      this.$valid = true;
-      this.$feedback = null;
-      this.$validationState = 'success';
-    } else {
-      const errors: any = this.$errors = {};
+      if (results.length === 0) {
+        this.$errors = EMPTY;
+        this.$valid = true;
+        this.$feedback = null;
+        this.$validationState = 'success';
+      } else {
+        const errors: any = this.$errors = {};
 
-      var feedback: Array<string> = [];
+        var feedback: Array<string> = [];
 
-      results.forEach(result => {
-        feedback.push(result.message);
-        errors[result.type] = result;
-      });
+        results.forEach(result => {
+          feedback.push(result.message);
+          errors[result.type] = result;
+        });
 
-      this.$feedback = feedback.join(', ');
+        this.$feedback = feedback.join(', ');
+        this.$valid = false;
+        this.$validationState = 'error';
+      }
+    }, () => {
+      this.$errors = {};
+      this.$errors[INVALID_ERROR.type] = INVALID_ERROR;
       this.$valid = false;
+      this.$feedback = "Not a valid value";
       this.$validationState = 'error';
-    }
+    });
   }
 }
 
@@ -292,7 +296,7 @@ export function validator<T>(type: string, config: ValidatorConfig<T>): Validato
   }
 
   if (type === validators.String) {
-    return buildValidator(s => s, s => s, check, "") as Validator<any>;
+    return buildValidator(s => of(s), s => s, check, "") as Validator<any>;
   }
 
   throw new Error("Illegal type: " + type);

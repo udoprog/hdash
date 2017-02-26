@@ -22,7 +22,7 @@ export interface Optional<T> {
     /**
      * Run the given consumer if the value is present.
      */
-    ifPresent(consumer: (value: T) => void): void;
+    accept(consumer: (value: T) => void, onElse?: () => void): void;
 
     /**
      * Get the value if present, or null if absent.
@@ -65,7 +65,7 @@ class Present<T> implements Optional<T> {
         return this.value;
     }
 
-    public ifPresent(consumer: (value: T) => void): void {
+    public accept(consumer: (value: T) => void, _onElse?: () => void): void {
         consumer(this.value);
     }
 
@@ -91,8 +91,10 @@ class Absent<T> implements Optional<T> {
         return supplier();
     }
 
-    public ifPresent(_consumer: (value: T) => void): void {
-        /* do nothing */
+    public accept(_consumer: (value: T) => void, onElse?: () => void): void {
+        if (onElse) {
+            onElse();
+        }
     }
 
     public get(): T | null {
