@@ -1,14 +1,28 @@
-import { field, clone, TypeField, ArrayType } from 'mapping';
+import { field, clone, TypeField, ArrayField } from 'mapping';
 
 // TODO: change to something better;
 var randomId = 0;
 
 export class DataSource {
-  @field() query: string;
+  @field()
+  readonly query: string;
+
+  constructor(values: any) {
+    this.query = values.query;
+  }
+
+  static visualizationType: string = 'embedded';
 }
 
 export class DataSourceReference {
-  @field() id: string;
+  @field()
+  readonly id: string;
+
+  constructor(values: any) {
+    this.id = values.id;
+  }
+
+  static visualizationType: string = 'reference';
 }
 
 export class Visualization {
@@ -16,59 +30,83 @@ export class Visualization {
    * Either an embedded data source, or a reference to one.
    */
   @field({
-    type: new TypeField([
-      { type: 'reference', target: DataSourceReference },
-      { type: 'immediate', target: DataSource }
-    ])
+    type: new TypeField(
+      input => (<any>input).constructor.visualizationType,
+      [
+        { type: 'reference', target: DataSourceReference },
+        { type: 'embedded', target: DataSource }
+      ]
+    )
   })
   datasource: DataSourceReference | DataSource;
+
+  constructor(values: any) {
+    this.datasource = values.datasource;
+  }
 }
 
 export class LayoutEntry {
   @field()
-  i: string;
+  readonly i: string;
   @field()
-  x: number;
+  readonly x: number;
   @field()
-  y: number;
+  readonly y: number;
   @field()
-  w: number;
+  readonly w: number;
   @field()
-  h: number;
+  readonly h: number;
+
+  constructor(values: any) {
+    this.i = values.i;
+    this.x = values.x;
+    this.y = values.y;
+    this.w = values.w;
+    this.h = values.h;
+  }
 }
 
 export class Component {
   @field()
-  id: string;
+  readonly id: string;
   @field()
-  title: string;
+  readonly title: string;
+
+  constructor(values: any) {
+    this.id = values.id;
+    this.title = values.title;
+  }
 }
 
 export class Dashboard {
   @field()
-  id: string;
+  readonly id: string;
   @field()
-  title: string;
+  readonly title: string;
   @field()
-  metadata: { [key: string]: string; };
-  @field({ type: new ArrayType(Component) })
-  components: Component[];
+  readonly metadata: { [key: string]: string; };
+  @field({ type: new ArrayField(Component) })
+  readonly components: Component[];
   @field()
-  layout: Array<LayoutEntry>;
+  readonly layout: Array<LayoutEntry>;
+
+  constructor(values: any) {
+    this.id = values.id;
+    this.title = values.title;
+    this.metadata = values.metadata;
+    this.components = values.components;
+    this.layout = values.layout;
+  }
 
   public withNewComponent(): Dashboard {
     const newComponents = this.components.slice();
-    newComponents.push({id: (randomId++).toString(), title: ""});
+    newComponents.push({ id: (randomId++).toString(), title: "" });
 
-    const newInstance = clone(this, Dashboard);
-    newInstance.components = newComponents;
-    return newInstance;
+    return clone(this, { components: newComponents });
   }
 
   public withLayout(layout: Array<LayoutEntry>): Dashboard {
-    const newInstance = clone(this, Dashboard);
-    newInstance.layout = layout;
-    return newInstance;
+    return clone(this, { layout: layout });
   }
 }
 

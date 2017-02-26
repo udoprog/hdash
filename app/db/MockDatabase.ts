@@ -3,31 +3,31 @@ import { Database } from 'api/interfaces';
 import { DashboardPage, User } from 'api/interfaces';
 import { Dashboard, DashboardEntry } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
-import { deserialize } from 'mapping';
+import { decode } from 'mapping';
 
 const store: { [s: string]: Dashboard } = {
-  "a": deserialize({
+  "a": decode({
     id: "hello",
     title: "Simple Title",
     metadata: { owner: "foo" },
     components: [],
     layout: []
   }, Dashboard),
-  "b": deserialize({
+  "b": decode({
     id: "world",
     title: "Complex Title",
     metadata: { owner: "foo", relation: "tough" },
     components: [],
     layout: []
   }, Dashboard),
-  "c": deserialize({
+  "c": decode({
     id: "foo",
     title: "Foo Title",
     metadata: { owner: "bar" },
     components: [],
     layout: []
   }, Dashboard),
-  "d": deserialize({
+  "d": decode({
     id: "foo",
     title: "Foo Title",
     metadata: { owner: "bar", relation: "loose" },

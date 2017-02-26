@@ -19,7 +19,7 @@ const html = new HtmlWebpackPlugin({
   template: path.resolve(__dirname, 'app/index.html')
 });
 
-const prod = process.env.ENV === 'production';
+const prod = process.env.NODE_ENV === 'production';
 const plugins = [html];
 
 if (prod) {

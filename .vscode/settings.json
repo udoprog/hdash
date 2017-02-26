@@ -1,0 +1,9 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "files.exclude": {
+        "app/**/*.js": true,
+        "app/**/*.js.map": true,
+        "modules/**/*.js": true,
+        "modules/**/*.js.map": true
+    }
+}

@@ -1,0 +1,7 @@
+--watch
+--colors
+--compilers ts:ts-node/register,tsx:ts-node/register
+--watch-extensions ts
+--ui bdd
+--recursive
+app/**/*.test.ts
