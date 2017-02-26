@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Grid, Row, Col } from 'react-bootstrap';
 
-export default class Main extends React.Component<{}, {}> {
+export default class MainPage extends React.Component<{}, {}> {
   public render() {
     return (
       <Grid>

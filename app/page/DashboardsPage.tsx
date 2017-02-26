@@ -3,7 +3,8 @@ import { Row, Col, Grid } from 'react-bootstrap';
 import { Pager } from 'react-bootstrap';
 import { Optional, absent, of, ofNullable } from 'optional';
 import { AndFilter, MetadataFilter, TitleFilter } from 'api/filter';
-import { PagesContext, RouterContext, DashboardEntry } from 'api/interfaces';
+import { PagesContext, RouterContext } from 'api/interfaces';
+import { DashboardEntry } from 'api/model';
 import { Filter } from 'api/filter';
 import * as shallowEqual from 'is-equal-shallow';
 import DashboardSearchForm from 'components/DashboardSearchForm';
@@ -31,7 +32,7 @@ interface State {
   limit: Optional<number>;
 }
 
-export default class Dashboards extends React.PureComponent<Props, State> {
+export default class DashboardsPage extends React.PureComponent<Props, State> {
   context: PagesContext & RouterContext;
 
   readonly setPageToken: (pageToken: string) => void;

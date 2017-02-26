@@ -1,4 +1,4 @@
-import { DashboardEntry } from 'api/interfaces';
+import { Dashboard, DashboardEntry } from 'api/model';
 import { InjectedRouter } from 'react-router';
 import { Filter } from 'api/filter';
 import { Optional } from 'optional';
@@ -12,7 +12,9 @@ declare namespace interfaces {
 
     searchStarred(filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage>;
 
-    get(id: string): Promise<Optional<DashboardData>>;
+    get(id: string): Promise<Optional<Dashboard>>;
+
+    save(dashboard: Dashboard): Promise<{}>;
 
     setStarred(dashboardId: string, starred: boolean): Promise<{}>;
   }
@@ -25,19 +27,6 @@ declare namespace interfaces {
   interface DashboardPage {
     results: DashboardEntry[];
     pageToken: Optional<string>;
-  }
-
-  interface DashboardEntry {
-    id: string;
-    title: string;
-    metadata: { [key: string]: string; };
-    starred: boolean;
-  }
-
-  interface DashboardData {
-    id: string;
-    title: string;
-    metadata: { [key: string]: string; };
   }
 
   interface RouterContext {

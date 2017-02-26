@@ -1,6 +1,5 @@
 import * as React from 'react';
-
-import { DashboardEntry } from 'api/interfaces';
+import { DashboardEntry } from 'api/model';
 
 export interface Filter<JSON> {
   render(): any;

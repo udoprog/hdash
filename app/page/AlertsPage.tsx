@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Grid } from 'react-bootstrap';
 
-export default class Alerts extends React.Component<{}, {}> {
+export default class AlertsPage extends React.Component<{}, {}> {
   public render() {
     return (
       <Grid>

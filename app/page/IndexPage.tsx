@@ -4,7 +4,7 @@ import { Navbar, Nav, NavItem, Glyphicon } from 'react-bootstrap';
 import { IndexLink } from 'react-router';
 import { LinkContainer, IndexLinkContainer } from 'react-router-bootstrap';
 
-export default class Index extends React.Component<any, {}> {
+export default class IndexPage extends React.Component<any, {}> {
   render() {
     const { children } = this.props;
 

@@ -38,6 +38,6 @@ export default class DatabaseProvider extends React.Component<Props, {}> {
 
   public render() {
     const { children } = this.props;
-    return <div>{children}</div>;
+    return <div className="database-provider">{children}</div>;
   }
 };

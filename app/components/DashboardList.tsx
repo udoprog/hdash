@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router';
 import { Button, ListGroup, ListGroupItem, Glyphicon } from 'react-bootstrap';
-import { DashboardEntry } from 'api/interfaces';
+import { DashboardEntry } from 'api/model';
 
 interface Props {
   dashboards: DashboardEntry[];

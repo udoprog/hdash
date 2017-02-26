@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 
 import NewVisualization from 'components/NewVisualization';
 
-export default class Visualizations extends React.Component<{}, {}> {
+export default class VisualizationsPage extends React.Component<{}, {}> {
   public render() {
     return (
       <Grid>
