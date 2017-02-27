@@ -9,16 +9,14 @@ import { Filter } from 'api/filter';
 import * as shallowEqual from 'is-equal-shallow';
 import DashboardSearchForm from 'components/DashboardSearchForm';
 import DashboardList from 'components/DashboardList';
+import { RouteComponentProps } from 'react-router';
 
 const META_PREFIX = "m_";
 const TITLE_PREFIX = "t_";
 const DEFAULT_LIMIT = 20;
 
-interface Props {
-  location: any,
-  route: {
-    test: string
-  }
+
+interface Props extends RouteComponentProps<{}, {}> {
 }
 
 interface State {
@@ -35,13 +33,13 @@ interface State {
 export default class DashboardsPage extends React.PureComponent<Props, State> {
   context: PagesContext & RouterContext;
 
-  readonly setPageToken: (pageToken: string) => void;
-  readonly setStarredPageToken: (pageToken: string) => void;
-
   public static contextTypes: any = {
     db: React.PropTypes.object,
     router: React.PropTypes.any
   };
+
+  readonly setPageToken: (pageToken: string) => void;
+  readonly setStarredPageToken: (pageToken: string) => void;
 
   constructor(props: any) {
     super(props);
@@ -234,6 +232,7 @@ export default class DashboardsPage extends React.PureComponent<Props, State> {
     const {pathname, query} = this.props.location;
     const {pageToken, filters} = this.state;
 
+    let currentQuery = Object.assign({}, query);
     let nextQuery: any = {};
 
     nextQuery.limit = this.state.limit.orElse(query.limit);
@@ -252,10 +251,8 @@ export default class DashboardsPage extends React.PureComponent<Props, State> {
       }
     });
 
-    const q = Object.assign({}, query);
-
-    if (!shallowEqual(q, nextQuery)) {
-      router.push({
+    if (!shallowEqual(currentQuery, nextQuery)) {
+      router.replace({
         pathname: pathname,
         query: nextQuery
       });

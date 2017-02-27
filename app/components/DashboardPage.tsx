@@ -1,20 +1,22 @@
 import * as React from 'react';
 import { Grid, Navbar, Nav, NavItem, Glyphicon, ButtonGroup, Button } from 'react-bootstrap';
-import { PagesContext } from 'api/interfaces';
+import { PagesContext, RouterContext } from 'api/interfaces';
 import { Dashboard, Component, LayoutEntry } from 'api/model';
-import { Optional, absent, of } from 'optional';
+import { Optional, absent, of, ofNullable } from 'optional';
 import ReactGridLayout from 'react-grid-layout';
 import EditComponent from 'components/EditComponent';
 import Visualization from 'components/Visualization';
+import { RouteComponentProps } from 'react-router';
 
 const ResponsiveReactGridLayout = ReactGridLayout.WidthProvider(ReactGridLayout);
 
 const ROW_HEIGHT = 150;
 
-interface Props {
-  params: {
-    id: string
-  }
+interface Params {
+  id: string
+}
+
+interface Props extends RouteComponentProps<Params, {}> {
 }
 
 interface State {
@@ -24,19 +26,22 @@ interface State {
 }
 
 export default class DashboardPage extends React.Component<Props, State> {
-  context: PagesContext;
+  context: PagesContext & RouterContext;
 
   public static contextTypes: any = {
-    db: React.PropTypes.object
+    db: React.PropTypes.object,
+    router: React.PropTypes.any
   };
 
   constructor(props: Props) {
     super(props);
 
+    const {query} = this.props.location;
+
     this.state = {
-      locked: true,
+      locked: !query.unlocked,
       dashboard: absent<Dashboard>(),
-      editComponent: absent<string>()
+      editComponent: ofNullable(query.edit)
     };
   }
 
@@ -46,9 +51,25 @@ export default class DashboardPage extends React.Component<Props, State> {
     });
   }
 
+  private updateUrl(): () => void {
+    return () => {
+      const {locked, editComponent} = this.state;
+      const {pathname, query} = this.props.location;
+      const {router} = this.context;
+
+      query.unlocked = !locked ? 'true' : undefined;
+      query.edit = editComponent.orElse(undefined);
+
+      router.replace({
+        pathname: pathname,
+        query: query
+      });
+    };
+  }
+
   private renderLock() {
     return (
-      <NavItem onClick={() => this.setState({ locked: true, editComponent: absent<string>() })}>
+      <NavItem onClick={() => this.setState({ locked: true, editComponent: absent<string>() }, this.updateUrl())}>
         <Glyphicon glyph="lock" />
         <span>&nbsp;&nbsp;Lock</span>
       </NavItem>
@@ -57,7 +78,7 @@ export default class DashboardPage extends React.Component<Props, State> {
 
   private renderUnlock() {
     return (
-      <NavItem onClick={() => this.setState({ locked: false })}>
+      <NavItem onClick={() => this.setState({ locked: false }, this.updateUrl())}>
         <Glyphicon glyph="wrench" />
         <span>&nbsp;&nbsp;Unlock to Edit</span>
       </NavItem>
@@ -176,11 +197,11 @@ export default class DashboardPage extends React.Component<Props, State> {
           return dashboard.withReplacedComponent(component);
         })
       }
-    });
+    }, this.updateUrl());
   }
 
   private edit(componentId: string) {
-    this.setState({ editComponent: of(componentId) });
+    this.setState({ editComponent: of(componentId) }, this.updateUrl());
   }
 
   private remove(component: Component) {
