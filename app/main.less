@@ -16,4 +16,16 @@ body {
 
 .component {
     border: 1px solid black;
+
+    .titlebar {
+      padding: 0px 5px;
+      height: @input-height-small;
+      background-color: @navbar-inverse-bg;
+
+      .buttons {
+        height: @input-height-small;
+        display: table-cell;
+        vertical-align: middle;
+      }
+    }
 }

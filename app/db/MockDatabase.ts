@@ -1,7 +1,7 @@
 import { Filter } from 'api/filter';
 import { Database } from 'api/interfaces';
 import { DashboardPage, User } from 'api/interfaces';
-import { Dashboard, DashboardEntry } from 'api/model';
+import { Dashboard, DashboardEntry, Visualization, DataSource } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import { decode } from 'mapping';
 
@@ -29,15 +29,32 @@ const store: { [s: string]: Dashboard } = {
   }, Dashboard),
   "d": decode({
     id: "foo",
-    title: "Foo Title",
+    title: "Has Visualization",
     metadata: { owner: "bar", relation: "loose" },
-    components: [],
+    components: [
+      { id: "some", title: "A title", visualization: { type: "reference", id: "a" } }
+    ],
     layout: []
   }, Dashboard),
 };
 
 const starredStore: { [s: string]: boolean } = {
   "a": true
+};
+
+const visualizationStore: { [s: string]: Visualization } = {
+  "a": decode({
+    datasource: {
+      type: "embedded",
+      query: "average by host"
+    }
+  }, Visualization)
+};
+
+const dataSourceStore: { [s: string]: DataSource } = {
+  "a": decode({
+    query: "average by host"
+  }, DataSource)
 };
 
 const user = { name: "John Doe", email: "john@doe.com" };
@@ -110,5 +127,13 @@ export default class MockDatabase implements Database {
     }
 
     return Promise.resolve({});
+  }
+
+  public getVisualization(visualizationId: string): Promise<Optional<Visualization>> {
+    return Promise.resolve(ofNullable(visualizationStore[visualizationId]));
+  }
+
+  public getDataSource(dataSourceId: string): Promise<Optional<DataSource>> {
+    return Promise.resolve(ofNullable(dataSourceStore[dataSourceId]));
   }
 };

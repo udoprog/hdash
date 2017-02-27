@@ -1,7 +1,7 @@
 import { Filter } from 'api/filter';
 import { Database } from 'api/interfaces';
 import { DashboardPage, User } from 'api/interfaces';
-import { Dashboard } from 'api/model';
+import { Dashboard, Visualization, DataSource } from 'api/model';
 import { Optional } from 'optional';
 
 export default class RealDatabase implements Database {
@@ -26,6 +26,14 @@ export default class RealDatabase implements Database {
   }
 
   public setStarred(_dashboardId: string, _started: boolean): Promise<{}> {
+    return Promise.reject(new Error("not implemented"));
+  }
+
+  public getVisualization(_visualizationId: string): Promise<Optional<Visualization>> {
+    return Promise.reject(new Error("not implemented"));
+  }
+
+  public getDataSource(_dataSourceId: string): Promise<Optional<DataSource>> {
     return Promise.reject(new Error("not implemented"));
   }
 };

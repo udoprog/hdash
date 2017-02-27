@@ -209,8 +209,8 @@ export class ClassField<T extends Target> implements Field<T> {
     this.optional = !!optional;
   }
 
-  public decode(value: any): T {
-    return decode(value, this.con);
+  public decode(value: any, path: Path): T {
+    return decode(value, this.con, path);
   }
 
   public encode(value: T, path: Path) {
@@ -310,7 +310,7 @@ export function clone<T extends Target, K extends keyof T>(input: T, overrides?:
 
   const constructor = (<any>input).constructor;
   const proto = constructor.prototype;
-  const fields = proto.__fields as { [s: string]: Field<any> } || {};
+  const fields: { [s: string]: Field<any> } = proto.__fields || {};
 
   Object.keys(fields).forEach(key => {
     values[key] = input[key];

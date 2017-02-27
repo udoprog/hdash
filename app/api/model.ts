@@ -1,4 +1,5 @@
-import { field, clone, TypeField, ArrayField } from 'mapping';
+import { decode, field, clone, TypeField, ArrayField } from 'mapping';
+import { Optional, ofNullable } from 'optional';
 
 // TODO: change to something better;
 var randomId = 0;
@@ -43,6 +44,19 @@ export class Visualization {
   constructor(values: any) {
     this.datasource = values.datasource;
   }
+
+  static componentType: string = 'embedded';
+}
+
+export class VisualizationReference {
+  @field()
+  readonly id: string;
+
+  constructor(values: any) {
+    this.id = values.id;
+  }
+
+  static componentType: string = 'reference';
 }
 
 export class LayoutEntry {
@@ -71,10 +85,21 @@ export class Component {
   readonly id: string;
   @field()
   readonly title: string;
+  @field({
+    type: new TypeField(
+      input => (<any>input).constructor.visualizationType,
+      [
+        { type: VisualizationReference.componentType, target: VisualizationReference },
+        { type: Visualization.componentType, target: Visualization }
+      ]
+    )
+  })
+  visualization: VisualizationReference | Visualization;
 
   constructor(values: any) {
     this.id = values.id;
     this.title = values.title;
+    this.visualization = values.visualization;
   }
 }
 
@@ -98,9 +123,22 @@ export class Dashboard {
     this.layout = values.layout;
   }
 
+  public getComponent(id: string): Optional<Component> {
+    return ofNullable(this.components.find(c => c.id === id));
+  }
+
   public withNewComponent(): Dashboard {
     const newComponents = this.components.slice();
-    newComponents.push({ id: (randomId++).toString(), title: "" });
+
+    newComponents.push(decode({
+      id: (randomId++).toString(), title: "", visualization: {
+        type: 'embedded',
+        datasource: {
+          type: 'embedded',
+          query: ""
+        }
+      }
+    }, Component));
 
     return clone(this, { components: newComponents });
   }
