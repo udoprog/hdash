@@ -76,6 +76,7 @@ module.exports = {
   },
   devtool: 'source-map',
   devServer: {
+    inline: true,
     proxy: {
       '/heroic': {
         target: 'http://localhost:8080',

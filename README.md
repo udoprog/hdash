@@ -33,3 +33,10 @@ Plugins that you _must_ have:
 
 * https://marketplace.visualstudio.com/items?itemName=Orta.vscode-jest
   * Provides instant (as you save) feedback on tests in your editor using jest.
+
+There are two tasks available:
+
+* `build` builds the project using webpack.
+* `server` starts and runs the server.
+  * Because this is a long-running task, it will have to be manually killed (`ctrl + shift + p ->
+      Terminate Running Task`).

@@ -2,22 +2,35 @@
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "0.1.0",
-    "command": "webpack",
-    "isShellCommand": true,
-    "problemMatcher": [{
-        "pattern": {
-            "regexp": "^ERROR in (.+)\n\\((\\d+):(\\d+)\\): (.+)$",
-            "file": 1,
-            "line": 2,
-            "column": 3,
-            "message": 4
+    "problemMatcher": [
+        {
+            "pattern": {
+                "regexp": "^ERROR in (.+)\n\\((\\d+):(\\d+)\\): (.+)$",
+                "file": 1,
+                "line": 2,
+                "column": 3,
+                "message": 4
+            }
+        },
+        {
+            "pattern": {
+                "regexp": "^ERROR in ([^\n]+)\n(.+)\n @ ([^\n]+) (\\d+):.+$",
+                "file": 1,
+                "line": 3,
+                "message": 2
+            }
         }
-    }, {
-        "pattern": {
-            "regexp": "^ERROR in ([^\n]+)\n(.+)\n @ ([^\n]+) (\\d+):.+$",
-            "file": 1,
-            "line": 3,
-            "message": 2
+    ],
+    "tasks": [
+        {
+            "taskName": "build",
+            "command": "webpack",
+            "isShellCommand": true
+        },
+        {
+            "taskName": "server",
+            "command": "./server.js",
+            "isShellCommand": true
         }
-    }]
+    ]
 }
