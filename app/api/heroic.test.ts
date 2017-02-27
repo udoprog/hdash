@@ -1,27 +1,18 @@
-import { decode, encode, clone, equals, Constructor } from 'mapping';
 import * as heroic from 'api/heroic';
-import { assert } from 'chai';
 
-function assertModel<T, K extends keyof T>(d: T, cls: Constructor<T>, overrides: Pick<T, K>) {
-  assert.isTrue(
-    equals(d, clone(d)),
-    "clone should be same");
+import { assertModel } from './test-utils';
 
-  assert.isTrue(
-    equals(d, decode(encode(d), cls)),
-    "decode/encode should be same");
-
-  assert.isFalse(
-    equals(d, clone(d, overrides)),
-    "modified should be different");
-}
-
-describe("This is a test", () => {
+describe('heroic', () => {
   it('should handle Sampling', () => {
-    const d = decode({
-      sampling: {size: 42, unit: "seconds"}
-    }, heroic.SumAggregation);
+    assertModel(heroic.SumAggregation, {
+      sampling: { size: 42, unit: "seconds" }
+    }, { sampling: null });
+  });
 
-    assertModel(d, heroic.SumAggregation, {sampling: null});
+  it('should handle Query', () => {
+    assertModel(heroic.Query, {
+      range: { type: "absolute", start: 0, end: 1000 },
+      query: "average by host"
+    }, { query: "foo" });
   });
 });

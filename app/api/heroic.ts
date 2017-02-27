@@ -15,6 +15,16 @@ class RelativeRange implements Range {
 }
 
 class AbsoluteRange implements Range {
+  @field()
+  readonly start: number;
+  @field()
+  readonly end: number;
+
+  constructor(values: any) {
+    this.start = values.start;
+    this.end = values.end;
+  }
+
   static type = 'absolute';
 }
 
@@ -52,7 +62,11 @@ export class Query {
   @field({ type: RangeType })
   readonly range: Range;
 
+  @field()
+  readonly query: string;
+
   constructor(values: any) {
     this.range = values.range;
+    this.query = values.query;
   }
 }

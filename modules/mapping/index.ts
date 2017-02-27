@@ -6,7 +6,7 @@ export interface Constructor<T> {
   /**
    * Access prototype.
    */
-  prototype: any;
+  prototype: T;
 }
 
 export interface Target {
@@ -50,7 +50,7 @@ class Path {
 
     while (current) {
       if (current.name === null) {
-        full.push("object");
+        full.push("[root]");
         break;
       }
 
@@ -118,11 +118,11 @@ export class TypeField<T extends Target> implements Field<T> {
   /**
    * Build a simplified type mapping.
    */
-  static of<U>(types: (HasType & ToField<U>)[]): TypeField<U> {
-    return new TypeField<U>(
+  static of<T>(types: (HasType & Constructor<T>)[]): TypeField<T> {
+    return new TypeField<T>(
       input => (<any>input).constructor.type,
       types.map(t => {
-        return {type: t.type, target: t} as TypeMapping<U>;
+        return {type: t.type, target: t} as TypeMapping<T>;
       })
     );
   }
@@ -235,7 +235,7 @@ export class ClassField<T extends Target> implements Field<T> {
 
     const values: { [s: string]: any } = {};
 
-    const fields = this.con.prototype.__fields as { [s: string]: Field<any> } || {};
+    const fields = (this.con.prototype as any).__fields as { [s: string]: Field<any> } || {};
 
     Object.keys(fields).forEach(key => {
       const field = fields[key];
@@ -262,7 +262,7 @@ export class ClassField<T extends Target> implements Field<T> {
   public encode(input: T, path: Path): any {
     const values: { [s: string]: any } = {};
     const proto = this.con.prototype;
-    const fields = proto.__fields as { [s: string]: Field<any> } || {};
+    const fields = (proto as any).__fields as { [s: string]: Field<any> } || {};
 
     Object.keys(fields).forEach(key => {
       const field = fields[key];
