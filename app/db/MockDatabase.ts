@@ -1,7 +1,7 @@
 import { Filter } from 'api/filter';
 import { Database } from 'api/interfaces';
 import { DashboardPage, User } from 'api/interfaces';
-import { Dashboard, DashboardEntry, Visualization, DataSource } from 'api/model';
+import { Dashboard, DashboardEntry, Visualization, DataSource, VisualizationType } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import { decode } from 'mapping';
 
@@ -32,9 +32,17 @@ const store: { [s: string]: Dashboard } = {
     title: "Has Visualization",
     metadata: { owner: "bar", relation: "loose" },
     components: [
-      { id: "some", title: "A title", visualization: { type: "reference", id: "a" } }
+      {
+        id: "some",
+        title: "A title",
+        showTitle: true,
+        visualization: { type: "reference", id: "a" },
+        datasource: { type: "reference", id: "a" }
+      }
     ],
-    layout: []
+    layout: [
+      { i: "some", x: 0, y: 0, w: 6, h: 2 }
+    ]
   }, Dashboard),
 };
 
@@ -44,11 +52,8 @@ const starredStore: { [s: string]: boolean } = {
 
 const visualizationStore: { [s: string]: Visualization } = {
   "a": decode({
-    datasource: {
-      type: "embedded",
-      query: "average by host"
-    }
-  }, Visualization)
+    type: "bar-chart"
+  }, VisualizationType)
 };
 
 const dataSourceStore: { [s: string]: DataSource } = {

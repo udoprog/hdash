@@ -12,7 +12,7 @@ export class DataSource {
     this.query = values.query;
   }
 
-  static visualizationType: string = 'embedded';
+  static visualizationType = 'embedded';
 }
 
 export class DataSourceReference {
@@ -23,32 +23,24 @@ export class DataSourceReference {
     this.id = values.id;
   }
 
-  static visualizationType: string = 'reference';
+  static visualizationType = 'reference';
 }
 
-export class Visualization {
-  /**
-   * Either an embedded data source, or a reference to one.
-   */
-  @field({
-    type: new TypeField(
-      input => (<any>input).constructor.visualizationType,
-      [
-        { type: 'reference', target: DataSourceReference },
-        { type: 'embedded', target: DataSource }
-      ]
-    )
-  })
-  datasource: DataSourceReference | DataSource;
+export interface Visualization {
+  typeTitle(): string;
+}
 
-  constructor(values: any) {
-    this.datasource = values.datasource;
+export class BarChart implements Visualization {
+  static type = "bar-chart";
+
+  typeTitle(): string {
+    return "Bar Chart";
   }
-
-  static componentType: string = 'embedded';
 }
 
-export class VisualizationReference {
+export class VisualizationReference implements Visualization {
+  static type = 'reference';
+
   @field()
   readonly id: string;
 
@@ -56,8 +48,18 @@ export class VisualizationReference {
     this.id = values.id;
   }
 
-  static componentType: string = 'reference';
+  typeTitle(): string {
+    return "Reference";
+  }
 }
+
+export const VisualizationType = new TypeField<Visualization>(
+  input => (<any>input).constructor.type,
+  [
+    { type: BarChart.type, target: BarChart },
+    { type: 'reference', target: VisualizationReference }
+  ]
+);
 
 export class LayoutEntry {
   @field()
@@ -85,21 +87,30 @@ export class Component {
   readonly id: string;
   @field()
   readonly title: string;
+  @field()
+  readonly showTitle: boolean;
+  @field({type: VisualizationType})
+  visualization: Visualization;
+  /**
+   * Either an embedded data source, or a reference to one.
+   */
   @field({
     type: new TypeField(
       input => (<any>input).constructor.visualizationType,
       [
-        { type: VisualizationReference.componentType, target: VisualizationReference },
-        { type: Visualization.componentType, target: Visualization }
+        { type: DataSourceReference.visualizationType, target: DataSourceReference },
+        { type: DataSource.visualizationType, target: DataSource }
       ]
     )
   })
-  visualization: VisualizationReference | Visualization;
+  datasource: DataSourceReference | DataSource;
 
   constructor(values: any) {
     this.id = values.id;
     this.title = values.title;
+    this.showTitle = values.showTitle;
     this.visualization = values.visualization;
+    this.datasource = values.datasource;
   }
 }
 
@@ -127,20 +138,58 @@ export class Dashboard {
     return ofNullable(this.components.find(c => c.id === id));
   }
 
+  public getLayout(id: string): Optional<LayoutEntry> {
+    return ofNullable(this.layout.find(c => c.i === id));
+  }
+
   public withNewComponent(): Dashboard {
     const newComponents = this.components.slice();
+    const layout = this.layout.slice();
 
-    newComponents.push(decode({
-      id: (randomId++).toString(), title: "", visualization: {
+    const newComponent = decode({
+      id: (randomId++).toString(),
+      title: "",
+      showTitle: true,
+      visualization: {
+        type: 'bar-chart'
+      },
+      datasource: {
         type: 'embedded',
-        datasource: {
-          type: 'embedded',
-          query: ""
-        }
+        query: ""
       }
-    }, Component));
+    }, Component);
 
-    return clone(this, { components: newComponents });
+    newComponents.push(newComponent);
+
+    layout.push(decode({
+      i: newComponent.id,
+      x: 0,
+      y: 0,
+      w: 6,
+      h: 2,
+    }, LayoutEntry));
+
+    return clone(this, {
+      components: newComponents,
+      layout: layout
+    });
+  }
+
+  public withoutComponent(component: Component) {
+    const components = this.components.slice().filter(c => c.id !== component.id);
+    return clone(this, { components: components });
+  }
+
+  public withReplacedComponent(component: Component) {
+    const components = this.components.slice().map(c => {
+      if (c.id === component.id) {
+        return component;
+      }
+
+      return c;
+    });
+
+    return clone(this, { components: components });
   }
 
   public withLayout(layout: Array<LayoutEntry>): Dashboard {

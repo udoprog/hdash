@@ -1,16 +1,17 @@
 import * as React from 'react';
 import { PagesContext } from 'api/interfaces';
-import { VisualizationReference, Visualization } from 'api/model';
-import { Row, Col, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
-import { Optional, absent } from 'optional';
-import EditDataSource from './EditDataSource';
+import * as model from 'api/model';
+import { Row, Col } from 'react-bootstrap';
+import { Optional, absent, of } from 'optional';
+
+import Visualization from './Visualization';
 
 interface Props {
-  visualization: VisualizationReference | Visualization
+  visualization: model.VisualizationReference | model.Visualization
 }
 
 interface State {
-  visualization: Optional<Visualization>
+  visualization: Optional<model.Visualization>
 }
 
 export default class EditVisualization extends React.Component<Props, State> {
@@ -24,36 +25,33 @@ export default class EditVisualization extends React.Component<Props, State> {
     super(props);
 
     this.state = {
-      visualization: absent<Visualization>()
+      visualization: absent<model.Visualization>()
     };
   }
 
   public componentDidMount() {
     const { visualization } = this.props;
 
-    if (visualization instanceof VisualizationReference) {
+    if (visualization instanceof model.VisualizationReference) {
       this.context.db.getVisualization(visualization.id).then(visualization => {
         this.setState({ visualization: visualization })
       });
+    } else {
+      this.setState({ visualization: of(visualization) });
     }
   }
 
   public render() {
-    const {visualization} = this.state;
+    const { visualization } = this.state;
 
-    const datasource = visualization.map(v => <EditDataSource datasource={v.datasource} />).get();
+    const chart = visualization.map(v => <Visualization height={200} visualization={v} />).orElseGet(() => <em>No Chart</em>);
 
     return (
       <div>
-        {datasource}
+        <h4>Editing {visualization.map(v => <span>{v.typeTitle()}</span>).orElse(<em>Unknown</em>)}</h4>
 
         <Row>
-          <Col sm={12}>
-            <FormGroup>
-              <ControlLabel label="title">Title</ControlLabel>
-              <FormControl type="text" value="cool beans" readOnly />
-            </FormGroup>
-          </Col>
+          <Col sm={12}>{chart}</Col>
         </Row>
       </div>
     );

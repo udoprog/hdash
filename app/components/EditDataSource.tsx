@@ -62,8 +62,6 @@ export default class EditDataSource extends React.Component<Props, State> {
   private changeQuery(e: any) {
     const {datasource} = this.state;
 
-    console.log(e);
-
     const query = e.value;
 
     datasource.accept(datasource => {

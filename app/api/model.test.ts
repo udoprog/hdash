@@ -45,16 +45,4 @@ describe("This is a test", () => {
 
     assertModel(d, model.DataSource, { query: "Other Query" });
   });
-
-  it('should handle Visualization', () => {
-    const ds = decode({
-      query: "Query"
-    }, model.DataSource);
-
-    const d1 = decode({
-      datasource: { type: "embedded", query: "Foo Bar" }
-    }, model.Visualization);
-
-    assertModel(d1, model.Visualization, { datasource: ds });
-  });
 });

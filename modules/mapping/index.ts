@@ -245,7 +245,7 @@ export function field(options?: { type?: Field<any>, optional?: boolean }): any 
   };
 }
 
-export function decode<T>(json: any, cls: Constructor<T>, path?: Path): T {
+export function decode<T>(json: any, cls: Constructor<T> | Field<T>, path?: Path): T {
   const p: Path = path || new Path(null);
 
   if (!(json instanceof Object)) {
@@ -253,7 +253,14 @@ export function decode<T>(json: any, cls: Constructor<T>, path?: Path): T {
   }
 
   const values: { [s: string]: any } = {};
-  const fields = cls.prototype.__fields as { [s: string]: Field<any> } || {};
+
+  // argument is a Field
+  if ((cls as any).constructor.__field) {
+    return (cls as Field<T>).decode(json, p);
+  }
+
+  const con = (cls as Constructor<T>);
+  const fields = con.prototype.__fields as { [s: string]: Field<any> } || {};
 
   Object.keys(fields).forEach(key => {
     const field = fields[key];
@@ -274,7 +281,7 @@ export function decode<T>(json: any, cls: Constructor<T>, path?: Path): T {
     }
   });
 
-  return new cls(values);
+  return new con(values);
 }
 
 export function encode<T extends Target>(input: T, path?: Path): { [s: string]: any } {
@@ -328,4 +335,20 @@ export function clone<T extends Target, K extends keyof T>(input: T, overrides?:
   }
 
   return new constructor(values);
+}
+
+export function mutate<T extends Target, K extends keyof T>(input: T, overrides: Pick<T, K>): T {
+  const constructor = (<any>input).constructor;
+  const proto = constructor.prototype;
+  const fields: { [s: string]: Field<any> } = proto.__fields || {};
+
+  Object.keys(overrides).forEach(key => {
+    if (fields[key] === undefined) {
+      throw new Error(String(constructor.name) + ": field does not exist: " + key);
+    }
+
+    input[key] = overrides[key];
+  });
+
+  return input;
 }
