@@ -1,4 +1,4 @@
-import { field, Field, TypeField } from 'mapping';
+import { field, TypeField } from 'mapping';
 
 export interface Heroic {
 }
@@ -18,7 +18,7 @@ class AbsoluteRange implements Range {
   static type = 'absolute';
 }
 
-export const RangeType = TypeField.of([RelativeRange, AbsoluteRange]);
+export const RangeType = TypeField.of<Range>([RelativeRange, AbsoluteRange]);
 
 export class Sampling {
   @field()
@@ -46,7 +46,7 @@ export class SumAggregation implements Aggregation {
   static type = 'sum';
 }
 
-export const AggregationType: Field<Aggregation> = TypeField.of<Aggregation>([SumAggregation]);
+export const AggregationType = TypeField.of<Aggregation>([SumAggregation]);
 
 export class Query {
   @field({ type: RangeType })

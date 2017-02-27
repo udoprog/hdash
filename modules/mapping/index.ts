@@ -89,7 +89,7 @@ class AssignField implements Field<any> {
   }
 }
 
-type ToField<T> = Field<T> | Constructor<T>;
+export type ToField<T> = Field<T> | Constructor<T>;
 
 function toField<T>(argument: ToField<T>, optional: boolean): Field<T> {
   if (argument.constructor && (argument.constructor as any).__field) {
@@ -99,9 +99,13 @@ function toField<T>(argument: ToField<T>, optional: boolean): Field<T> {
   return new ClassField<T>(argument as Constructor<T>, optional);
 }
 
-interface TypeMapping {
+interface TypeMapping<T> {
   type: string;
-  target: ToField<any>;
+  target: ToField<T>;
+}
+
+interface HasType {
+  type: string;
 }
 
 export class TypeField<T extends Target> implements Field<T> {
@@ -111,16 +115,19 @@ export class TypeField<T extends Target> implements Field<T> {
   readonly types: { [s: string]: Field<any> };
   readonly optional: boolean;
 
-  static of<T>(types: T[]): TypeField<T> {
-    return new TypeField<T>(
+  /**
+   * Build a simplified type mapping.
+   */
+  static of<U>(types: (HasType & ToField<U>)[]): TypeField<U> {
+    return new TypeField<U>(
       input => (<any>input).constructor.type,
       types.map(t => {
-        return {type: (t as any).type, target: (t as any) as ToField<T>};
+        return {type: t.type, target: t} as TypeMapping<U>;
       })
     );
   }
 
-  constructor(typeFunction: (input: T) => string, types: TypeMapping[], options?: { optional?: boolean }) {
+  constructor(typeFunction: (input: T) => string, types: TypeMapping<any>[], options?: { optional?: boolean }) {
     const mapTypes: { [s: string]: Field<any> } = {};
     const {optional}: { optional?: boolean } = (options || {});
 

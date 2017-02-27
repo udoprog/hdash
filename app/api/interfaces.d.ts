@@ -1,4 +1,4 @@
-import { Dashboard, DashboardEntry, DataSource, Visualization } from 'api/model';
+import { Dashboard, DashboardEntry, DataSourceData, Visualization } from 'api/model';
 import { InjectedRouter } from 'react-router';
 import { Filter } from 'api/filter';
 import { Optional } from 'optional';
@@ -20,7 +20,7 @@ declare namespace interfaces {
 
     getVisualization(visualizationId: string): Promise<Optional<Visualization>>;
 
-    getDataSource(dataSourceId: string): Promise<Optional<DataSource>>;
+    getDataSource(dataSourceId: string): Promise<Optional<DataSourceData>>;
   }
 
   interface User {

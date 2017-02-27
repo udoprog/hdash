@@ -140,12 +140,9 @@ export default class DashboardPage extends React.Component<Props, State> {
                   </div>
                 ) : null;
 
-                const h = dashboard.getLayout(component.id).map(l => l.h).orElse(2);
-                const height = h * ROW_HEIGHT + (showNav ? -36 : 0);
-
                 return <div className={"component" + (showNav ? " visible-titlebar" : "")} key={component.id}>
                   {titlebar}
-                  <Visualization height={height} visualization={component.visualization} />
+                  <Visualization visualization={component.visualization} />
                 </div>;
               })}
             </ResponsiveReactGridLayout>

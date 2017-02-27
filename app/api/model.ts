@@ -4,7 +4,10 @@ import { Optional, ofNullable } from 'optional';
 // TODO: change to something better;
 var randomId = 0;
 
-export class DataSource {
+export interface DataSource {
+}
+
+export class DataSourceData implements DataSource {
   @field()
   readonly query: string;
 
@@ -12,10 +15,10 @@ export class DataSource {
     this.query = values.query;
   }
 
-  static visualizationType = 'embedded';
+  static type = 'embedded';
 }
 
-export class DataSourceReference {
+export class DataSourceReference implements DataSource {
   @field()
   readonly id: string;
 
@@ -23,24 +26,24 @@ export class DataSourceReference {
     this.id = values.id;
   }
 
-  static visualizationType = 'reference';
+  static type = 'reference';
 }
+
+export const DataSourceType = TypeField.of<DataSource>([DataSourceData, DataSourceReference]);
 
 export interface Visualization {
   typeTitle(): string;
 }
 
 export class BarChart implements Visualization {
-  static type = "bar-chart";
-
   typeTitle(): string {
     return "Bar Chart";
   }
+
+  static type = "bar-chart";
 }
 
 export class VisualizationReference implements Visualization {
-  static type = 'reference';
-
   @field()
   readonly id: string;
 
@@ -49,17 +52,13 @@ export class VisualizationReference implements Visualization {
   }
 
   typeTitle(): string {
-    return "Reference";
+    return "Reference title";
   }
+
+  static type = 'reference';
 }
 
-export const VisualizationType = new TypeField<Visualization>(
-  input => (<any>input).constructor.type,
-  [
-    { type: BarChart.type, target: BarChart },
-    { type: 'reference', target: VisualizationReference }
-  ]
-);
+export const VisualizationType = TypeField.of<Visualization>([BarChart, VisualizationReference]);
 
 export class LayoutEntry {
   @field()
@@ -89,21 +88,13 @@ export class Component {
   readonly title: string;
   @field()
   readonly showTitle: boolean;
-  @field({type: VisualizationType})
+  @field({ type: VisualizationType })
   visualization: Visualization;
   /**
    * Either an embedded data source, or a reference to one.
    */
-  @field({
-    type: new TypeField(
-      input => (<any>input).constructor.visualizationType,
-      [
-        { type: DataSourceReference.visualizationType, target: DataSourceReference },
-        { type: DataSource.visualizationType, target: DataSource }
-      ]
-    )
-  })
-  datasource: DataSourceReference | DataSource;
+  @field({ type: DataSourceType })
+  datasource: DataSourceReference | DataSourceData;
 
   constructor(values: any) {
     this.id = values.id;

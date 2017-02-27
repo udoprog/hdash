@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { PagesContext } from 'api/interfaces';
-import { DataSourceReference, DataSource } from 'api/model';
+import { DataSourceReference, DataSource, DataSourceData } from 'api/model';
 import { Row, Col, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import { Optional, absent, of } from 'optional';
 import { clone } from 'mapping';
@@ -10,7 +10,7 @@ interface Props {
 }
 
 interface State {
-  datasource: Optional<DataSource>
+  datasource: Optional<DataSourceData>
 }
 
 export default class EditDataSource extends React.Component<Props, State> {
@@ -24,7 +24,7 @@ export default class EditDataSource extends React.Component<Props, State> {
     super(props);
 
     this.state = {
-      datasource: absent<DataSource>()
+      datasource: absent<DataSourceData>()
     };
   }
 
@@ -36,7 +36,7 @@ export default class EditDataSource extends React.Component<Props, State> {
         this.setState({ datasource: datasource })
       });
     } else {
-      this.setState({ datasource: of(datasource as DataSource) });
+      this.setState({ datasource: of(datasource as DataSourceData) });
     }
   }
 

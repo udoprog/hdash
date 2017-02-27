@@ -1,14 +1,14 @@
-import { decode, encode, clone, equals, Constructor } from 'mapping';
+import { decode, encode, clone, equals, ToField } from 'mapping';
 import * as model from 'api/model';
 import { assert } from 'chai';
 
-function assertModel<T, K extends keyof T>(d: T, cls: Constructor<T>, overrides: Pick<T, K>) {
+function assertModel<T, K extends keyof T>(d: T, field: ToField<T>, overrides: Pick<T, K>) {
   assert.isTrue(
     equals(d, clone(d)),
     "clone should be same");
 
   assert.isTrue(
-    equals(d, decode(encode(d), cls)),
+    equals(d, decode(encode(d), field)),
     "decode/encode should be same");
 
   assert.isFalse(
@@ -34,8 +34,8 @@ describe("This is a test", () => {
       id: "hello",
       title: "Foo Bar",
       showTitle: false,
-      visualization: {type: 'reference', id: 'a'},
-      datasource: {type: 'reference', id: 'a'}
+      visualization: { type: 'reference', id: 'a' },
+      datasource: { type: 'reference', id: 'a' }
     }, model.Component);
 
     assertModel(d, model.Component, { title: "other" });
@@ -44,8 +44,8 @@ describe("This is a test", () => {
   it('should handle DataSource', () => {
     const d = decode({
       query: "Query"
-    }, model.DataSource);
+    }, model.DataSourceData);
 
-    assertModel(d, model.DataSource, { query: "Other Query" });
+    assertModel(d, model.DataSourceData, { query: "Other Query" });
   });
 });

@@ -23,7 +23,5 @@ describe("This is a test", () => {
     }, heroic.SumAggregation);
 
     assertModel(d, heroic.SumAggregation, {sampling: null});
-
-    console.log(encode(d, heroic.AggregationType));
   });
 });

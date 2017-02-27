@@ -1,7 +1,7 @@
 import { Filter } from 'api/filter';
 import { Database } from 'api/interfaces';
 import { DashboardPage, User } from 'api/interfaces';
-import { Dashboard, DashboardEntry, Visualization, DataSource, VisualizationType } from 'api/model';
+import { Dashboard, DashboardEntry, Visualization, DataSource, DataSourceData, VisualizationType } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import { decode } from 'mapping';
 
@@ -56,10 +56,10 @@ const visualizationStore: { [s: string]: Visualization } = {
   }, VisualizationType)
 };
 
-const dataSourceStore: { [s: string]: DataSource } = {
+const dataSourceStore: { [s: string]: DataSourceData } = {
   "a": decode({
     query: "average by host"
-  }, DataSource)
+  }, DataSourceData)
 };
 
 const user = { name: "John Doe", email: "john@doe.com" };
