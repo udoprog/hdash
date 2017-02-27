@@ -19,8 +19,17 @@ $> npm test
 
 * webpack
   * run `NODE_ENV=production webpack` to build minified version.
-* Mocha, configured to watch and execute typescript-based unit tests.
+* jest
   * run `npm test`
+  * _or_, `jest --watch` after `npm i -g jest`
+  * _or_, using vscode (see below)
 * react
 * react-router
 * react-bootstrap
+
+## Visual Studio Code
+
+Plugins that you _must_ have:
+
+* https://marketplace.visualstudio.com/items?itemName=Orta.vscode-jest
+  * Provides instant (as you save) feedback on tests in your editor using jest.
