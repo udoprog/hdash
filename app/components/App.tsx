@@ -2,12 +2,12 @@ import * as React from 'react';
 
 import { Router, Route, IndexRoute, browserHistory } from 'react-router';
 
-import IndexPage from 'page/IndexPage';
-import DashboardsPage from 'page/DashboardsPage';
-import DashboardPage from 'page/DashboardPage';
-import AlertsPage from 'page/AlertsPage';
-import VisualizationsPage from 'page/VisualizationsPage';
-import MainPage from 'page/MainPage';
+import IndexPage from 'components/IndexPage';
+import DashboardsPage from 'components/DashboardsPage';
+import DashboardPage from 'components/DashboardPage';
+import AlertsPage from 'components/AlertsPage';
+import VisualizationsPage from 'components/VisualizationsPage';
+import MainPage from 'components/MainPage';
 
 import DatabaseProvider from 'db/DatabaseProvider';
 import HeroicProvider from 'heroic/HeroicProvider';
@@ -16,7 +16,7 @@ export default class App extends React.Component<{}, {}> {
   public render() {
     return (
       <HeroicProvider>
-        <DatabaseProvider>
+        <DatabaseProvider mock={true}>
           <Router history={browserHistory}>
             <Route path="/" component={IndexPage}>
               <IndexRoute component={MainPage} />

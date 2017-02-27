@@ -7,6 +7,7 @@ describe('DashboardList', () => {
   it("should do shit", () => {
     const renderer = ReactTestUtils.createRenderer();
     renderer.render(<DashboardList dashboards={[]} onAddMetadataFilter={() => null} onToggleStarred={() => null} />);
-    renderer.getRenderOutput();
+    const output = renderer.getRenderOutput();
+    expect(output).toBeTruthy();
   });
 });
