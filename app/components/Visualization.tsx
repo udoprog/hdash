@@ -1,17 +1,50 @@
 import * as React from 'react';
 import * as model from 'api/model';
-import { LineChart, XAxis, Tooltip, CartesianGrid, Line, ResponsiveContainer } from 'recharts';
 import { Optional, absent, of } from 'optional';
 import { PagesContext } from 'api/interfaces';
+import { Chart } from 'chart.js';
 
-const DATA: any[] = [
-  { name: "1", uv: 100, pv: 200 },
-  { name: "2", uv: 121, pv: 231 },
-  { name: "3", uv: 99, pv: 312 }
-];
+const DEFAULT_HEIGHT = 300;
+
+const DATA = {
+  labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+  datasets: [{
+    label: '# of Votes',
+    data: [12, 19, 3, 5, 2, 3],
+    backgroundColor: [
+      'rgba(255, 99, 132, 0.2)',
+      'rgba(54, 162, 235, 0.2)',
+      'rgba(255, 206, 86, 0.2)',
+      'rgba(75, 192, 192, 0.2)',
+      'rgba(153, 102, 255, 0.2)',
+      'rgba(255, 159, 64, 0.2)'
+    ],
+    borderColor: [
+      'rgba(255,99,132,1)',
+      'rgba(54, 162, 235, 1)',
+      'rgba(255, 206, 86, 1)',
+      'rgba(75, 192, 192, 1)',
+      'rgba(153, 102, 255, 1)',
+      'rgba(255, 159, 64, 1)'
+    ],
+    borderWidth: 1
+  }]
+};
+
+const OPTIONS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    yAxes: [{
+      ticks: {
+        beginAtZero: true
+      }
+    }]
+  }
+};
 
 interface Props {
-  height: number;
+  height?: number;
   visualization: model.VisualizationReference | model.Visualization;
 }
 
@@ -21,6 +54,13 @@ interface State {
 
 export default class Visualization extends React.Component<Props, State> {
   context: PagesContext;
+
+  refs: {
+    [string: string]: any;
+    canvas: any;
+  };
+
+  chart?: Chart;
 
   public static contextTypes: any = {
     db: React.PropTypes.object
@@ -34,6 +74,12 @@ export default class Visualization extends React.Component<Props, State> {
     };
   }
 
+  public componentDidUpdate() {
+    if (this.chart) {
+      this.chart.resize();
+    }
+  }
+
   public componentDidMount() {
     const { visualization } = this.props;
 
@@ -44,21 +90,22 @@ export default class Visualization extends React.Component<Props, State> {
     } else {
       this.setState({ visualization: of(visualization) });
     }
+
+    this.chart = new Chart(this.refs.canvas, { type: 'bar', data: DATA, options: OPTIONS });
+  }
+
+  public componentWillUnmount() {
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
   }
 
   public render() {
     const { height } = this.props;
 
     return (
-      <ResponsiveContainer width="100%" height={height}>
-        <LineChart data={DATA}>
-          <XAxis dataKey="name" />
-          <Tooltip />
-          <CartesianGrid stroke="#f5f5f5" />
-          <Line type="monotone" dataKey="uv" stroke="#ff7300" yAxisId={0} />
-          <Line type="monotone" dataKey="pv" stroke="#387908" yAxisId={1} />
-        </LineChart>
-      </ResponsiveContainer>
+      <canvas ref="canvas" width="100%" height={height || DEFAULT_HEIGHT} />
     );
   }
 };

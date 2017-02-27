@@ -20,6 +20,14 @@ body {
 .component {
     border: 1px solid black;
 
+    &.visible-titlebar {
+      padding-top: @titlebar-height;
+
+      .titlebar {
+        margin-top: -@titlebar-height;
+      }
+    }
+
     .titlebar {
       .user-select(none);
 
