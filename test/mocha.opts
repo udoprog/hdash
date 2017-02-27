@@ -4,4 +4,6 @@
 --watch-extensions ts
 --ui bdd
 --recursive
+--require ./test/jsdom-setup.ts
 app/**/*.test.ts
+app/**/*.test.tsx

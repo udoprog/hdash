@@ -19,6 +19,8 @@ export interface Target {
 export interface Field<T> {
   optional: boolean;
 
+  descriptor: string;
+
   decode(value: any, path: Path): T;
 
   encode(value: T, path: Path): any;
@@ -49,8 +51,8 @@ class Path {
     var current: Path = this;
 
     while (current) {
-      if (current.name === null) {
-        full.push("[root]");
+      if (!current.parent) {
+        full.push(`[${current.name}]`);
         break;
       }
 
@@ -71,6 +73,7 @@ class AssignField implements Field<any> {
   public static __field = true;
 
   readonly optional: boolean;
+  readonly descriptor: string = '=';
 
   constructor(optional: boolean) {
     this.optional = optional;
@@ -114,6 +117,7 @@ export class TypeField<T extends Target> implements Field<T> {
   readonly typeFunction: (input: T) => string;
   readonly types: { [s: string]: Field<any> };
   readonly optional: boolean;
+  readonly descriptor: string;
 
   /**
    * Build a simplified type mapping.
@@ -138,6 +142,7 @@ export class TypeField<T extends Target> implements Field<T> {
     this.typeFunction = typeFunction;
     this.types = mapTypes;
     this.optional = !!optional;
+    this.descriptor = '?';
   }
 
   public decode(value: any, path: Path): T {
@@ -184,10 +189,12 @@ export class ArrayField<T extends Target> implements Field<Array<T>> {
 
   readonly field: Field<T>;
   readonly optional: boolean;
+  readonly descriptor: string;
 
   constructor(field: ToField<T>, optional?: boolean) {
     this.field = toField(field, !!optional);
     this.optional = !!optional;
+    this.descriptor = `[${this.field.descriptor}]`
   }
 
   public decode(value: any, path: Path): Array<T> {
@@ -222,10 +229,12 @@ export class ClassField<T extends Target> implements Field<T> {
 
   readonly con: Constructor<T>;
   readonly optional: boolean;
+  readonly descriptor: string;
 
   constructor(con: Constructor<T>, optional?: boolean) {
     this.con = con;
     this.optional = !!optional;
+    this.descriptor = con.name;
   }
 
   public decode(input: any, path: Path): T {
@@ -316,14 +325,19 @@ export function field(options?: { type?: ToField<any>, optional?: boolean }): an
   };
 }
 
+/**
+ * Decode the given object.
+ */
 export function decode<T>(input: any, type: ToField<T>): T {
-  const p: Path = new Path(null);
-  return toField(type, false).decode(input, p);
+  const field = toField(type, false);
+  const p: Path = new Path(field.descriptor);
+  return field.decode(input, p);
 }
 
 export function encode<T extends Target>(input: T, type?: ToField<T>): { [s: string]: any } {
-  const p: Path = new Path(null);
-  return (type && toField(type, false) || toField((<any>input).constructor as Constructor<T>, false)).encode(input, p);
+  const field = (type && toField(type, false) || toField((<any>input).constructor as Constructor<T>, false));
+  const p: Path = new Path(field.descriptor);
+  return field.encode(input, p);
 }
 
 /**
