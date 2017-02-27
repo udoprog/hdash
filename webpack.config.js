@@ -8,13 +8,13 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const babelOptions = {
   "presets": [
     "react",
-    ["es2015", {"modules": false}],
+    ["es2015", { "modules": false }],
     "es2016",
     "stage-0"
   ]
 };
 
-const babelLoader = {loader: 'babel-loader', options: babelOptions};
+const babelLoader = { loader: 'babel-loader', options: babelOptions };
 const html = new HtmlWebpackPlugin({
   template: path.resolve(__dirname, 'app/index.html')
 });
@@ -33,7 +33,7 @@ if (prod) {
 
   plugins.push(new OptimizeCssAssetsPlugin({
     assetNameRegExp: /\.min\.css$/,
-    cssProcessorOptions: {discardComments: {removeAll: true}}
+    cssProcessorOptions: { discardComments: { removeAll: true } }
   }));
 } else {
   plugins.push(new ExtractTextPlugin('[name].css'));
@@ -74,5 +74,13 @@ module.exports = {
       path.resolve(__dirname, "app"), path.resolve(__dirname, "modules"), "node_modules"
     ]
   },
-  devtool: 'source-map'
+  devtool: 'source-map',
+  devServer: {
+    proxy: {
+      '/heroic': {
+        target: 'http://localhost:8080',
+        secure: false
+      }
+    }
+  }
 };

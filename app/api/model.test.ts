@@ -32,7 +32,10 @@ describe("This is a test", () => {
   it('should handle Component', () => {
     const d = decode({
       id: "hello",
-      title: "Foo Bar"
+      title: "Foo Bar",
+      showTitle: false,
+      visualization: {type: 'reference', id: 'a'},
+      datasource: {type: 'reference', id: 'a'}
     }, model.Component);
 
     assertModel(d, model.Component, { title: "other" });

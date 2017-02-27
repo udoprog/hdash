@@ -16,7 +16,7 @@ export interface Target {
   [key: string]: any;
 }
 
-interface Field<T> {
+export interface Field<T> {
   optional: boolean;
 
   decode(value: any, path: Path): T;
@@ -89,17 +89,19 @@ class AssignField implements Field<any> {
   }
 }
 
-interface TypeMapping {
-  type: string;
-  target: Field<any> | Constructor<any>;
-}
+type ToField<T> = Field<T> | Constructor<T>;
 
-function toField<T extends Target>(argument: any): Field<T> {
-  if (argument.__field) {
+function toField<T>(argument: ToField<T>, optional: boolean): Field<T> {
+  if (argument.constructor && (argument.constructor as any).__field) {
     return argument as Field<T>;
   }
 
-  return new ClassField<T>(argument as Constructor<T>, false);
+  return new ClassField<T>(argument as Constructor<T>, optional);
+}
+
+interface TypeMapping {
+  type: string;
+  target: ToField<any>;
 }
 
 export class TypeField<T extends Target> implements Field<T> {
@@ -109,12 +111,21 @@ export class TypeField<T extends Target> implements Field<T> {
   readonly types: { [s: string]: Field<any> };
   readonly optional: boolean;
 
+  static of<T>(types: T[]): TypeField<T> {
+    return new TypeField<T>(
+      input => (<any>input).constructor.type,
+      types.map(t => {
+        return {type: (t as any).type, target: (t as any) as ToField<T>};
+      })
+    );
+  }
+
   constructor(typeFunction: (input: T) => string, types: TypeMapping[], options?: { optional?: boolean }) {
     const mapTypes: { [s: string]: Field<any> } = {};
     const {optional}: { optional?: boolean } = (options || {});
 
     types.forEach(type => {
-      mapTypes[type.type] = toField(type.target);
+      mapTypes[type.type] = toField(type.target, false);
     })
 
     this.typeFunction = typeFunction;
@@ -143,7 +154,8 @@ export class TypeField<T extends Target> implements Field<T> {
     const sub = this.types[type];
 
     if (!sub) {
-      throw path.error("does not correspond to a sub-type: " + type);
+      const expected = Object.keys(this.types).join(", ");
+      throw path.error(`does not correspond to a sub-type: ${type}, expected one of: ${expected}`);
     }
 
     const values = sub.encode(value, path);
@@ -166,8 +178,8 @@ export class ArrayField<T extends Target> implements Field<Array<T>> {
   readonly field: Field<T>;
   readonly optional: boolean;
 
-  constructor(field: Field<T> | Constructor<T>, optional?: boolean) {
-    this.field = toField<T>(field);
+  constructor(field: ToField<T>, optional?: boolean) {
+    this.field = toField(field, !!optional);
     this.optional = !!optional;
   }
 
@@ -209,12 +221,56 @@ export class ClassField<T extends Target> implements Field<T> {
     this.optional = !!optional;
   }
 
-  public decode(value: any, path: Path): T {
-    return decode(value, this.con, path);
+  public decode(input: any, path: Path): T {
+    if (!(input instanceof Object)) {
+      throw path.error(`expected object, got: ${input}`);
+    }
+
+    const values: { [s: string]: any } = {};
+
+    const fields = this.con.prototype.__fields as { [s: string]: Field<any> } || {};
+
+    Object.keys(fields).forEach(key => {
+      const field = fields[key];
+      const value = input[key];
+
+      if (value === undefined || value == null) {
+        if (!field.optional) {
+          throw path.extend(key).error("missing value");
+        } else {
+          values[key] = absent<any>();
+        }
+      }
+
+      if (field.optional) {
+        values[key] = of(field.decode(value, path.extend(key)));
+      } else {
+        values[key] = field.decode(value, path.extend(key));
+      }
+    });
+
+    return new this.con(values);
   }
 
-  public encode(value: T, path: Path) {
-    return encode(value, path);
+  public encode(input: T, path: Path): any {
+    const values: { [s: string]: any } = {};
+    const proto = this.con.prototype;
+    const fields = proto.__fields as { [s: string]: Field<any> } || {};
+
+    Object.keys(fields).forEach(key => {
+      const field = fields[key];
+      const value = input[key];
+
+      if (field.optional) {
+        (value as Optional<any>).accept(value => {
+          values[key] = field.encode(value, path.extend(key));
+        });
+      } else {
+        values[key] = field.encode(value, path.extend(key));
+      }
+    });
+
+    return values;
   }
 
   public equals(a: T, b: T): boolean {
@@ -223,9 +279,17 @@ export class ClassField<T extends Target> implements Field<T> {
 }
 
 export function equals<T extends Target>(a: T, b: T): boolean {
+  if (a === null || b === null) {
+    return a === b;
+  }
+
+  if (a === undefined || b === undefined) {
+    return a === b;
+  }
+
   /* required check to guarantee same prototype */
-  if (a.constructor.prototype !== b.constructor.prototype) {
-    throw new Error("Objects " + String(a) + " and " + String(b) + " are not the same type");
+  if (a.constructor !== b.constructor) {
+    return false;
   }
 
   const proto = a.constructor.prototype;
@@ -236,77 +300,23 @@ export function equals<T extends Target>(a: T, b: T): boolean {
   });
 }
 
-export function field(options?: { type?: Field<any>, optional?: boolean }): any {
-  const {type, optional}: { type?: Field<any>, optional?: boolean } = options || {};
+export function field(options?: { type?: ToField<any>, optional?: boolean }): any {
+  const {type, optional}: { type?: ToField<any>, optional?: boolean } = options || {};
 
   return function (target: any, fieldKey: any) {
     const fields: { [s: string]: Field<any> } = target.__fields = target.__fields || {};
-    fields[fieldKey] = type || new AssignField(!!optional);
+    fields[fieldKey] = type && toField(type, !!optional) || new AssignField(!!optional);
   };
 }
 
-export function decode<T>(json: any, cls: Constructor<T> | Field<T>, path?: Path): T {
-  const p: Path = path || new Path(null);
-
-  if (!(json instanceof Object)) {
-    throw p.error(`expected object, got: ${json}`);
-  }
-
-  const values: { [s: string]: any } = {};
-
-  // argument is a Field
-  if ((cls as any).constructor.__field) {
-    return (cls as Field<T>).decode(json, p);
-  }
-
-  const con = (cls as Constructor<T>);
-  const fields = con.prototype.__fields as { [s: string]: Field<any> } || {};
-
-  Object.keys(fields).forEach(key => {
-    const field = fields[key];
-    const value = json[key];
-
-    if (value === undefined || value == null) {
-      if (!field.optional) {
-        throw p.extend(key).error("missing value");
-      } else {
-        values[key] = absent<any>();
-      }
-    }
-
-    if (field.optional) {
-      values[key] = of(field.decode(value, p.extend(key)));
-    } else {
-      values[key] = field.decode(value, p.extend(key));
-    }
-  });
-
-  return new con(values);
+export function decode<T>(input: any, type: ToField<T>): T {
+  const p: Path = new Path(null);
+  return toField(type, false).decode(input, p);
 }
 
-export function encode<T extends Target>(input: T, path?: Path): { [s: string]: any } {
-  const p: Path = path || new Path(null);
-
-  const values: { [s: string]: any } = {};
-
-  const constructor = (<any>input).constructor;
-  const proto = constructor.prototype;
-  const fields = proto.__fields as { [s: string]: Field<any> } || {};
-
-  Object.keys(fields).forEach(key => {
-    const field = fields[key];
-    const value = input[key];
-
-    if (field.optional) {
-      (value as Optional<any>).accept(value => {
-        values[key] = field.encode(value, p.extend(key));
-      });
-    } else {
-      values[key] = field.encode(value, p.extend(key));
-    }
-  });
-
-  return values;
+export function encode<T extends Target>(input: T, type?: ToField<T>): { [s: string]: any } {
+  const p: Path = new Path(null);
+  return (type && toField(type, false) || toField((<any>input).constructor as Constructor<T>, false)).encode(input, p);
 }
 
 /**

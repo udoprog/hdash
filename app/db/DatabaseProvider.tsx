@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import MockDatabase from './MockDatabase';
-import RealDatabase from './MockDatabase';
+import RealDatabase from './RealDatabase';
 
 import { Database, PagesContext } from 'api/interfaces';
 

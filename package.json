@@ -10,6 +10,7 @@
     "test": "NODE_PATH=./modules:./app TS_NODE_PROJECT=tsconfig.test.json mocha"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "@types/chai": "^3.4.35",
     "@types/chart.js": "0.0.14",
     "@types/jasmine": "^2.5.43",
@@ -19,6 +20,7 @@
     "@types/react-router": "^3.0.5",
     "@types/react-router-bootstrap": "0.23.0",
     "@types/shallowequal": "^0.2.1",
+    "axios": "^0.15.3",
     "babel": "^6.23.0",
     "babel-core": "^6.23.1",
     "babel-loader": "^6.3.2",

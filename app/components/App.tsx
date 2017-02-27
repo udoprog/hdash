@@ -8,23 +8,27 @@ import DashboardPage from 'page/DashboardPage';
 import AlertsPage from 'page/AlertsPage';
 import VisualizationsPage from 'page/VisualizationsPage';
 import MainPage from 'page/MainPage';
+
 import DatabaseProvider from 'db/DatabaseProvider';
+import HeroicProvider from 'heroic/HeroicProvider';
 
 export default class App extends React.Component<{}, {}> {
   public render() {
     return (
-      <DatabaseProvider>
-        <Router history={browserHistory}>
-          <Route path="/" component={IndexPage}>
-            <IndexRoute component={MainPage} />
-            <Route path="dashboards" component={DashboardsPage} />
-            <Route path="dashboards/:id" component={DashboardPage} />
-            <Route path="alerts" component={AlertsPage} />
-            <Route path="visualizations" component={VisualizationsPage} />
-            <Route path="me" component={MainPage} />
-          </Route>
-        </Router>
-      </DatabaseProvider>
+      <HeroicProvider>
+        <DatabaseProvider>
+          <Router history={browserHistory}>
+            <Route path="/" component={IndexPage}>
+              <IndexRoute component={MainPage} />
+              <Route path="dashboards" component={DashboardsPage} />
+              <Route path="dashboards/:id" component={DashboardPage} />
+              <Route path="alerts" component={AlertsPage} />
+              <Route path="visualizations" component={VisualizationsPage} />
+              <Route path="me" component={MainPage} />
+            </Route>
+          </Router>
+        </DatabaseProvider>
+      </HeroicProvider>
     );
   }
 };
