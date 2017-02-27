@@ -3,9 +3,19 @@ import './main.less';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import App from 'components/App';
+import { AppContainer } from 'react-hot-loader';
 
-ReactDOM.render(
-  <App />,
-  document.getElementById('app')
-);
+import App from './components/App';
+
+const root = document.getElementById('app');
+
+const render = (Component: any) => {
+  ReactDOM.render(
+    <AppContainer>
+      <Component />
+    </AppContainer>,
+    root
+  );
+};
+
+render(App);

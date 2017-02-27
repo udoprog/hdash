@@ -6,11 +6,11 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const babelOptions = {
-  "presets": [
-    "react",
-    ["es2015", { "modules": false }],
-    "es2016",
-    "stage-0"
+  presets: [
+    'react',
+    ['es2015', { 'modules': false }],
+    'es2016',
+    'stage-0'
   ]
 };
 
@@ -74,14 +74,5 @@ module.exports = {
       path.resolve(__dirname, "app"), path.resolve(__dirname, "modules"), "node_modules"
     ]
   },
-  devtool: 'source-map',
-  devServer: {
-    inline: true,
-    proxy: {
-      '/heroic': {
-        target: 'http://localhost:8080',
-        secure: false
-      }
-    }
-  }
+  devtool: 'source-map'
 };
