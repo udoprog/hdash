@@ -1,5 +1,5 @@
 import React from 'react';
-import { decode, field, clone, TypeField, ArrayField, Constructor } from 'mapping';
+import { decode, field, clone, TypeField, ArrayField, Constructor, Values } from 'mapping';
 import { Optional, ofNullable } from 'optional';
 import EditBarChart from 'components/EditBarChart';
 import ViewBarChart from 'components/ViewBarChart';
@@ -40,7 +40,7 @@ export class EmbeddedDataSource implements DataSource {
   @field()
   readonly query: string;
 
-  constructor(values: any) {
+  constructor(values: Values<EmbeddedDataSource>) {
     this.type = EmbeddedDataSource.type;
     this.query = values.query;
   }
@@ -62,7 +62,7 @@ export class ReferenceDataSource implements DataSource {
   @field()
   readonly id: string;
 
-  constructor(values: any) {
+  constructor(values: Values<ReferenceDataSource>) {
     this.type = ReferenceDataSource.type;
     this.id = values.id;
   }
@@ -109,7 +109,7 @@ export class LineChart implements Vis {
   @field({ type: DataSourceType })
   dataSource: DataSource;
 
-  constructor(values: any) {
+  constructor(values: Values<LineChart>) {
     this.type = LineChart.type;
     this.stacked = values.stacked;
     this.dataSource = values.dataSource;
@@ -142,7 +142,7 @@ export class BarChart implements Vis {
   @field({ type: DataSourceType })
   dataSource: DataSource;
 
-  constructor(values: any) {
+  constructor(values: Values<BarChart>) {
     this.type = BarChart.type;
     this.stacked = values.stacked;
     this.dataSource = values.dataSource;
@@ -173,7 +173,7 @@ export class ReferenceVis implements Vis {
   @field()
   readonly id: string;
 
-  constructor(values: any) {
+  constructor(values: Values<ReferenceVis>) {
     this.type = ReferenceVis.type;
     this.id = values.id;
   }
@@ -211,7 +211,7 @@ export class LayoutEntry {
   @field()
   readonly h: number;
 
-  constructor(values: any) {
+  constructor(values: Values<LayoutEntry>) {
     this.i = values.i;
     this.x = values.x;
     this.y = values.y;
@@ -228,7 +228,7 @@ export class Component {
   @field({ type: VisType })
   readonly visualization: Vis;
 
-  constructor(values: any) {
+  constructor(values: Values<Component>) {
     this.id = values.id;
     this.title = values.title;
     this.visualization = values.visualization;
@@ -247,7 +247,7 @@ export class Dashboard {
   @field({ type: new ArrayField(LayoutEntry) })
   readonly layout: Array<LayoutEntry>;
 
-  constructor(values: any) {
+  constructor(values: Values<Dashboard>) {
     this.id = values.id;
     this.title = values.title;
     this.metadata = values.metadata;

@@ -1,5 +1,7 @@
 import { Optional, of, absent } from 'optional';
 
+export type Values<T> = Pick<T, keyof T>;
+
 export class PathError extends Error {
   readonly path: Path;
 
@@ -10,7 +12,7 @@ export class PathError extends Error {
 }
 
 export interface Constructor<T> {
-  new (values: { [s: string]: any }): T;
+  new (values: Values<T>): T;
 
   /**
    * Access prototype.
@@ -293,7 +295,7 @@ export class ClassField<T extends Target> implements Field<T> {
       throw path.error(`expected object, got: ${input}`);
     }
 
-    const values: { [s: string]: any } = {};
+    const values: Values<any> = {};
 
     const fields = (this.con.prototype as any).__fields as { [s: string]: Field<any> } || {};
 

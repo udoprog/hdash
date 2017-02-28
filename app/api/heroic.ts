@@ -1,4 +1,4 @@
-import { field, TypeField } from 'mapping';
+import { field, TypeField, Values } from 'mapping';
 
 export interface Heroic {
 }
@@ -12,6 +12,16 @@ export interface Range {
 
 class RelativeRange implements Range {
   static type = 'relative';
+
+  @field()
+  readonly size: number;
+  @field()
+  readonly unit: string;
+
+  constructor(values: Values<RelativeRange>) {
+    this.size = values.size;
+    this.unit = values.unit;
+  }
 }
 
 class AbsoluteRange implements Range {
@@ -20,7 +30,7 @@ class AbsoluteRange implements Range {
   @field()
   readonly end: number;
 
-  constructor(values: any) {
+  constructor(values: Values<AbsoluteRange>) {
     this.start = values.start;
     this.end = values.end;
   }
@@ -36,7 +46,7 @@ export class Sampling {
   @field()
   readonly unit: string;
 
-  constructor(values: any) {
+  constructor(values: Values<Sampling>) {
     this.size = values.size;
     this.unit = values.unit;
   }
@@ -49,14 +59,16 @@ export class SumAggregation implements Aggregation {
   @field({ type: Sampling })
   readonly sampling: Sampling;
 
-  constructor(values: any) {
+  constructor(values: Values<SumAggregation>) {
     this.sampling = values.sampling;
   }
 
   static type = 'sum';
 }
 
-export const AggregationType = TypeField.of<Aggregation>([SumAggregation]);
+export const AggregationType = TypeField.of<Aggregation>([
+  SumAggregation
+]);
 
 export class Query {
   @field({ type: RangeType })
@@ -65,7 +77,7 @@ export class Query {
   @field()
   readonly query: string;
 
-  constructor(values: any) {
+  constructor(values: Values<Query>) {
     this.range = values.range;
     this.query = values.query;
   }
