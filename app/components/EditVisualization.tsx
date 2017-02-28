@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Visualization, ReferenceVisualization, LineChart, BarChart, DEFAULT_REFERENCE, DEFAULT_BAR_CHART, DEFAULT_LINE_CHART } from 'api/model';
-import { Row, Col, FormGroup, FormControl, ButtonGroup, Button, InputGroup } from 'react-bootstrap';
+import { Row, Col, FormGroup, FormControl, ButtonGroup, InputGroup } from 'react-bootstrap';
 import { clone } from 'mapping';
+import TypeButton from 'components/TypeButton';
 
 interface Props {
   visualization: Visualization;
@@ -28,25 +29,19 @@ export default class EditVisualization extends React.Component<Props, {}> {
               Visualization Type:
             </InputGroup.Addon>
             <ButtonGroup>
-              <Button
+              <TypeButton
                 style={{ borderRadius: 0 }}
-                active={visualization.type === ReferenceVisualization.type}
-                onClick={() => this.changeType(ReferenceVisualization.type)}
-              >
-                Reference
-              </Button>
-              <Button
-                active={visualization.type === LineChart.type}
-                onClick={() => this.changeType(LineChart.type)}
-              >
-                Line Chart
-              </Button>
-              <Button
-                active={visualization.type === BarChart.type}
-                onClick={() => this.changeType(BarChart.type)}
-              >
-                Bar Chart
-              </Button>
+                instance={visualization}
+                model={ReferenceVisualization}
+                onChangeType={type => this.changeType(type)} />
+              <TypeButton
+                instance={visualization}
+                model={LineChart}
+                onChangeType={type => this.changeType(type)} />
+              <TypeButton
+                instance={visualization}
+                model={BarChart}
+                onChangeType={type => this.changeType(type)} />
             </ButtonGroup>
           </InputGroup>
         </FormControl.Static>

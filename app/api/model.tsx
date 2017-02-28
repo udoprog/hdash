@@ -32,6 +32,8 @@ export interface DataSource {
 
 export class EmbeddedDataSource implements DataSource {
   static type = 'embedded';
+  static font = 'database';
+  static description = 'Embedded';
 
   type: string;
 
@@ -52,6 +54,8 @@ export class EmbeddedDataSource implements DataSource {
 
 export class ReferenceDataSource implements DataSource {
   static type = 'reference';
+  static font = 'link';
+  static description = 'Reference';
 
   type: string;
 
@@ -95,7 +99,9 @@ export interface Visualization {
 
 
 export class LineChart implements Visualization {
-  static type = "line-chart";
+  static type = 'line-chart';
+  static font = 'line-chart';
+  static description = 'Line Chart';
 
   type: string;
 
@@ -126,7 +132,9 @@ export class LineChart implements Visualization {
 }
 
 export class BarChart implements Visualization {
-  static type = "bar-chart";
+  static type = 'bar-chart';
+  static font = 'bar-chart';
+  static description = 'Bar Chart';
 
   type: string;
 
@@ -157,6 +165,10 @@ export class BarChart implements Visualization {
 }
 
 export class ReferenceVisualization implements Visualization {
+  static type = 'reference';
+  static font = 'link';
+  static description = 'Reference';
+
   type: string;
 
   @field()
@@ -180,8 +192,6 @@ export class ReferenceVisualization implements Visualization {
   renderVisual(options: VisualOptions) {
     return <ViewReferenceVisualization visualizationReference={this} visualOptions={options} />;
   }
-
-  static type = 'reference';
 }
 
 export const VisualizationType = TypeField.of<Visualization>([

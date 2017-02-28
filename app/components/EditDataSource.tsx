@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, FormControl, ButtonGroup, Button, InputGroup } from 'react-bootstrap';
+import { FormGroup, FormControl, ButtonGroup, InputGroup } from 'react-bootstrap';
 import {
   DataSource,
   ReferenceDataSource,
@@ -9,6 +9,7 @@ import {
   DEFAULT_REFERENCE_DATA_SOURCE
 } from 'api/model';
 import { decode } from 'mapping';
+import TypeButton from 'components/TypeButton';
 
 interface Props {
   dataSource: DataSource;
@@ -35,19 +36,15 @@ export default class EditDataSource extends React.Component<Props, {}> {
               Data Source Type:
             </InputGroup.Addon>
             <ButtonGroup>
-              <Button
+              <TypeButton
                 style={{ borderRadius: 0 }}
-                active={dataSource.type === EmbeddedDataSource.type}
-                onClick={() => this.changeType(EmbeddedDataSource.type)}
-              >
-                Embedded
-              </Button>
-              <Button
-                active={dataSource.type === ReferenceDataSource.type}
-                onClick={() => this.changeType(ReferenceDataSource.type)}
-              >
-                Reference
-              </Button>
+                instance={dataSource}
+                model={EmbeddedDataSource}
+                onChangeType={type => this.changeType(type)} />
+              <TypeButton
+                instance={dataSource}
+                model={ReferenceDataSource}
+                onChangeType={type => this.changeType(type)} />
             </ButtonGroup>
           </InputGroup>
         </FormControl.Static>

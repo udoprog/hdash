@@ -2,7 +2,7 @@ import React from 'react';
 import { Visualization, ReferenceVisualization, VisualOptions } from 'api/model';
 import { Optional, absent, of } from 'optional';
 import { PagesContext } from 'api/interfaces';
-import { Glyphicon } from 'react-bootstrap';
+import FontAwesome from 'react-fontawesome';
 
 interface Props {
   visualizationReference: ReferenceVisualization;
@@ -72,7 +72,7 @@ export default class ViewReferenceVisualization extends React.Component<Props, S
       return (
         <div className="loading">
           <span>Loading '{visualizationReference.id}'&nbsp;&nbsp;</span>
-          <Glyphicon glyph="refresh" />
+          <FontAwesome name="circle-o-notch" spin={true} />
         </div>
       );
     }
