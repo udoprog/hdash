@@ -70,10 +70,10 @@ export default class ViewReferenceVisualization extends React.Component<Props, S
 
     if (loading) {
       return (
-        <h4>
-          <span>Loading&nbsp;&nbsp;</span>
+        <div className="loading">
+          <span>Loading '{visualizationReference.id}'&nbsp;&nbsp;</span>
           <Glyphicon glyph="refresh" />
-        </h4>
+        </div>
       );
     }
 
