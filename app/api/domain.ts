@@ -1,14 +1,18 @@
 export class Domain {
-  readonly source: number;
-  readonly sourceMin: number;
-  readonly target: number;
-  readonly targetMin: number;
+  public readonly source: number;
+  public readonly sourceMin: number;
+  public readonly sourceMax: number;
+  public readonly target: number;
+  public readonly targetMin: number;
+  public readonly targetMax: number;
 
   constructor(sourceMin: number, sourceMax: number, targetMin: number, targetMax: number) {
     this.source = sourceMax - sourceMin;
     this.sourceMin = sourceMin;
+    this.sourceMax = sourceMax;
     this.target = targetMax - targetMin;
     this.targetMin = targetMin;
+    this.targetMax = targetMax;
   }
 
   /**
@@ -16,6 +20,10 @@ export class Domain {
    */
   public scale(value: number) {
     return Math.round(value * this.target / this.source);
+  }
+
+  public scaleInverse(value: number) {
+    return Math.round(value / this.target * this.source);
   }
 
   public map(value: number) {

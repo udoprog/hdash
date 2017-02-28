@@ -64,7 +64,15 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     canvas: HTMLCanvasElement;
   }
 
+  /**
+   * Initial draw state to be implemented by extending classes.
+   */
   abstract initialDrawState(): D;
+
+  /**
+   * Primary draw function to be implemented be extending classes.
+   */
+  abstract draw(color: ColorIterator): void;
 
   public componentDidMount() {
     const { canvas } = this.refs;
@@ -224,8 +232,6 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     this.draw(color);
   }
 
-  abstract draw(color: ColorIterator): void;
-
   private calcMinMax(result: QueryResult[]): { min: number, max: number } {
     const { stacked, zeroBased } = this.props.model;
 
@@ -250,6 +256,105 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     }
 
     return { min: min, max: max };
+  }
+
+  static SECONDS = 1000;
+  static MINUTES = 60 * CanvasChart.SECONDS;
+  static HOURS = 60 * CanvasChart.MINUTES;
+  static DAYS = 24 * CanvasChart.HOURS;
+
+  static TIME_UNITS = [
+    15 * CanvasChart.SECONDS,
+    30 * CanvasChart.SECONDS,
+    1 * CanvasChart.MINUTES,
+    2 * CanvasChart.MINUTES,
+    5 * CanvasChart.MINUTES,
+    15 * CanvasChart.MINUTES,
+    30 * CanvasChart.MINUTES,
+    1 * CanvasChart.HOURS,
+    2 * CanvasChart.HOURS,
+    4 * CanvasChart.HOURS,
+    6 * CanvasChart.HOURS,
+    12 * CanvasChart.HOURS,
+    1 * CanvasChart.DAYS,
+    2 * CanvasChart.DAYS,
+    3 * CanvasChart.DAYS,
+    5 * CanvasChart.DAYS,
+    10 * CanvasChart.DAYS,
+    20 * CanvasChart.DAYS
+  ];
+
+  protected drawGrid() {
+    const {xScale, yScale, result} = this.next;
+    const {ctx, width, height} = this;
+
+    const yMid = yScale.map(0);
+    const xMid = xScale.map(0);
+
+    ctx.save();
+
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(0, yMid);
+    ctx.lineTo(width, yMid);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(xMid, 0);
+    ctx.lineTo(xMid, height);
+    ctx.stroke();
+
+    var cadence;
+
+    var xStep = xScale.scaleInverse(20);
+    var yStep = yScale.scaleInverse(40);
+
+    /**
+     * Inform the y-step using the given cadence.
+     */
+    if (result[0]) {
+      cadence = result[0].cadence;
+
+      while (cadence < xStep) {
+        cadence *= 2;
+      }
+
+      xStep = cadence;
+    }
+
+    const xStart = xScale.sourceMin - xScale.sourceMin % xStep;
+    const xEnd = xScale.sourceMax + (xScale.sourceMax - xScale.sourceMax % cadence);
+
+    const yStart = yScale.sourceMin - yScale.sourceMin % Math.abs(yStep);
+    const yEnd = yScale.sourceMax + (yScale.sourceMax - yScale.sourceMax % Math.abs(yStep));
+
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 2;
+
+    for (var i = xStart; i < xEnd; i += cadence) {
+      const x = xScale.map(i);
+
+      ctx.beginPath();
+      ctx.moveTo(x, yScale.map(yStart));
+      ctx.lineTo(x, yScale.map(yEnd));
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 2;
+
+    for (var i = yStart; i > yEnd; i += yStep) {
+      const y = yScale.map(i);
+
+      ctx.beginPath();
+      ctx.moveTo(xScale.map(xStart), y);
+      ctx.lineTo(xScale.map(xEnd), y);
+      ctx.stroke();
+    }
+
+    ctx.restore();
   }
 };
 

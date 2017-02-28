@@ -33,24 +33,26 @@ export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState
 
     const width = (cadence / result.length);
 
-    var filler = (x: number, y: number) => {
+    var filler = (i: number, x: number, y: number) => {
       ctx.fillRect(
-        xScale.map(x + width * i - cadence) + 1, yScale.map(0),
-        xScale.scale(width) - 2, yScale.scale(y)
+        xScale.map(x + (width * i) - cadence) + 2, yScale.map(0),
+        xScale.scale(width) - 4, yScale.scale(y)
       );
     };
 
     if (stacked) {
       const floors: { [key: number]: number } = {};
 
-      filler = (x: number, y: number) => {
-        const prevY = (floors[x] || 0);
-        floors[x] = prevY + y;
+      filler = (_i: number, x: number, y: number) => {
+        const prevY = (floors[x] || yScale.map(0));
+        const height = yScale.scale(Math.abs(y));
 
         ctx.fillRect(
-          xScale.map(x - cadence) + 1, yScale.map(prevY),
-          xScale.scale(cadence) - 2, yScale.scale(y)
+          xScale.map(x - cadence) + 1, prevY,
+          xScale.scale(cadence) - 2, height
         );
+
+        floors[x] = prevY + height;
       };
     }
 
@@ -66,10 +68,15 @@ export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState
 
       for (var di = 0, dl = d.length; di < dl; di++) {
         const [x, y] = d[di];
-        filler(x, y);
+        filler(i, x, y);
       }
 
       ctx.fill();
     }
+
+    ctx.strokeStyle = '#000000';
+    ctx.moveTo(xScale.targetMin - 10, yScale.map(0));
+    ctx.lineTo(xScale.targetMax + 10, yScale.map(0));
+    ctx.stroke();
   }
 };
