@@ -149,9 +149,9 @@ export default class DashboardPage extends React.Component<Props, State> {
                   </div>
                 ) : null;
 
-                const showNav = (component.showTitle && !!component.title || !locked);
+                const showTitleBar = !!component.title || !locked;
 
-                const titlebar = showNav ? (
+                const titlebar = showTitleBar ? (
                   <div className={"titlebar" + (!locked ? " draggable" : "")}>
                     <span className="text">{component.title}</span>
                     {buttons}
@@ -160,7 +160,7 @@ export default class DashboardPage extends React.Component<Props, State> {
 
                 var componentClasses = "component";
 
-                if (showNav) {
+                if (showTitleBar) {
                   componentClasses += " visible-titlebar";
                 }
 

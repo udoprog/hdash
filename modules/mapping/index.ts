@@ -184,7 +184,7 @@ export class TypeField<T extends Target> implements Field<T> {
     }
 
     const values = sub.encode(value, path);
-    values["type"] = type;
+    values['type'] = type;
     return values;
   }
 

@@ -9,6 +9,14 @@ interface Props {
 }
 
 export default class EditVisualization extends React.Component<Props, {}> {
+  old: { [key: string]: Visualization };
+
+  constructor(props: Props) {
+    super(props);
+
+    this.old = {};
+  }
+
   public render() {
     const { visualization, onChange } = this.props;
 
@@ -21,7 +29,7 @@ export default class EditVisualization extends React.Component<Props, {}> {
             </InputGroup.Addon>
             <ButtonGroup>
               <Button
-                style={{ "border-radius": 0 }}
+                style={{ borderRadius: 0 }}
                 active={visualization.type === ReferenceVisualization.type}
                 onClick={() => this.changeType(ReferenceVisualization.type)}
               >
@@ -61,17 +69,19 @@ export default class EditVisualization extends React.Component<Props, {}> {
   }
 
   private changeType(type: string) {
-    const { onChange } = this.props;
+    const { onChange, visualization } = this.props;
+
+    this.old[visualization.type] = visualization;
 
     switch (type) {
       case ReferenceVisualization.type:
-        onChange(clone(DEFAULT_REFERENCE));
+        onChange(clone(this.old[type] || DEFAULT_REFERENCE));
         break;
       case BarChart.type:
-        onChange(clone(DEFAULT_BAR_CHART));
+        onChange(clone(this.old[type] || DEFAULT_BAR_CHART));
         break;
       case LineChart.type:
-        onChange(clone(DEFAULT_LINE_CHART));
+        onChange(clone(this.old[type] || DEFAULT_LINE_CHART));
         break;
       default:
         throw new Error("Unsupported type: " + type);

@@ -70,11 +70,18 @@ export class ReferenceDataSource implements DataSource {
   }
 }
 
-export const DataSourceType = TypeField.of<DataSource>([EmbeddedDataSource, ReferenceDataSource]);
+export const DataSourceType = TypeField.of<DataSource>([
+  EmbeddedDataSource,
+  ReferenceDataSource
+]);
 
-export const DEFAULT_DATA_SOURCE = decode({
+export const DEFAULT_EMBEDDED_DATA_SOURCE = decode({
   query: ""
 }, EmbeddedDataSource);
+
+export const DEFAULT_REFERENCE_DATA_SOURCE = decode({
+  id: ""
+}, ReferenceDataSource);
 
 export interface Visualization {
   type: string;
@@ -209,15 +216,12 @@ export class Component {
   readonly id: string;
   @field()
   readonly title: string;
-  @field()
-  readonly showTitle: boolean;
   @field({ type: VisualizationType })
   readonly visualization: Visualization;
 
   constructor(values: any) {
     this.id = values.id;
     this.title = values.title;
-    this.showTitle = values.showTitle;
     this.visualization = values.visualization;
   }
 }
@@ -231,7 +235,7 @@ export class Dashboard {
   readonly metadata: { [key: string]: string; };
   @field({ type: new ArrayField(Component) })
   readonly components: Component[];
-  @field()
+  @field({ type: new ArrayField(LayoutEntry) })
   readonly layout: Array<LayoutEntry>;
 
   constructor(values: any) {
@@ -337,12 +341,12 @@ export const DEFAULT_REFERENCE = decode({
 
 export const DEFAULT_LINE_CHART = decode({
   stacked: false,
-  dataSource: DEFAULT_DATA_SOURCE
+  dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, LineChart);
 
 export const DEFAULT_BAR_CHART = decode({
   stacked: false,
-  dataSource: DEFAULT_DATA_SOURCE
+  dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, BarChart);
 
 interface VisualizationConstructor extends Constructor<Visualization> {

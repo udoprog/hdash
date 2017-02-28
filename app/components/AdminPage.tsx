@@ -122,7 +122,7 @@ export default class DashboardPage extends React.Component<Props, State> {
   private export() {
     this.context.db.export().then(content => {
       const encoded = encode(content, DatabaseContent);
-      var blob = new Blob([JSON.stringify(encoded)], { type: "application/json" });
+      var blob = new Blob([JSON.stringify(encoded, null, 2)], { type: "application/json" });
       var url = URL.createObjectURL(blob);
 
       this.refs.export.href = url;

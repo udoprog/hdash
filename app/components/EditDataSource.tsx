@@ -1,6 +1,13 @@
 import * as React from 'react';
 import { FormGroup, FormControl, ButtonGroup, Button, InputGroup } from 'react-bootstrap';
-import { DataSource, ReferenceDataSource, EmbeddedDataSource, EditOptions } from 'api/model';
+import {
+  DataSource,
+  ReferenceDataSource,
+  EmbeddedDataSource,
+  EditOptions,
+  DEFAULT_EMBEDDED_DATA_SOURCE,
+  DEFAULT_REFERENCE_DATA_SOURCE
+} from 'api/model';
 import { decode } from 'mapping';
 
 interface Props {
@@ -9,6 +16,14 @@ interface Props {
 }
 
 export default class EditDataSource extends React.Component<Props, {}> {
+  old: { [key: string]: DataSource };
+
+  constructor(props: Props) {
+    super(props);
+
+    this.old = {};
+  }
+
   public render() {
     const { dataSource, editOptions } = this.props;
 
@@ -21,7 +36,7 @@ export default class EditDataSource extends React.Component<Props, {}> {
             </InputGroup.Addon>
             <ButtonGroup>
               <Button
-                style={{ "border-radius": 0 }}
+                style={{ borderRadius: 0 }}
                 active={dataSource.type === EmbeddedDataSource.type}
                 onClick={() => this.changeType(EmbeddedDataSource.type)}
               >
@@ -48,14 +63,16 @@ export default class EditDataSource extends React.Component<Props, {}> {
   }
 
   private changeType(type: string) {
-    const { editOptions } = this.props;
+    const { editOptions, dataSource } = this.props;
+
+    this.old[dataSource.type] = dataSource;
 
     switch (type) {
       case EmbeddedDataSource.type:
-        editOptions.onChange(decode({ query: "" }, EmbeddedDataSource));
+        editOptions.onChange(decode(this.old[type] || DEFAULT_EMBEDDED_DATA_SOURCE, EmbeddedDataSource));
         break;
       case ReferenceDataSource.type:
-        editOptions.onChange(decode({ id: "" }, ReferenceDataSource));
+        editOptions.onChange(decode(this.old[type] || DEFAULT_REFERENCE_DATA_SOURCE, ReferenceDataSource));
         break;
       default:
         throw new Error("Unsupported type: " + type);

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { PagesContext } from 'api/interfaces';
 import { Component, Visualization } from 'api/model';
-import { Row, Col, Grid, Button, Glyphicon, FormGroup, ControlLabel, FormControl, Checkbox } from 'react-bootstrap';
+import { Row, Col, Grid, Button, Glyphicon, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import EditVisualization from './EditVisualization';
 import { mutate } from 'mapping';
 
@@ -35,18 +35,11 @@ export default class EditComponent extends React.Component<Props, State> {
     return (
       <Grid>
         <Row>
-          <Col sm={10}>
+          <Col sm={12}>
             <FormGroup>
               <ControlLabel label="title">Title</ControlLabel>
-              <FormControl type="text" disabled={!component.showTitle} value={component.title} onChange={(e: any) => this.mutate({ title: e.target.value })} />
+              <FormControl type="text" value={component.title} onChange={(e: any) => this.mutate({ title: e.target.value })} />
             </FormGroup>
-          </Col>
-
-          <Col sm={2}>
-            <ControlLabel label="title"></ControlLabel>
-            <Checkbox checked={component.showTitle} onChange={(e: any) => this.mutate({ showTitle: e.target.checked })}>
-              Show Title
-            </Checkbox>
           </Col>
         </Row>
 
