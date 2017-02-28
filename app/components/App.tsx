@@ -9,6 +9,7 @@ import AlertsPage from 'components/AlertsPage';
 import VisualizationsPage from 'components/VisualizationsPage';
 import AdminPage from 'components/AdminPage';
 import MainPage from 'components/MainPage';
+import DataSourcesPage from 'components/DataSourcesPage';
 
 import DatabaseProvider from 'db/DatabaseProvider';
 import HeroicProvider from 'heroic/HeroicProvider';
@@ -23,6 +24,7 @@ export default class App extends React.Component<{}, {}> {
               <IndexRoute component={MainPage} />
               <Route path="dashboards" component={DashboardsPage} />
               <Route path="dashboards/:id" component={DashboardPage} />
+              <Route path="datasources" component={DataSourcesPage} />
               <Route path="alerts" component={AlertsPage} />
               <Route path="visualizations" component={VisualizationsPage} />
               <Route path="admin" component={AdminPage} />

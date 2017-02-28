@@ -70,6 +70,7 @@ export default class DashboardPage extends React.Component<Props, State> {
     return (
       <NavItem title="Lock" onClick={() => this.setState({ locked: true, editComponent: absent<string>() }, this.updateUrl())}>
         <Glyphicon glyph="lock" />
+        <span>&nbsp;&nbsp;Lock</span>
       </NavItem>
     );
   }
@@ -78,6 +79,7 @@ export default class DashboardPage extends React.Component<Props, State> {
     return (
       <NavItem title="Unlock to Edit" onClick={() => this.setState({ locked: false }, this.updateUrl())}>
         <Glyphicon glyph="wrench" />
+        <span>&nbsp;&nbsp;Unlock</span>
       </NavItem>
     );
   }
@@ -117,88 +119,108 @@ export default class DashboardPage extends React.Component<Props, State> {
           );
         });
       }).orElseGet(() => {
-        return (
-          <Grid fluid={true}>
-            <h1>{title}</h1>
-
-            <ResponsiveReactGridLayout
-              className="layout"
-              draggableHandle=".titlebar"
-              layout={dashboard.layout}
-              cols={12}
-              measureBeforeMount={true}
-              onLayoutChange={(layout: any) => this.layoutChanged(layout)}
-              rowHeight={ROW_HEIGHT}
-              isDraggable={!locked}
-              isResizable={!locked}
-            >
-              {dashboard.components.map(component => {
-                const buttons = !locked ? (
-                  <div className="pull-right">
-                    <div className="buttons">
-                      <ButtonGroup bsSize="xs">
-                        <Button onClick={() => this.edit(component.id)}>
-                          <Glyphicon glyph="edit" />
-                        </Button>
-
-                        <Button bsStyle="danger" onClick={() => this.remove(component)}>
-                          <Glyphicon glyph="remove" />
-                        </Button>
-                      </ButtonGroup>
-                    </div>
-                  </div>
-                ) : null;
-
-                const showTitleBar = !!component.title || !locked;
-
-                const titlebar = showTitleBar ? (
-                  <div className={"titlebar" + (!locked ? " draggable" : "")}>
-                    <span className="text">{component.title}</span>
-                    {buttons}
-                  </div>
-                ) : null;
-
-                var componentClasses = "component";
-
-                if (showTitleBar) {
-                  componentClasses += " visible-titlebar";
-                }
-
-                if (!locked) {
-                  componentClasses += " editing";
-                } else {
-                  componentClasses += " locked";
-                }
-
-                const visualOptions = {
-                };
-
-                return <div className={componentClasses} key={component.id}>
-                  {titlebar}
-                  {component.visualization.renderVisual(visualOptions)}
-                </div>;
-              })}
-            </ResponsiveReactGridLayout>
-          </Grid>
-        );
+        if (matchMedia("(min-width: 768px)").matches) {
+          return this.renderLayoutGrid(title, locked, dashboard);
+        } else {
+          return this.renderList(title, locked, dashboard);
+        }
       });
     }).get();
 
     return (
       <div>
         <Navbar collapseOnSelect staticTop={true}>
-          <Navbar.Collapse>
-            <Nav pullRight>
-              {plus}
-              {save}
-              {lock}
-            </Nav>
-          </Navbar.Collapse>
+          <Nav pullRight>
+            {plus}
+            {save}
+            {lock}
+          </Nav>
         </Navbar>
 
         {main}
       </div>
     );
+  }
+
+  private renderLayoutGrid(title: string, locked: boolean, dashboard: Dashboard) {
+    return (
+      <Grid fluid={true}>
+        <h1>{title}</h1>
+
+        <ResponsiveReactGridLayout
+          className="layout"
+          draggableHandle=".titlebar"
+          layout={dashboard.layout}
+          cols={12}
+          measureBeforeMount={true}
+          onLayoutChange={(layout: any) => this.layoutChanged(layout)}
+          rowHeight={ROW_HEIGHT}
+          isDraggable={!locked}
+          isResizable={!locked}
+        >
+          {this.renderComponents(locked, dashboard)}
+        </ResponsiveReactGridLayout>
+      </Grid>
+    );
+  }
+
+  private renderList(title: string, locked: boolean, dashboard: Dashboard) {
+    return (
+      <Grid fluid={true}>
+        <h1>{title}</h1>
+        {this.renderComponents(locked, dashboard, 200)}
+      </Grid >
+    );
+  }
+
+  private renderComponents(locked: boolean, dashboard: Dashboard, height?: number) {
+    return dashboard.components.map(component => {
+      const buttons = !locked ? (
+        <div className="pull-right">
+          <div className="buttons">
+            <ButtonGroup bsSize="xs">
+              <Button onClick={() => this.edit(component.id)}>
+                <Glyphicon glyph="edit" />
+              </Button>
+
+              <Button bsStyle="danger" onClick={() => this.remove(component)}>
+                <Glyphicon glyph="remove" />
+              </Button>
+            </ButtonGroup>
+          </div>
+        </div>
+      ) : null;
+
+      const showTitleBar = !!component.title || !locked;
+
+      const titlebar = showTitleBar ? (
+        <div className={"titlebar" + (!locked ? " draggable" : "")}>
+          <span className="text">{component.title}</span>
+          {buttons}
+        </div>
+      ) : null;
+
+      var componentClasses = "component";
+
+      if (showTitleBar) {
+        componentClasses += " visible-titlebar";
+      }
+
+      if (!locked) {
+        componentClasses += " editing";
+      } else {
+        componentClasses += " locked";
+      }
+
+      const visualOptions = {
+        height: height
+      };
+
+      return <div className={componentClasses} key={component.id}>
+        {titlebar}
+        {component.visualization.renderVisual(visualOptions)}
+      </div>;
+    })
   }
 
   private back(component: Component) {

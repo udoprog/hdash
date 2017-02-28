@@ -1,8 +1,9 @@
 import * as React from 'react';
 
-import { Navbar, Nav, NavItem, Glyphicon } from 'react-bootstrap';
+import { Navbar, Nav, NavItem } from 'react-bootstrap';
 import { IndexLink } from 'react-router';
 import { LinkContainer, IndexLinkContainer } from 'react-router-bootstrap';
+import FontAwesome from 'react-fontawesome';
 
 export default class IndexPage extends React.Component<any, {}> {
   render() {
@@ -22,25 +23,31 @@ export default class IndexPage extends React.Component<any, {}> {
             <Nav>
               <IndexLinkContainer to="/">
                 <NavItem>
-                  <Glyphicon glyph="home" />
+                  <FontAwesome name="home" />
                   <span>&nbsp;&nbsp;Main</span>
                 </NavItem>
               </IndexLinkContainer>
+              <LinkContainer to="/datasources">
+                <NavItem>
+                  <FontAwesome name="database" />
+                  <span>&nbsp;&nbsp;Data Sources</span>
+                </NavItem>
+              </LinkContainer>
               <LinkContainer to="/visualizations">
                 <NavItem>
-                  <Glyphicon glyph="eye-open" />
+                  <FontAwesome name="eye" />
                   <span>&nbsp;&nbsp;Visualizations</span>
                 </NavItem>
               </LinkContainer>
               <LinkContainer to="/dashboards">
                 <NavItem>
-                  <Glyphicon glyph="th" />
+                  <FontAwesome name="th" />
                   <span>&nbsp;&nbsp;Dashboards</span>
                 </NavItem>
               </LinkContainer>
               <LinkContainer to="/alerts">
                 <NavItem>
-                  <Glyphicon glyph="bell" />
+                  <FontAwesome name="bell" />
                   <span>&nbsp;&nbsp;Alerts</span>
                 </NavItem>
               </LinkContainer>
