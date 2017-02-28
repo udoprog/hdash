@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { LineChart, EditOptions, DataSource } from 'api/model';
 import { Form, FormGroup, FormControl, Checkbox } from 'react-bootstrap';
 import { clone, mutate } from 'mapping';

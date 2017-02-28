@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { ReferenceDataSource, EditOptions } from 'api/model';
 import { Row, Col, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import { clone } from 'mapping';

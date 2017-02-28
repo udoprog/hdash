@@ -141,7 +141,7 @@ export class LineChart implements Vis {
   }
 
   renderVisual(options: VisualOptions) {
-    return <ViewLineChart lineChart={this} visualOptions={options} />;
+    return <ViewLineChart model={this} visualOptions={options} />;
   }
 }
 
@@ -151,6 +151,7 @@ export class BarChart implements Vis {
   static description = 'Bar Chart';
 
   type: string;
+  zeroBased: boolean;
 
   @field()
   stacked: boolean;
@@ -159,6 +160,7 @@ export class BarChart implements Vis {
 
   constructor(values: Values<BarChart>) {
     this.type = BarChart.type;
+    this.zeroBased = true;
     this.stacked = values.stacked;
     this.dataSource = values.dataSource;
   }
@@ -174,7 +176,7 @@ export class BarChart implements Vis {
   }
 
   renderVisual(options: VisualOptions) {
-    return <ViewBarChart barChart={this} visualOptions={options} />;
+    return <ViewBarChart model={this} visualOptions={options} />;
   }
 }
 

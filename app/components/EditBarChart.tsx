@@ -1,7 +1,7 @@
-import React from 'react';
+import * as React from 'react';
 import { BarChart, EditOptions, DataSource } from 'api/model';
-import { Form, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
-import { clone } from 'mapping';
+import { Form, FormGroup, Checkbox } from 'react-bootstrap';
+import { clone, mutate } from 'mapping';
 import EditDataSource from 'components/EditDataSource';
 
 interface Props {
@@ -22,10 +22,11 @@ export default class EditBarChart extends React.Component<Props, {}> {
     return (
       <Form>
         <FormGroup controlId='stacked'>
-          <ControlLabel>Stacked:</ControlLabel>
-          <FormControl.Static>
-            {barChart.stacked ? "yes" : "no"}
-          </FormControl.Static>
+          <Checkbox checked={barChart.stacked} onChange={
+            (e: any) => editOptions.onChange(mutate(barChart, { stacked: e.target.checked }))
+          }>
+            Stacked?
+          </Checkbox>
         </FormGroup>
 
         <EditDataSource dataSource={barChart.dataSource} editOptions={options} />

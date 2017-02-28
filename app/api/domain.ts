@@ -1,22 +1,29 @@
 export class Domain {
-  readonly width: number;
-  readonly start: number;
-  readonly diff: number;
-  readonly min: number;
+  readonly source: number;
+  readonly sourceMin: number;
+  readonly target: number;
+  readonly targetMin: number;
 
-  constructor(start: number, stop: number, min: number, max: number) {
-    this.width = stop - start;
-    this.start = start;
-    this.diff = max - min;
-    this.min = min;
+  constructor(sourceMin: number, sourceMax: number, targetMin: number, targetMax: number) {
+    this.source = sourceMax - sourceMin;
+    this.sourceMin = sourceMin;
+    this.target = targetMax - targetMin;
+    this.targetMin = targetMin;
   }
 
+  /**
+   * Scale a value from one domain to another.
+   */
   public scale(value: number) {
-    return Math.round((value - this.start) * this.diff / this.width + this.min);
+    return Math.round(value * this.target / this.source);
+  }
+
+  public map(value: number) {
+    return Math.round((value - this.sourceMin) * this.target / this.source + this.targetMin);
   }
 
   public invert(value: number) {
-    return Math.round((value - this.min) * this.width / this.diff + this.start);
+    return Math.round((value - this.targetMin) * this.source / this.target + this.sourceMin);
   }
 
   public equals(o: Domain) {
@@ -25,10 +32,10 @@ export class Domain {
     }
 
     return (
-      this.width === o.width &&
-      this.start === o.start &&
-      this.diff === o.diff &&
-      this.min === o.min
+      this.source === o.source &&
+      this.sourceMin === o.sourceMin &&
+      this.target === o.target &&
+      this.targetMin === o.targetMin
     );
   }
 }

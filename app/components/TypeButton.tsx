@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Button, ButtonProps } from 'react-bootstrap';
 import FontAwesome from 'react-fontawesome';
 

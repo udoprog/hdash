@@ -1,4 +1,4 @@
-class ColorIterator {
+export class ColorIterator {
   readonly colors: string[];
   index: number;
 

@@ -1,82 +1,75 @@
-import React from 'react';
-import { BarChart, VisualOptions } from 'api/model';
-import { Chart } from 'chart.js';
+import { BarChart } from 'api/model';
 
-const DEFAULT_HEIGHT = 300;
+import CanvasChart, { CanvasChartDrawState, CanvasChartProps } from './CanvasChart';
+import { ColorIterator } from 'api/colors';
 
-const DATA = {
-  labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
-  datasets: [{
-    label: '# of Votes',
-    data: [12, 19, 3, 5, 2, 3],
-    backgroundColor: [
-      'rgba(255, 99, 132, 0.2)',
-      'rgba(54, 162, 235, 0.2)',
-      'rgba(255, 206, 86, 0.2)',
-      'rgba(75, 192, 192, 0.2)',
-      'rgba(153, 102, 255, 0.2)',
-      'rgba(255, 159, 64, 0.2)'
-    ],
-    borderColor: [
-      'rgba(255,99,132,1)',
-      'rgba(54, 162, 235, 1)',
-      'rgba(255, 206, 86, 1)',
-      'rgba(75, 192, 192, 1)',
-      'rgba(153, 102, 255, 1)',
-      'rgba(255, 159, 64, 1)'
-    ],
-    borderWidth: 1
-  }]
-};
-
-const OPTIONS = {
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: false,
-  scales: {
-    yAxes: [{
-      ticks: {
-        beginAtZero: true
-      }
-    }]
-  }
-};
-
-interface Props {
-  barChart: BarChart; 
-  visualOptions: VisualOptions;
+interface Props extends CanvasChartProps<BarChart> {
 }
 
-export default class ViewBarChart extends React.Component<Props, {}> {
-  refs: {
-    canvas: any;
+interface DrawState extends CanvasChartDrawState {
+}
+
+export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState> {
+  public initialDrawState(): DrawState {
+    return {};
   }
 
-  chart?: Chart;
+  public draw(color: ColorIterator): void {
+    const {xScale, yScale, result, stacked} = this.next;
 
-  public componentDidUpdate() {
-    if (this.chart) {
-      this.chart.resize();
+    const ctx = this.ctx;
+
+    if (result.length <= 0) {
+      /* indicate that there are no results */
+      return;
     }
-  }
 
-  public componentDidMount() {
-    this.chart = new Chart(this.refs.canvas, { type: 'bar', data: DATA, options: OPTIONS });
-  }
+    var cadence = result[0].cadence;
 
-  public componentWillUnmount() {
-    if (this.chart) {
-      this.chart.destroy();
-      this.chart = null;
+    if (cadence <= 0) {
+      /* indicate that there is nothing to do */
+      return;
     }
-  }
 
-  public render() {
-    const { visualOptions } = this.props;
-    const { height } = visualOptions;
+    const width = (cadence / result.length);
 
-    return (
-      <canvas ref="canvas" width="100%" height={height || DEFAULT_HEIGHT} />
-    );
+    var filler = (x: number, y: number) => {
+      ctx.fillRect(
+        xScale.map(x + width * i - cadence) + 1, yScale.map(0),
+        xScale.scale(width) - 2, yScale.scale(y)
+      );
+    };
+
+    if (stacked) {
+      const floors: { [key: number]: number } = {};
+
+      filler = (x: number, y: number) => {
+        const prevY = (floors[x] || 0);
+        floors[x] = prevY + y;
+
+        ctx.fillRect(
+          xScale.map(x - cadence) + 1, yScale.map(prevY),
+          xScale.scale(cadence) - 2, yScale.scale(y)
+        );
+      };
+    }
+
+    for (var i = 0, l = result.length; i < l; i++) {
+      const res = result[i];
+      const d = res.values;
+
+      if (d.length <= 0) {
+        continue;
+      }
+
+      ctx.fillStyle = color.next();
+
+      for (var di = 0, dl = d.length; di < dl; di++) {
+        const [x, y] = d[di];
+        filler(x, y);
+      }
+
+      ctx.fill();
+    }
   }
 };
