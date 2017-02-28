@@ -168,12 +168,12 @@ export default class DashboardPage extends React.Component<Props, State> {
     return (
       <Grid fluid={true}>
         <h1>{title}</h1>
-        {this.renderComponents(locked, dashboard, 200)}
+        {this.renderComponents(locked, dashboard)}
       </Grid >
     );
   }
 
-  private renderComponents(locked: boolean, dashboard: Dashboard, height?: number) {
+  private renderComponents(locked: boolean, dashboard: Dashboard) {
     return dashboard.components.map(component => {
       const buttons = !locked ? (
         <div className="pull-right">
@@ -213,13 +213,16 @@ export default class DashboardPage extends React.Component<Props, State> {
       }
 
       const visualOptions = {
-        height: height
+        width: 0,
+        height: 0,
       };
 
-      return <div className={componentClasses} key={component.id}>
-        {titlebar}
-        {component.visualization.renderVisual(visualOptions)}
-      </div>;
+      return (
+        <div className={componentClasses} key={component.id}>
+          {titlebar}
+          {component.visualization.renderVisual(visualOptions)}
+        </div>
+      );
     })
   }
 

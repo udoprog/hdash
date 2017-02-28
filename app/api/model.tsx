@@ -1,6 +1,6 @@
 import React from 'react';
 import { decode, field, clone, TypeField, ArrayField, Constructor, Values } from 'mapping';
-import { Optional, ofNullable } from 'optional';
+import { Optional, ofNullable, of } from 'optional';
 import EditBarChart from 'components/EditBarChart';
 import ViewBarChart from 'components/ViewBarChart';
 import EditLineChart from 'components/EditLineChart';
@@ -10,6 +10,8 @@ import EditReferenceVis from 'components/EditReferenceVis';
 
 import EditEmbeddedDataSource from 'components/EditEmbeddedDataSource';
 import EditReferenceDataSource from 'components/EditReferenceDataSource';
+
+import { PagesContext } from 'api/interfaces';
 
 const MAX_ATTEMPTS = 1000;
 const RANGE = 1000000;
@@ -28,6 +30,8 @@ export interface DataSource {
   type: string;
 
   renderEdit(options: EditOptions<this>): any;
+
+  toEmbedded(context: PagesContext): Promise<Optional<EmbeddedDataSource>>;
 }
 
 export class EmbeddedDataSource implements DataSource {
@@ -50,6 +54,10 @@ export class EmbeddedDataSource implements DataSource {
       <EditEmbeddedDataSource dataSource={this} editOptions={options} />
     );
   }
+
+  toEmbedded(_context: PagesContext): Promise<Optional<EmbeddedDataSource>> {
+    return Promise.resolve(of(this));
+  }
 }
 
 export class ReferenceDataSource implements DataSource {
@@ -71,6 +79,10 @@ export class ReferenceDataSource implements DataSource {
     return (
       <EditReferenceDataSource dataSource={this} editOptions={options} />
     );
+  }
+
+  toEmbedded(context: PagesContext): Promise<Optional<EmbeddedDataSource>> {
+    return context.db.getDataSource(this.id);
   }
 }
 
@@ -106,12 +118,15 @@ export class LineChart implements Vis {
 
   @field()
   stacked: boolean;
+  @field()
+  zeroBased: boolean;
   @field({ type: DataSourceType })
   dataSource: DataSource;
 
   constructor(values: Values<LineChart>) {
     this.type = LineChart.type;
     this.stacked = values.stacked;
+    this.zeroBased = values.zeroBased;
     this.dataSource = values.dataSource;
   }
 
@@ -274,6 +289,7 @@ export class Dashboard {
       visualization: {
         type: 'line-chart',
         stacked: false,
+        zeroBased: false,
         dataSource: {
           type: 'embedded',
           query: ''
@@ -350,6 +366,7 @@ export const DEFAULT_REFERENCE = decode({
 
 export const DEFAULT_LINE_CHART = decode({
   stacked: false,
+  zeroBased: false,
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, LineChart);
 

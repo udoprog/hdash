@@ -1,6 +1,6 @@
-import { Heroic, Query } from 'api/heroic';
+import { Heroic, Query, QueryResponse } from 'api/heroic';
 import axios from 'axios';
-import { encode } from 'mapping'
+import { encode, decode } from 'mapping'
 
 export default class RealHeroic implements Heroic {
   readonly url: string;
@@ -9,8 +9,11 @@ export default class RealHeroic implements Heroic {
     this.url = url;
   }
 
-  queryMetrics(query: Query) {
-    return axios.post(this.buildUrl('/query/metrics'), { data: encode(query) });
+  queryMetrics(query: Query): Promise<QueryResponse> {
+    return axios.post(this.buildUrl('/query/metrics'), encode(query))
+      .then(response => {
+        return decode(response.data, QueryResponse);
+      }) as Promise<QueryResponse>;
   }
 
   private buildUrl(path: string): string {

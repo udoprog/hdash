@@ -1,7 +1,7 @@
 import React from 'react';
 import { LineChart, EditOptions, DataSource } from 'api/model';
-import { Form, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
-import { clone } from 'mapping';
+import { Form, FormGroup, FormControl, Checkbox } from 'react-bootstrap';
+import { clone, mutate } from 'mapping';
 import EditDataSource from 'components/EditDataSource';
 
 interface Props {
@@ -22,9 +22,18 @@ export default class EditLineChart extends React.Component<Props, {}> {
     return (
       <Form>
         <FormGroup controlId='stacked'>
-          <ControlLabel>Stacked:</ControlLabel>
-          <FormControl.Static>
-            {lineChart.stacked ? "yes" : "no"}
+          <FormControl.Static componentClass="div">
+            <Checkbox checked={lineChart.stacked} onChange={
+              (e: any) => editOptions.onChange(mutate(lineChart, { stacked: e.target.checked }))
+            }>
+              Stacked?
+            </Checkbox>
+
+            <Checkbox checked={lineChart.zeroBased} onChange={
+              (e: any) => editOptions.onChange(mutate(lineChart, { zeroBased: e.target.checked }))
+            }>
+              Zero Based?
+            </Checkbox>
           </FormControl.Static>
         </FormGroup>
 

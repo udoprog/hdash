@@ -1,6 +1,4 @@
 import * as model from 'api/model';
-import { } from 'chai';
-
 import { assertModel } from './test-utils';
 
 describe('model', () => {

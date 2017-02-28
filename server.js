@@ -45,7 +45,8 @@ new WebpackDevServer(webpack(config), {
   proxy: {
     '/heroic': {
       target: 'http://localhost:8080',
-      secure: false
+      secure: false,
+      pathRewrite: { '^/heroic': '' }
     }
   }
 }).listen(port, host, function (err, result) {

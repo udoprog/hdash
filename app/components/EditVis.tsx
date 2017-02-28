@@ -55,7 +55,9 @@ export default class EditVis extends React.Component<Props, {}> {
         {typePicker}
 
         <Row>
-          <Col sm={12}>{vis.renderVisual({ height: 200 })}</Col>
+          <Col sm={12}>
+            {vis.renderVisual({ height: 200 })}
+          </Col>
         </Row>
 
         {vis.renderEdit(editOptions)}
