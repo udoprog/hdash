@@ -1,16 +1,16 @@
 import * as React from 'react';
-import { Visualization, ReferenceVisualization, LineChart, BarChart, DEFAULT_REFERENCE, DEFAULT_BAR_CHART, DEFAULT_LINE_CHART } from 'api/model';
+import { Vis, ReferenceVis, LineChart, BarChart, DEFAULT_REFERENCE, DEFAULT_BAR_CHART, DEFAULT_LINE_CHART } from 'api/model';
 import { Row, Col, FormGroup, FormControl, ButtonGroup, InputGroup } from 'react-bootstrap';
 import { clone } from 'mapping';
 import TypeButton from 'components/TypeButton';
 
 interface Props {
-  visualization: Visualization;
-  onChange: (visualization: Visualization) => void;
+  vis: Vis;
+  onChange: (visualization: Vis) => void;
 }
 
-export default class EditVisualization extends React.Component<Props, {}> {
-  old: { [key: string]: Visualization };
+export default class EditVis extends React.Component<Props, {}> {
+  old: { [key: string]: Vis };
 
   constructor(props: Props) {
     super(props);
@@ -19,7 +19,7 @@ export default class EditVisualization extends React.Component<Props, {}> {
   }
 
   public render() {
-    const { visualization, onChange } = this.props;
+    const { vis, onChange } = this.props;
 
     const typePicker = (
       <FormGroup >
@@ -31,15 +31,15 @@ export default class EditVisualization extends React.Component<Props, {}> {
             <ButtonGroup>
               <TypeButton
                 style={{ borderRadius: 0 }}
-                instance={visualization}
-                model={ReferenceVisualization}
+                instance={vis}
+                model={ReferenceVis}
                 onChangeType={type => this.changeType(type)} />
               <TypeButton
-                instance={visualization}
+                instance={vis}
                 model={LineChart}
                 onChangeType={type => this.changeType(type)} />
               <TypeButton
-                instance={visualization}
+                instance={vis}
                 model={BarChart}
                 onChangeType={type => this.changeType(type)} />
             </ButtonGroup>
@@ -55,21 +55,21 @@ export default class EditVisualization extends React.Component<Props, {}> {
         {typePicker}
 
         <Row>
-          <Col sm={12}>{visualization.renderVisual({ height: 200 })}</Col>
+          <Col sm={12}>{vis.renderVisual({ height: 200 })}</Col>
         </Row>
 
-        {visualization.renderEdit(editOptions)}
+        {vis.renderEdit(editOptions)}
       </div>
     );
   }
 
   private changeType(type: string) {
-    const { onChange, visualization } = this.props;
+    const { onChange, vis } = this.props;
 
-    this.old[visualization.type] = visualization;
+    this.old[vis.type] = vis;
 
     switch (type) {
-      case ReferenceVisualization.type:
+      case ReferenceVis.type:
         onChange(clone(this.old[type] || DEFAULT_REFERENCE));
         break;
       case BarChart.type:

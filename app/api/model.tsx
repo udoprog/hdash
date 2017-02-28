@@ -5,8 +5,8 @@ import EditBarChart from 'components/EditBarChart';
 import ViewBarChart from 'components/ViewBarChart';
 import EditLineChart from 'components/EditLineChart';
 import ViewLineChart from 'components/ViewLineChart';
-import ViewReferenceVisualization from 'components/ViewReferenceVisualization';
-import EditReferenceVisualization from 'components/EditReferenceVisualization';
+import ViewReferenceVis from 'components/ViewReferenceVis';
+import EditReferenceVis from 'components/EditReferenceVis';
 
 import EditEmbeddedDataSource from 'components/EditEmbeddedDataSource';
 import EditReferenceDataSource from 'components/EditReferenceDataSource';
@@ -87,7 +87,7 @@ export const DEFAULT_REFERENCE_DATA_SOURCE = decode({
   id: ""
 }, ReferenceDataSource);
 
-export interface Visualization {
+export interface Vis {
   type: string;
 
   typeTitle(): string;
@@ -97,8 +97,7 @@ export interface Visualization {
   renderVisual(options: VisualOptions): any;
 }
 
-
-export class LineChart implements Visualization {
+export class LineChart implements Vis {
   static type = 'line-chart';
   static font = 'line-chart';
   static description = 'Line Chart';
@@ -131,7 +130,7 @@ export class LineChart implements Visualization {
   }
 }
 
-export class BarChart implements Visualization {
+export class BarChart implements Vis {
   static type = 'bar-chart';
   static font = 'bar-chart';
   static description = 'Bar Chart';
@@ -164,7 +163,7 @@ export class BarChart implements Visualization {
   }
 }
 
-export class ReferenceVisualization implements Visualization {
+export class ReferenceVis implements Vis {
   static type = 'reference';
   static font = 'link';
   static description = 'Reference';
@@ -175,7 +174,7 @@ export class ReferenceVisualization implements Visualization {
   readonly id: string;
 
   constructor(values: any) {
-    this.type = ReferenceVisualization.type;
+    this.type = ReferenceVis.type;
     this.id = values.id;
   }
 
@@ -183,21 +182,21 @@ export class ReferenceVisualization implements Visualization {
     return "Reference title";
   }
 
-  renderEdit(options: EditOptions<ReferenceVisualization>): any {
+  renderEdit(options: EditOptions<ReferenceVis>): any {
     return (
-      <EditReferenceVisualization visualizationReference={this} editOptions={options} />
+      <EditReferenceVis vis={this} editOptions={options} />
     );
   }
 
   renderVisual(options: VisualOptions) {
-    return <ViewReferenceVisualization visualizationReference={this} visualOptions={options} />;
+    return <ViewReferenceVis vis={this} visualOptions={options} />;
   }
 }
 
-export const VisualizationType = TypeField.of<Visualization>([
+export const VisType = TypeField.of<Vis>([
   LineChart,
   BarChart,
-  ReferenceVisualization
+  ReferenceVis
 ]);
 
 export class LayoutEntry {
@@ -226,8 +225,8 @@ export class Component {
   readonly id: string;
   @field()
   readonly title: string;
-  @field({ type: VisualizationType })
-  readonly visualization: Visualization;
+  @field({ type: VisType })
+  readonly visualization: Vis;
 
   constructor(values: any) {
     this.id = values.id;
@@ -347,7 +346,7 @@ export class DashboardEntry {
 
 export const DEFAULT_REFERENCE = decode({
   id: ""
-}, ReferenceVisualization);
+}, ReferenceVis);
 
 export const DEFAULT_LINE_CHART = decode({
   stacked: false,
@@ -359,12 +358,12 @@ export const DEFAULT_BAR_CHART = decode({
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, BarChart);
 
-interface VisualizationConstructor extends Constructor<Visualization> {
+interface VisualizationConstructor extends Constructor<Vis> {
   type: string;
 }
 
 export const VISUALIZATION_TYPES: VisualizationConstructor[] = [
-  ReferenceVisualization,
+  ReferenceVis,
   LineChart,
   BarChart
 ];

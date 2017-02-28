@@ -1,4 +1,4 @@
-import { Dashboard, DashboardEntry, EmbeddedDataSource, Visualization, VisualizationType } from 'api/model';
+import { Dashboard, DashboardEntry, EmbeddedDataSource, Vis, VisType } from 'api/model';
 import { InjectedRouter } from 'react-router';
 import { Filter } from 'api/filter';
 import { Optional } from 'optional';
@@ -27,8 +27,8 @@ export class DatabaseContent {
   dashboards: { [s: string]: Dashboard };
   @field()
   starred: { [s: string]: boolean };
-  @field({ type: new MapField({ value: VisualizationType }) })
-  visualizations: { [s: string]: Visualization };
+  @field({ type: new MapField({ value: VisType }) })
+  visualizations: { [s: string]: Vis };
   @field({ type: new MapField({ value: EmbeddedDataSource }) })
   dataSources: { [s: string]: EmbeddedDataSource };
   @field({ type: User })
@@ -59,7 +59,7 @@ export interface Database {
 
   setStarred(dashboardId: string, starred: boolean): Promise<{}>;
 
-  getVisualization(visualizationId: string): Promise<Optional<Visualization>>;
+  getVisualization(visualizationId: string): Promise<Optional<Vis>>;
 
   getDataSource(dataSourceId: string): Promise<Optional<EmbeddedDataSource>>;
 

@@ -1,7 +1,7 @@
 import { Filter } from 'api/filter';
 import { Database } from 'api/interfaces';
 import { DashboardPage, User, DatabaseContent } from 'api/interfaces';
-import { Dashboard, DashboardEntry, Visualization, DataSource } from 'api/model';
+import { Dashboard, DashboardEntry, Vis, DataSource } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import Initial from './MockDatabaseInitial';
 import { encode, decode } from 'mapping';
@@ -105,7 +105,7 @@ export default class MockDatabase implements Database {
     return Promise.resolve({});
   }
 
-  public getVisualization(visualizationId: string): Promise<Optional<Visualization>> {
+  public getVisualization(visualizationId: string): Promise<Optional<Vis>> {
     return new Promise((resolve, _reject) => {
       setTimeout(() => {
         resolve(ofNullable(this.content.visualizations[visualizationId]));

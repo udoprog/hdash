@@ -2,7 +2,7 @@ import { DatabaseContent } from 'api/interfaces';
 import { Filter } from 'api/filter';
 import { Database } from 'api/interfaces';
 import { DashboardPage, User } from 'api/interfaces';
-import { Dashboard, Visualization, DataSource } from 'api/model';
+import { Dashboard, Vis, DataSource } from 'api/model';
 import { Optional } from 'optional';
 
 export default class RealDatabase implements Database {
@@ -30,7 +30,7 @@ export default class RealDatabase implements Database {
     return Promise.reject(new Error("not implemented"));
   }
 
-  public getVisualization(_visualizationId: string): Promise<Optional<Visualization>> {
+  public getVisualization(_visualizationId: string): Promise<Optional<Vis>> {
     return Promise.reject(new Error("not implemented"));
   }
 

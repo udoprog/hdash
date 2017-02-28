@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { PagesContext } from 'api/interfaces';
-import { Component, Visualization } from 'api/model';
+import { Component, Vis } from 'api/model';
 import { Row, Col, Grid, Button, Glyphicon, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
-import EditVisualization from './EditVisualization';
+import EditVis from './EditVis';
 import { mutate } from 'mapping';
 
 interface Props {
@@ -43,7 +43,7 @@ export default class EditComponent extends React.Component<Props, State> {
           </Col>
         </Row>
 
-        <EditVisualization visualization={component.visualization} onChange={visualization => this.changeVisualization(visualization)} />
+        <EditVis vis={component.visualization} onChange={visualization => this.changeVisualization(visualization)} />
 
         <Row>
           <Col sm={12}>
@@ -57,7 +57,7 @@ export default class EditComponent extends React.Component<Props, State> {
     );
   }
 
-  private changeVisualization(visualization: Visualization) {
+  private changeVisualization(visualization: Vis) {
     this.mutate({ visualization: visualization });
   }
 
