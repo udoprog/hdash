@@ -1,11 +1,11 @@
 import React from 'react';
-import { Visualization, VisualizationReference, VisualOptions } from 'api/model';
+import { Visualization, ReferenceVisualization, VisualOptions } from 'api/model';
 import { Optional, absent, of } from 'optional';
 import { PagesContext } from 'api/interfaces';
 import { Glyphicon } from 'react-bootstrap';
 
 interface Props {
-  visualizationReference: VisualizationReference;
+  visualizationReference: ReferenceVisualization;
   visualOptions: VisualOptions;
 }
 
@@ -15,7 +15,7 @@ interface State {
   lastId: Optional<string>;
 }
 
-export default class ViewVisualizationReference extends React.Component<Props, State> {
+export default class ViewReferenceVisualization extends React.Component<Props, State> {
   context: PagesContext;
 
   public static contextTypes: any = {

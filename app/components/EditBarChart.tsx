@@ -1,15 +1,23 @@
 import React from 'react';
-import { BarChart } from 'api/model';
+import { BarChart, EditOptions, DataSource } from 'api/model';
 import { Form, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
+import { clone } from 'mapping';
 import EditDataSource from 'components/EditDataSource';
 
 interface Props {
   barChart: BarChart;
+  editOptions: EditOptions<BarChart>;
 }
 
 export default class EditBarChart extends React.Component<Props, {}> {
   public render() {
-    const { barChart } = this.props;
+    const { barChart, editOptions } = this.props;
+
+    const options = {
+      onChange: (dataSource: DataSource) => {
+        editOptions.onChange(clone(barChart, { dataSource: dataSource }))
+      }
+    };
 
     return (
       <Form>
@@ -20,7 +28,7 @@ export default class EditBarChart extends React.Component<Props, {}> {
           </FormControl.Static>
         </FormGroup>
 
-        <EditDataSource datasource={barChart.datasource} />
+        <EditDataSource dataSource={barChart.dataSource} editOptions={options} />
       </Form >
     );
   }

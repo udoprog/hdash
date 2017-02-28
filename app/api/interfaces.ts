@@ -1,4 +1,4 @@
-import { Dashboard, DashboardEntry, DataSourceData, Visualization, VisualizationType } from 'api/model';
+import { Dashboard, DashboardEntry, EmbeddedDataSource, Visualization, VisualizationType } from 'api/model';
 import { InjectedRouter } from 'react-router';
 import { Filter } from 'api/filter';
 import { Optional } from 'optional';
@@ -29,8 +29,8 @@ export class DatabaseContent {
   starred: { [s: string]: boolean };
   @field({ type: new MapField({ value: VisualizationType }) })
   visualizations: { [s: string]: Visualization };
-  @field({ type: new MapField({ value: DataSourceData }) })
-  datasources: { [s: string]: DataSourceData };
+  @field({ type: new MapField({ value: EmbeddedDataSource }) })
+  dataSources: { [s: string]: EmbeddedDataSource };
   @field({ type: User })
   user: User;
 
@@ -38,7 +38,7 @@ export class DatabaseContent {
     this.dashboards = values.dashboards;
     this.starred = values.starred;
     this.visualizations = values.visualizations;
-    this.datasources = values.datasources;
+    this.dataSources = values.dataSources;
     this.user = values.user;
   }
 }
@@ -61,7 +61,7 @@ export interface Database {
 
   getVisualization(visualizationId: string): Promise<Optional<Visualization>>;
 
-  getDataSource(dataSourceId: string): Promise<Optional<DataSourceData>>;
+  getDataSource(dataSourceId: string): Promise<Optional<EmbeddedDataSource>>;
 
   /**
    * Export the content of the database.

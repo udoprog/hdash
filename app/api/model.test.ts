@@ -19,13 +19,12 @@ describe('model', () => {
       id: "hello",
       title: "Foo Bar",
       showTitle: false,
-      visualization: { type: 'reference', id: 'a' },
-      datasource: { type: 'reference', id: 'a' }
+      visualization: { type: 'reference', id: 'a' }
     }, { title: "other" });
   });
 
   it('should handle DataSource', () => {
-    assertModel(model.DataSourceData, {
+    assertModel(model.EmbeddedDataSource, {
       query: "Query"
     }, { query: "Other Query" });
   });

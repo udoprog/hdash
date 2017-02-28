@@ -1,6 +1,7 @@
 import React from 'react';
-import { LineChart, EditOptions } from 'api/model';
+import { LineChart, EditOptions, DataSource } from 'api/model';
 import { Form, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
+import { clone } from 'mapping';
 import EditDataSource from 'components/EditDataSource';
 
 interface Props {
@@ -8,21 +9,15 @@ interface Props {
   editOptions: EditOptions<LineChart>;
 }
 
-interface State {
-  lineChart: LineChart;
-}
-
-export default class EditLineChart extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      lineChart: props.lineChart
-    };
-  }
-
+export default class EditLineChart extends React.Component<Props, {}> {
   public render() {
-    const { lineChart } = this.state;
+    const { lineChart, editOptions } = this.props;
+
+    const options = {
+      onChange: (dataSource: DataSource) => {
+        editOptions.onChange(clone(lineChart, { dataSource: dataSource }))
+      }
+    };
 
     return (
       <Form>
@@ -33,7 +28,7 @@ export default class EditLineChart extends React.Component<Props, State> {
           </FormControl.Static>
         </FormGroup>
 
-        <EditDataSource datasource={lineChart.datasource} />
+        <EditDataSource dataSource={lineChart.dataSource} editOptions={options} />
       </Form >
     );
   }

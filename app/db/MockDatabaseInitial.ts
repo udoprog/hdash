@@ -32,7 +32,7 @@ const dashboards: any = {
         id: "some",
         title: "A title",
         showTitle: true,
-        visualization: { type: "reference", id: "a" }
+        visualization: { type: "reference", id: "vis1" }
       }
     ],
     layout: [
@@ -46,15 +46,15 @@ const starred: any = {
 };
 
 const visualizations: any = {
-  "a": {
+  "vis1": {
     type: "bar-chart",
     stacked: false,
-    datasource: { type: "reference", id: "a" }
+    dataSource: { type: "reference", id: "datasource" }
   }
 };
 
-const datasources: any = {
-  "a": {
+const dataSources: any = {
+  "datasource": {
     query: "average by host"
   }
 };
@@ -65,7 +65,7 @@ const content = decode({
   dashboards: dashboards,
   starred: starred,
   visualizations: visualizations,
-  datasources: datasources,
+  dataSources: dataSources,
   user: user
 }, DatabaseContent);
 

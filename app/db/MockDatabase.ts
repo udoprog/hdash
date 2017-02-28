@@ -114,7 +114,7 @@ export default class MockDatabase implements Database {
   }
 
   public getDataSource(dataSourceId: string): Promise<Optional<DataSource>> {
-    return Promise.resolve(ofNullable(this.content.datasources[dataSourceId]));
+    return Promise.resolve(ofNullable(this.content.dataSources[dataSourceId]));
   }
 
   public export(): Promise<DatabaseContent> {

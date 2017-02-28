@@ -1,14 +1,14 @@
 import React from 'react';
-import { VisualizationReference, EditOptions } from 'api/model';
+import { ReferenceVisualization, EditOptions } from 'api/model';
 import { Form, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import { clone } from 'mapping';
 
 interface Props {
-  visualizationReference: VisualizationReference;
-  editOptions: EditOptions<VisualizationReference>;
+  visualizationReference: ReferenceVisualization;
+  editOptions: EditOptions<ReferenceVisualization>;
 }
 
-export default class EditVisualizationReference extends React.Component<Props, {}> {
+export default class EditReferenceVisualization extends React.Component<Props, {}> {
   public render() {
     const { visualizationReference } = this.props;
 

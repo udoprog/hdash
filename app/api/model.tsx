@@ -5,40 +5,16 @@ import EditBarChart from 'components/EditBarChart';
 import ViewBarChart from 'components/ViewBarChart';
 import EditLineChart from 'components/EditLineChart';
 import ViewLineChart from 'components/ViewLineChart';
-import ViewVisualizationReference from 'components/ViewVisualizationReference';
-import EditVisualizationReference from 'components/EditVisualizationReference';
+import ViewReferenceVisualization from 'components/ViewReferenceVisualization';
+import EditReferenceVisualization from 'components/EditReferenceVisualization';
+
+import EditEmbeddedDataSource from 'components/EditEmbeddedDataSource';
+import EditReferenceDataSource from 'components/EditReferenceDataSource';
 
 const MAX_ATTEMPTS = 1000;
 const RANGE = 1000000;
 
 var randomId = Math.round(Math.random() * RANGE);
-
-export interface DataSource {
-}
-
-export class DataSourceData implements DataSource {
-  @field()
-  readonly query: string;
-
-  constructor(values: any) {
-    this.query = values.query;
-  }
-
-  static type = 'embedded';
-}
-
-export class DataSourceReference implements DataSource {
-  @field()
-  readonly id: string;
-
-  constructor(values: any) {
-    this.id = values.id;
-  }
-
-  static type = 'reference';
-}
-
-export const DataSourceType = TypeField.of<DataSource>([DataSourceData, DataSourceReference]);
 
 export interface EditOptions<T> {
   onChange: (value: T) => void;
@@ -47,6 +23,58 @@ export interface EditOptions<T> {
 export interface VisualOptions {
   height?: number;
 }
+
+export interface DataSource {
+  type: string;
+
+  renderEdit(options: EditOptions<this>): any;
+}
+
+export class EmbeddedDataSource implements DataSource {
+  static type = 'embedded';
+
+  type: string;
+
+  @field()
+  readonly query: string;
+
+  constructor(values: any) {
+    this.type = EmbeddedDataSource.type;
+    this.query = values.query;
+  }
+
+  renderEdit(options: EditOptions<EmbeddedDataSource>): any {
+    return (
+      <EditEmbeddedDataSource dataSource={this} editOptions={options} />
+    );
+  }
+}
+
+export class ReferenceDataSource implements DataSource {
+  static type = 'reference';
+
+  type: string;
+
+  @field()
+  readonly id: string;
+
+  constructor(values: any) {
+    this.type = ReferenceDataSource.type;
+    this.id = values.id;
+  }
+
+  renderEdit(options: EditOptions<ReferenceDataSource>): any {
+    return (
+      <EditReferenceDataSource dataSource={this} editOptions={options} />
+    );
+  }
+}
+
+export const DataSourceType = TypeField.of<DataSource>([EmbeddedDataSource, ReferenceDataSource]);
+
+export const DEFAULT_DATA_SOURCE = decode({
+  query: ""
+}, EmbeddedDataSource);
 
 export interface Visualization {
   type: string;
@@ -67,12 +95,12 @@ export class LineChart implements Visualization {
   @field()
   stacked: boolean;
   @field({ type: DataSourceType })
-  datasource: DataSource;
+  dataSource: DataSource;
 
   constructor(values: any) {
     this.type = LineChart.type;
     this.stacked = values.stacked;
-    this.datasource = values.datasource;
+    this.dataSource = values.dataSource;
   }
 
   typeTitle(): string {
@@ -98,21 +126,21 @@ export class BarChart implements Visualization {
   @field()
   stacked: boolean;
   @field({ type: DataSourceType })
-  datasource: DataSource;
+  dataSource: DataSource;
 
   constructor(values: any) {
     this.type = BarChart.type;
     this.stacked = values.stacked;
-    this.datasource = values.datasource;
+    this.dataSource = values.dataSource;
   }
 
   typeTitle(): string {
     return "Bar Chart";
   }
 
-  renderEdit(): any {
+  renderEdit(editOptions: EditOptions<BarChart>): any {
     return (
-      <EditBarChart barChart={this} />
+      <EditBarChart barChart={this} editOptions={editOptions} />
     );
   }
 
@@ -121,14 +149,14 @@ export class BarChart implements Visualization {
   }
 }
 
-export class VisualizationReference implements Visualization {
+export class ReferenceVisualization implements Visualization {
   type: string;
 
   @field()
   readonly id: string;
 
   constructor(values: any) {
-    this.type = VisualizationReference.type;
+    this.type = ReferenceVisualization.type;
     this.id = values.id;
   }
 
@@ -136,14 +164,14 @@ export class VisualizationReference implements Visualization {
     return "Reference title";
   }
 
-  renderEdit(options: EditOptions<VisualizationReference>): any {
+  renderEdit(options: EditOptions<ReferenceVisualization>): any {
     return (
-      <EditVisualizationReference visualizationReference={this} editOptions={options} />
+      <EditReferenceVisualization visualizationReference={this} editOptions={options} />
     );
   }
 
   renderVisual(options: VisualOptions) {
-    return <ViewVisualizationReference visualizationReference={this} visualOptions={options} />;
+    return <ViewReferenceVisualization visualizationReference={this} visualOptions={options} />;
   }
 
   static type = 'reference';
@@ -152,7 +180,7 @@ export class VisualizationReference implements Visualization {
 export const VisualizationType = TypeField.of<Visualization>([
   LineChart,
   BarChart,
-  VisualizationReference
+  ReferenceVisualization
 ]);
 
 export class LayoutEntry {
@@ -233,7 +261,7 @@ export class Dashboard {
       visualization: {
         type: 'line-chart',
         stacked: false,
-        datasource: {
+        dataSource: {
           type: 'embedded',
           query: ''
         }
@@ -305,16 +333,16 @@ export class DashboardEntry {
 
 export const DEFAULT_REFERENCE = decode({
   id: ""
-}, VisualizationReference);
+}, ReferenceVisualization);
 
 export const DEFAULT_LINE_CHART = decode({
   stacked: false,
-  datasource: { type: 'reference', id: "" }
+  dataSource: DEFAULT_DATA_SOURCE
 }, LineChart);
 
 export const DEFAULT_BAR_CHART = decode({
   stacked: false,
-  datasource: { type: 'reference', id: "" }
+  dataSource: DEFAULT_DATA_SOURCE
 }, BarChart);
 
 interface VisualizationConstructor extends Constructor<Visualization> {
@@ -322,7 +350,7 @@ interface VisualizationConstructor extends Constructor<Visualization> {
 }
 
 export const VISUALIZATION_TYPES: VisualizationConstructor[] = [
-  VisualizationReference,
+  ReferenceVisualization,
   LineChart,
   BarChart
 ];
