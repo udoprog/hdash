@@ -4,12 +4,8 @@ export class PathError extends Error {
   readonly path: Path;
 
   constructor(message: string, path: Path) {
-    super(message);
+    super(path.formatPath() + ": " + message);
     this.path = path;
-  }
-
-  toString(): string {
-    return this.path.formatPath() + ": " + this.message;
   }
 }
 
@@ -143,7 +139,7 @@ export class TypeField<T extends Target> implements Field<T> {
     return new TypeField<T>(
       input => (<any>input).constructor.type,
       types.map(t => {
-        return {type: t.type, target: t} as TypeMapping<T>;
+        return { type: t.type, target: t } as TypeMapping<T>;
       })
     );
   }
@@ -241,21 +237,21 @@ export class ArrayField<T extends Target> implements Field<Array<T>> {
   }
 }
 
-export class MapField<T extends Target> implements Field<{[key: string]: T}> {
+export class MapField<T extends Target> implements Field<{ [key: string]: T }> {
   public static __field = true;
 
   readonly value: Field<T>;
   readonly optional: boolean;
   readonly descriptor: string;
 
-  constructor({value, optional} : {value: ToField<T>, optional?: boolean}) {
+  constructor({value, optional}: { value: ToField<T>, optional?: boolean }) {
     this.value = toField<T>(value, optional);
     this.optional = this.value.optional;
     this.descriptor = `{[key: string]: ${this.value.descriptor}}`;
   }
 
-  public decode(input: any, path: Path): {[s: string]: T} {
-    const output: {[s: string]: T} = {};
+  public decode(input: any, path: Path): { [s: string]: T } {
+    const output: { [s: string]: T } = {};
 
     Object.keys(input).forEach(key => {
       output[key] = this.value.decode(input[key], path.extend(key));
@@ -264,8 +260,8 @@ export class MapField<T extends Target> implements Field<{[key: string]: T}> {
     return output;
   }
 
-  public encode(input: {[s: string]: T}, path: Path): any {
-    const output: {[s: string]: T} = {};
+  public encode(input: { [s: string]: T }, path: Path): any {
+    const output: { [s: string]: T } = {};
 
     Object.keys(input).forEach(key => {
       output[key] = this.value.encode(input[key], path.extend(key));

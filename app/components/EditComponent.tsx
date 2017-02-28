@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { PagesContext } from 'api/interfaces';
-import { Component } from 'api/model';
+import { Component, Visualization } from 'api/model';
 import { Row, Col, Grid, Button, Glyphicon, FormGroup, ControlLabel, FormControl, Checkbox } from 'react-bootstrap';
 import EditVisualization from './EditVisualization';
 import { mutate } from 'mapping';
-import EditDataSource from './EditDataSource';
 
 interface Props {
   component: Component;
@@ -51,9 +50,7 @@ export default class EditComponent extends React.Component<Props, State> {
           </Col>
         </Row>
 
-        <EditVisualization visualization={component.visualization} />
-
-        <EditDataSource datasource={component.datasource} />
+        <EditVisualization visualization={component.visualization} onChange={visualization => this.changeVisualization(visualization)} />
 
         <Row>
           <Col sm={12}>
@@ -67,11 +64,17 @@ export default class EditComponent extends React.Component<Props, State> {
     );
   }
 
+  private changeVisualization(visualization: Visualization) {
+    this.mutate({ visualization: visualization });
+  }
+
   private back() {
     this.props.onBack(this.state.component);
   }
 
   private mutate<K extends keyof Component>(mutation: Pick<Component, K>) {
-    this.setState((prev, _) => ({ component: mutate(prev.component, mutation) }));
+    this.setState((prev, _) => {
+      return { component: mutate(prev.component, mutation) };
+    });
   }
 };

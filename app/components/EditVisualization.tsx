@@ -1,61 +1,70 @@
 import * as React from 'react';
-import { PagesContext } from 'api/interfaces';
-import * as model from 'api/model';
-import { Row, Col } from 'react-bootstrap';
-import { Optional, absent, of } from 'optional';
-
-import Visualization from './Visualization';
+import { Visualization, VisualizationReference, LineChart, BarChart, DEFAULT_REFERENCE, DEFAULT_BAR_CHART, DEFAULT_LINE_CHART } from 'api/model';
+import { Row, Col, FormGroup, ControlLabel, FormControl, ButtonGroup, Button } from 'react-bootstrap';
+import { clone } from 'mapping';
 
 interface Props {
-  visualization: model.VisualizationReference | model.Visualization
+  visualization: Visualization;
+  onChange: (visualization: Visualization) => void;
 }
 
 interface State {
-  visualization: Optional<model.Visualization>
+  visualization: Visualization
 }
 
 export default class EditVisualization extends React.Component<Props, State> {
-  context: PagesContext;
-
-  public static contextTypes: any = {
-    db: React.PropTypes.object
-  };
-
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      visualization: absent<model.Visualization>()
-    };
-  }
-
-  public componentDidMount() {
-    const { visualization } = this.props;
-
-    if (visualization instanceof model.VisualizationReference) {
-      this.context.db.getVisualization(visualization.id).then(visualization => {
-        this.setState({ visualization: visualization })
-      });
-    } else {
-      this.setState({ visualization: of(visualization) });
-    }
-  }
-
   public render() {
-    const { visualization } = this.state;
+    const { visualization, onChange } = this.props;
 
-    const chart = visualization.map(v => <Visualization height={200} visualization={v} />).orElseGet(() => <em>No Chart</em>);
+    const typePicker = (
+      <FormGroup >
+        <ControlLabel>Type:</ControlLabel>
+        <FormControl.Static componentClass="div">
+          <ButtonGroup>
+            <Button active={visualization.type === VisualizationReference.type} onClick={() => this.changeType(VisualizationReference.type)}>
+              Reference
+              </Button>
+            <Button active={visualization.type === LineChart.type} onClick={() => this.changeType(LineChart.type)}>
+              Line Chart
+              </Button>
+            <Button active={visualization.type === BarChart.type} onClick={() => this.changeType(BarChart.type)}>
+              Bar Chart
+              </Button>
+          </ButtonGroup>
+        </FormControl.Static>
+      </FormGroup >
+    );
+
+    const editOptions = { onChange: onChange };
 
     return (
       <div>
-        <h4>Editing {visualization.map(v => <span>{v.typeTitle()}</span>).orElse(<em>Unknown</em>)}</h4>
+        {typePicker}
 
         <Row>
-          <Col sm={12}>{chart}</Col>
+          <Col sm={12}>{visualization.renderVisual({ height: 200 })}</Col>
         </Row>
 
-        {visualization.map(v => v.renderEdit()).get()}
+        {visualization.renderEdit(editOptions)}
       </div>
     );
+  }
+
+  private changeType(type: string) {
+    const { onChange } = this.props;
+
+    switch (type) {
+      case VisualizationReference.type:
+        onChange(clone(DEFAULT_REFERENCE));
+        break;
+      case BarChart.type:
+        onChange(clone(DEFAULT_BAR_CHART));
+        break;
+      case LineChart.type:
+        onChange(clone(DEFAULT_LINE_CHART));
+        break;
+      default:
+        throw new Error("Unsupported type: " + type);
+    }
   }
 };

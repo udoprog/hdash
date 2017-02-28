@@ -1,7 +1,5 @@
-import * as React from 'react';
-import * as model from 'api/model';
-import { Optional, absent, of } from 'optional';
-import { PagesContext } from 'api/interfaces';
+import React from 'react';
+import { BarChart, VisualOptions } from 'api/model';
 import { Chart } from 'chart.js';
 
 const DEFAULT_HEIGHT = 300;
@@ -45,35 +43,16 @@ const OPTIONS = {
 };
 
 interface Props {
-  height?: number;
-  visualization: model.VisualizationReference | model.Visualization;
+  barChart: BarChart; 
+  visualOptions: VisualOptions;
 }
 
-interface State {
-  visualization: Optional<model.Visualization>;
-}
-
-export default class Visualization extends React.Component<Props, State> {
-  context: PagesContext;
-
+export default class ViewBarChart extends React.Component<Props, {}> {
   refs: {
-    [string: string]: any;
     canvas: any;
-  };
+  }
 
   chart?: Chart;
-
-  public static contextTypes: any = {
-    db: React.PropTypes.object
-  };
-
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      visualization: absent<model.Visualization>()
-    };
-  }
 
   public componentDidUpdate() {
     if (this.chart) {
@@ -82,16 +61,6 @@ export default class Visualization extends React.Component<Props, State> {
   }
 
   public componentDidMount() {
-    const { visualization } = this.props;
-
-    if (visualization instanceof model.VisualizationReference) {
-      this.context.db.getVisualization(visualization.id).then(visualization => {
-        this.setState({ visualization: visualization })
-      });
-    } else {
-      this.setState({ visualization: of(visualization) });
-    }
-
     this.chart = new Chart(this.refs.canvas, { type: 'bar', data: DATA, options: OPTIONS });
   }
 
@@ -103,7 +72,8 @@ export default class Visualization extends React.Component<Props, State> {
   }
 
   public render() {
-    const { height } = this.props;
+    const { visualOptions } = this.props;
+    const { height } = visualOptions;
 
     return (
       <canvas ref="canvas" width="100%" height={height || DEFAULT_HEIGHT} />

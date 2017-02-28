@@ -1,7 +1,12 @@
 import React from 'react';
-import { decode, field, clone, TypeField, ArrayField } from 'mapping';
+import { decode, field, clone, TypeField, ArrayField, Constructor } from 'mapping';
 import { Optional, ofNullable } from 'optional';
 import EditBarChart from 'components/EditBarChart';
+import ViewBarChart from 'components/ViewBarChart';
+import EditLineChart from 'components/EditLineChart';
+import ViewLineChart from 'components/ViewLineChart';
+import ViewVisualizationReference from 'components/ViewVisualizationReference';
+import EditVisualizationReference from 'components/EditVisualizationReference';
 
 const MAX_ATTEMPTS = 1000;
 const RANGE = 1000000;
@@ -35,18 +40,70 @@ export class DataSourceReference implements DataSource {
 
 export const DataSourceType = TypeField.of<DataSource>([DataSourceData, DataSourceReference]);
 
+export interface EditOptions<T> {
+  onChange: (value: T) => void;
+}
+
+export interface VisualOptions {
+  height?: number;
+}
+
 export interface Visualization {
+  type: string;
+
   typeTitle(): string;
 
-  renderEdit(): any;
+  renderEdit(options: EditOptions<this>): any;
+
+  renderVisual(options: VisualOptions): any;
+}
+
+
+export class LineChart implements Visualization {
+  static type = "line-chart";
+
+  type: string;
+
+  @field()
+  stacked: boolean;
+  @field({ type: DataSourceType })
+  datasource: DataSource;
+
+  constructor(values: any) {
+    this.type = LineChart.type;
+    this.stacked = values.stacked;
+    this.datasource = values.datasource;
+  }
+
+  typeTitle(): string {
+    return "Line Chart";
+  }
+
+  renderEdit(options: EditOptions<LineChart>): any {
+    return (
+      <EditLineChart lineChart={this} editOptions={options} />
+    );
+  }
+
+  renderVisual(options: VisualOptions) {
+    return <ViewLineChart lineChart={this} visualOptions={options} />;
+  }
 }
 
 export class BarChart implements Visualization {
+  static type = "bar-chart";
+
+  type: string;
+
   @field()
   stacked: boolean;
+  @field({ type: DataSourceType })
+  datasource: DataSource;
 
   constructor(values: any) {
+    this.type = BarChart.type;
     this.stacked = values.stacked;
+    this.datasource = values.datasource;
   }
 
   typeTitle(): string {
@@ -55,18 +112,23 @@ export class BarChart implements Visualization {
 
   renderEdit(): any {
     return (
-      <EditBarChart barChart={ this} />
+      <EditBarChart barChart={this} />
     );
   }
 
-  static type = "bar-chart";
+  renderVisual(options: VisualOptions) {
+    return <ViewBarChart barChart={this} visualOptions={options} />;
+  }
 }
 
 export class VisualizationReference implements Visualization {
+  type: string;
+
   @field()
   readonly id: string;
 
   constructor(values: any) {
+    this.type = VisualizationReference.type;
     this.id = values.id;
   }
 
@@ -74,16 +136,24 @@ export class VisualizationReference implements Visualization {
     return "Reference title";
   }
 
-  renderEdit(): any {
+  renderEdit(options: EditOptions<VisualizationReference>): any {
     return (
-      <h1>Reference to {this.id}</h1> 
+      <EditVisualizationReference visualizationReference={this} editOptions={options} />
     );
+  }
+
+  renderVisual(options: VisualOptions) {
+    return <ViewVisualizationReference visualizationReference={this} visualOptions={options} />;
   }
 
   static type = 'reference';
 }
 
-export const VisualizationType = TypeField.of<Visualization>([BarChart, VisualizationReference]);
+export const VisualizationType = TypeField.of<Visualization>([
+  LineChart,
+  BarChart,
+  VisualizationReference
+]);
 
 export class LayoutEntry {
   @field()
@@ -114,19 +184,13 @@ export class Component {
   @field()
   readonly showTitle: boolean;
   @field({ type: VisualizationType })
-  visualization: Visualization;
-  /**
-   * Either an embedded data source, or a reference to one.
-   */
-  @field({ type: DataSourceType })
-  datasource: DataSourceReference | DataSourceData;
+  readonly visualization: Visualization;
 
   constructor(values: any) {
     this.id = values.id;
     this.title = values.title;
     this.showTitle = values.showTitle;
     this.visualization = values.visualization;
-    this.datasource = values.datasource;
   }
 }
 
@@ -167,11 +231,12 @@ export class Dashboard {
       title: '',
       showTitle: true,
       visualization: {
-        type: 'bar-chart'
-      },
-      datasource: {
-        type: 'embedded',
-        query: ''
+        type: 'line-chart',
+        stacked: false,
+        datasource: {
+          type: 'embedded',
+          query: ''
+        }
       }
     }, Component);
 
@@ -237,3 +302,27 @@ export class DashboardEntry {
   @field()
   starred: boolean;
 }
+
+export const DEFAULT_REFERENCE = decode({
+  id: ""
+}, VisualizationReference);
+
+export const DEFAULT_LINE_CHART = decode({
+  stacked: false,
+  datasource: { type: 'reference', id: "" }
+}, LineChart);
+
+export const DEFAULT_BAR_CHART = decode({
+  stacked: false,
+  datasource: { type: 'reference', id: "" }
+}, BarChart);
+
+interface VisualizationConstructor extends Constructor<Visualization> {
+  type: string;
+}
+
+export const VISUALIZATION_TYPES: VisualizationConstructor[] = [
+  VisualizationReference,
+  LineChart,
+  BarChart
+];

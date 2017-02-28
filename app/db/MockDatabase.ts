@@ -106,7 +106,11 @@ export default class MockDatabase implements Database {
   }
 
   public getVisualization(visualizationId: string): Promise<Optional<Visualization>> {
-    return Promise.resolve(ofNullable(this.content.visualizations[visualizationId]));
+    return new Promise((resolve, _reject) => {
+      setTimeout(() => {
+        resolve(ofNullable(this.content.visualizations[visualizationId]));
+      }, 500);
+    });
   }
 
   public getDataSource(dataSourceId: string): Promise<Optional<DataSource>> {

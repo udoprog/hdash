@@ -5,7 +5,6 @@ import { Dashboard, Component, LayoutEntry } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import ReactGridLayout from 'react-grid-layout';
 import EditComponent from 'components/EditComponent';
-import Visualization from 'components/Visualization';
 import { RouteComponentProps } from 'react-router';
 
 const ResponsiveReactGridLayout = ReactGridLayout.WidthProvider(ReactGridLayout);
@@ -171,9 +170,12 @@ export default class DashboardPage extends React.Component<Props, State> {
                   componentClasses += " locked";
                 }
 
+                const visualOptions = {
+                };
+
                 return <div className={componentClasses} key={component.id}>
                   {titlebar}
-                  <Visualization visualization={component.visualization} />
+                  {component.visualization.renderVisual(visualOptions)}
                 </div>;
               })}
             </ResponsiveReactGridLayout>

@@ -32,8 +32,7 @@ const dashboards: any = {
         id: "some",
         title: "A title",
         showTitle: true,
-        visualization: { type: "reference", id: "a" },
-        datasource: { type: "reference", id: "a" }
+        visualization: { type: "reference", id: "a" }
       }
     ],
     layout: [
@@ -49,7 +48,8 @@ const starred: any = {
 const visualizations: any = {
   "a": {
     type: "bar-chart",
-    stacked: false
+    stacked: false,
+    datasource: { type: "reference", id: "a" }
   }
 };
 
