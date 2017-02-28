@@ -1,3 +1,4 @@
+import { DatabaseContent } from 'api/interfaces';
 import { Filter } from 'api/filter';
 import { Database } from 'api/interfaces';
 import { DashboardPage, User } from 'api/interfaces';
@@ -34,6 +35,14 @@ export default class RealDatabase implements Database {
   }
 
   public getDataSource(_dataSourceId: string): Promise<Optional<DataSource>> {
+    return Promise.reject(new Error("not implemented"));
+  }
+
+  public export(): Promise<DatabaseContent> {
+    return Promise.reject(new Error("not implemented"));
+  }
+
+  public import(_content: DatabaseContent): Promise<{}> {
     return Promise.reject(new Error("not implemented"));
   }
 };

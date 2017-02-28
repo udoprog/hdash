@@ -1,0 +1,62 @@
+@import '~react-grid-layout/css/styles.css';
+
+.react-grid-layout {
+  transition: none;
+}
+
+.react-grid-item {
+  transition: none;
+}
+
+@component-padding: 5px;
+@component-border-width: 1px;
+@titlebar-height: ceil((@font-size-large * 2.0));
+@titlebar-padding: ceil((@font-size-large * 0.5));
+
+.component {
+    &.editing {
+      border: 1px solid black;
+      padding: @component-padding - @component-border-width;
+
+      &.visible-titlebar {
+        padding-top: @titlebar-height + @component-padding - @component-border-width;
+      }
+    }
+
+    &.locked {
+      padding: @component-padding;
+
+      &.visible-titlebar {
+        padding-top: @titlebar-height + @component-padding;
+      }
+    }
+
+    &.visible-titlebar {
+      .titlebar {
+        margin-top: -@titlebar-height;
+      }
+    }
+
+    .titlebar {
+      padding: 0px @titlebar-padding;
+      height: @titlebar-height;
+      background-color: @navbar-inverse-bg;
+
+      &.draggable {
+        cursor: pointer;
+      }
+
+      .text {
+        line-height: @titlebar-height;
+        font-size: @font-size-large;
+        color: @navbar-inverse-color;
+        overflow: hidden;
+      }
+
+      .buttons {
+        height: @titlebar-height;
+        display: table-cell;
+        vertical-align: middle;
+      }
+    }
+}

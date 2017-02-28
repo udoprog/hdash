@@ -1,92 +1,62 @@
 import { Filter } from 'api/filter';
 import { Database } from 'api/interfaces';
-import { DashboardPage, User } from 'api/interfaces';
-import { Dashboard, DashboardEntry, Visualization, DataSource, DataSourceData, VisualizationType } from 'api/model';
+import { DashboardPage, User, DatabaseContent } from 'api/interfaces';
+import { Dashboard, DashboardEntry, Visualization, DataSource } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
-import { decode } from 'mapping';
-
-const store: { [s: string]: Dashboard } = {
-  "a": decode({
-    id: "hello",
-    title: "Simple Title",
-    metadata: { owner: "foo" },
-    components: [],
-    layout: []
-  }, Dashboard),
-  "b": decode({
-    id: "world",
-    title: "Complex Title",
-    metadata: { owner: "foo", relation: "tough" },
-    components: [],
-    layout: []
-  }, Dashboard),
-  "c": decode({
-    id: "foo",
-    title: "Foo Title",
-    metadata: { owner: "bar" },
-    components: [],
-    layout: []
-  }, Dashboard),
-  "d": decode({
-    id: "foo",
-    title: "Has Visualization",
-    metadata: { owner: "bar", relation: "loose" },
-    components: [
-      {
-        id: "some",
-        title: "A title",
-        showTitle: true,
-        visualization: { type: "reference", id: "a" },
-        datasource: { type: "reference", id: "a" }
-      }
-    ],
-    layout: [
-      { i: "some", x: 0, y: 0, w: 6, h: 2 }
-    ]
-  }, Dashboard),
-};
-
-const starredStore: { [s: string]: boolean } = {
-  "a": true
-};
-
-const visualizationStore: { [s: string]: Visualization } = {
-  "a": decode({
-    type: "bar-chart"
-  }, VisualizationType)
-};
-
-const dataSourceStore: { [s: string]: DataSourceData } = {
-  "a": decode({
-    query: "average by host"
-  }, DataSourceData)
-};
-
-const user = { name: "John Doe", email: "john@doe.com" };
+import Initial from './MockDatabaseInitial';
+import { encode, decode } from 'mapping';
 
 export default class MockDatabase implements Database {
+  private content: DatabaseContent;
+
+  constructor() {
+    if (!localStorage.getItem('content')) {
+      this.content = Initial;
+      this.write();
+    } else {
+      this.read();
+    }
+  }
+
+  public static clear() {
+    localStorage.removeItem('content');
+  }
+
+  private write() {
+    localStorage.setItem('content', JSON.stringify(encode(this.content)));
+  }
+
+  private read() {
+    const contentString = localStorage.getItem('content');
+
+    if (contentString) {
+      this.content = decode(JSON.parse(contentString), DatabaseContent);
+    }
+  }
+
   public me(): Promise<Optional<User>> {
-    return Promise.resolve(of(user as User));
+    return Promise.resolve(of(this.content.user as User));
   }
 
   public get(id: string): Promise<Optional<Dashboard>> {
-    return Promise.resolve(ofNullable(store[id]));
+    return Promise.resolve(ofNullable(this.content.dashboards[id]));
   }
 
   public save(dashboard: Dashboard): Promise<{}> {
-    store[dashboard.id] = dashboard;
+    this.content.dashboards[dashboard.id] = dashboard;
+    this.write();
     return Promise.resolve({});
   }
 
   public search(filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage> {
-    let result: DashboardEntry[] = Object.keys(store).map(key => {
-      let value = store[key];
+    let result: DashboardEntry[] = Object.keys(this.content.dashboards).map(key => {
+      let value = this.content.dashboards[key];
 
       return {
         id: key,
         title: value.title,
         metadata: value.metadata,
-        starred: starredStore[key]
+        starred: this.content.starred[key]
       };
     });
 
@@ -94,8 +64,8 @@ export default class MockDatabase implements Database {
   }
 
   public searchStarred(filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage> {
-    let result: DashboardEntry[] = Object.keys(starredStore).map(key => {
-      let value = store[key];
+    let result: DashboardEntry[] = Object.keys(this.content.starred).map(key => {
+      let value = this.content.dashboards[key];
 
       return {
         id: key,
@@ -126,19 +96,29 @@ export default class MockDatabase implements Database {
 
   public setStarred(dashboardId: string, starred: boolean): Promise<{}> {
     if (starred) {
-      starredStore[dashboardId] = starred;
+      this.content.starred[dashboardId] = starred;
     } else {
-      delete starredStore[dashboardId];
+      delete this.content.starred[dashboardId];
     }
 
+    this.write();
     return Promise.resolve({});
   }
 
   public getVisualization(visualizationId: string): Promise<Optional<Visualization>> {
-    return Promise.resolve(ofNullable(visualizationStore[visualizationId]));
+    return Promise.resolve(ofNullable(this.content.visualizations[visualizationId]));
   }
 
   public getDataSource(dataSourceId: string): Promise<Optional<DataSource>> {
-    return Promise.resolve(ofNullable(dataSourceStore[dataSourceId]));
+    return Promise.resolve(ofNullable(this.content.datasources[dataSourceId]));
+  }
+
+  public export(): Promise<DatabaseContent> {
+    return Promise.resolve(this.content);
+  }
+
+  public import(content: DatabaseContent): Promise<{}> {
+    this.content = content;
+    return Promise.resolve({});
   }
 };

@@ -1,5 +1,18 @@
 import { Optional, of, absent } from 'optional';
 
+export class PathError extends Error {
+  readonly path: Path;
+
+  constructor(message: string, path: Path) {
+    super(message);
+    this.path = path;
+  }
+
+  toString(): string {
+    return this.path.formatPath() + ": " + this.message;
+  }
+}
+
 export interface Constructor<T> {
   new (values: { [s: string]: any }): T;
 
@@ -42,10 +55,10 @@ class Path {
   }
 
   public error(message: string): Error {
-    return new Error(this.formatPath() + ": " + message);
+    return new PathError(message, this);
   }
 
-  private formatPath(): string {
+  public formatPath(): string {
     const full: string[] = [];
 
     var current: Path = this;
@@ -69,7 +82,7 @@ class Path {
   }
 }
 
-class AssignField implements Field<any> {
+class AssignField<T> implements Field<T> {
   public static __field = true;
 
   readonly optional: boolean;
@@ -95,6 +108,10 @@ class AssignField implements Field<any> {
 export type ToField<T> = Field<T> | Constructor<T>;
 
 function toField<T>(argument: ToField<T>, optional: boolean): Field<T> {
+  if (!argument) {
+    return new AssignField<T>(optional);
+  }
+
   if (argument.constructor && (argument.constructor as any).__field) {
     return argument as Field<T>;
   }
@@ -221,6 +238,44 @@ export class ArrayField<T extends Target> implements Field<Array<T>> {
     return a.every((value, index) => {
       return this.field.equals(value, b[index]);
     });
+  }
+}
+
+export class MapField<T extends Target> implements Field<{[key: string]: T}> {
+  public static __field = true;
+
+  readonly value: Field<T>;
+  readonly optional: boolean;
+  readonly descriptor: string;
+
+  constructor({value, optional} : {value: ToField<T>, optional?: boolean}) {
+    this.value = toField<T>(value, optional);
+    this.optional = this.value.optional;
+    this.descriptor = `{[key: string]: ${this.value.descriptor}}`;
+  }
+
+  public decode(input: any, path: Path): {[s: string]: T} {
+    const output: {[s: string]: T} = {};
+
+    Object.keys(input).forEach(key => {
+      output[key] = this.value.decode(input[key], path.extend(key));
+    });
+
+    return output;
+  }
+
+  public encode(input: {[s: string]: T}, path: Path): any {
+    const output: {[s: string]: T} = {};
+
+    Object.keys(input).forEach(key => {
+      output[key] = this.value.encode(input[key], path.extend(key));
+    });
+
+    return output;
+  }
+
+  public equals(a: T, b: T): boolean {
+    return equals(a, b);
   }
 }
 

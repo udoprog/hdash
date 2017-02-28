@@ -34,6 +34,7 @@ const DATA = {
 const OPTIONS = {
   responsive: true,
   maintainAspectRatio: false,
+  animation: false,
   scales: {
     yAxes: [{
       ticks: {

@@ -47,6 +47,10 @@ export default class IndexPage extends React.Component<any, {}> {
             </Nav>
 
             <Nav pullRight>
+              <LinkContainer to="/admin">
+                <NavItem>Admin</NavItem>
+              </LinkContainer>
+
               <LinkContainer to="/me">
                 <NavItem>User</NavItem>
               </LinkContainer>

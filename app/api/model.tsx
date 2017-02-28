@@ -1,8 +1,12 @@
+import React from 'react';
 import { decode, field, clone, TypeField, ArrayField } from 'mapping';
 import { Optional, ofNullable } from 'optional';
+import EditBarChart from 'components/EditBarChart';
 
-// TODO: change to something better;
-var randomId = 0;
+const MAX_ATTEMPTS = 1000;
+const RANGE = 1000000;
+
+var randomId = Math.round(Math.random() * RANGE);
 
 export interface DataSource {
 }
@@ -33,11 +37,26 @@ export const DataSourceType = TypeField.of<DataSource>([DataSourceData, DataSour
 
 export interface Visualization {
   typeTitle(): string;
+
+  renderEdit(): any;
 }
 
 export class BarChart implements Visualization {
+  @field()
+  stacked: boolean;
+
+  constructor(values: any) {
+    this.stacked = values.stacked;
+  }
+
   typeTitle(): string {
     return "Bar Chart";
+  }
+
+  renderEdit(): any {
+    return (
+      <EditBarChart barChart={ this} />
+    );
   }
 
   static type = "bar-chart";
@@ -53,6 +72,12 @@ export class VisualizationReference implements Visualization {
 
   typeTitle(): string {
     return "Reference title";
+  }
+
+  renderEdit(): any {
+    return (
+      <h1>Reference to {this.id}</h1> 
+    );
   }
 
   static type = 'reference';
@@ -138,15 +163,15 @@ export class Dashboard {
     const layout = this.layout.slice();
 
     const newComponent = decode({
-      id: (randomId++).toString(),
-      title: "",
+      id: this.newComponentId(),
+      title: '',
       showTitle: true,
       visualization: {
         type: 'bar-chart'
       },
       datasource: {
         type: 'embedded',
-        query: ""
+        query: ''
       }
     }, Component);
 
@@ -156,7 +181,7 @@ export class Dashboard {
       i: newComponent.id,
       x: 0,
       y: 0,
-      w: 6,
+      w: 4,
       h: 2,
     }, LayoutEntry));
 
@@ -164,6 +189,20 @@ export class Dashboard {
       components: newComponents,
       layout: layout
     });
+  }
+
+  public newComponentId(): string {
+    var attempts = 0;
+
+    while (attempts++ < MAX_ATTEMPTS) {
+      const next = 'c' + (randomId++ % RANGE).toString();
+
+      if (!this.components.some(c => c.id === next)) {
+        return next;
+      }
+    }
+
+    throw new Error('Failed to allocated component ID');
   }
 
   public withoutComponent(component: Component) {

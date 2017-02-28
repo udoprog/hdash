@@ -24,7 +24,13 @@ export default class DatabaseProvider extends React.Component<Props, {}> {
 
   db(): Database {
     if (this.props.mock) {
-      return new MockDatabase();
+      try {
+        return new MockDatabase();
+      } catch (e) {
+        console.log("Error when opening mock database, clearing state", e);
+        MockDatabase.clear();
+        return new MockDatabase();
+      }
     }
 
     return new RealDatabase();

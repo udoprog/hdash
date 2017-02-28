@@ -69,18 +69,16 @@ export default class DashboardPage extends React.Component<Props, State> {
 
   private renderLock() {
     return (
-      <NavItem onClick={() => this.setState({ locked: true, editComponent: absent<string>() }, this.updateUrl())}>
+      <NavItem title="Lock" onClick={() => this.setState({ locked: true, editComponent: absent<string>() }, this.updateUrl())}>
         <Glyphicon glyph="lock" />
-        <span>&nbsp;&nbsp;Lock</span>
       </NavItem>
     );
   }
 
   private renderUnlock() {
     return (
-      <NavItem onClick={() => this.setState({ locked: false }, this.updateUrl())}>
+      <NavItem title="Unlock to Edit" onClick={() => this.setState({ locked: false }, this.updateUrl())}>
         <Glyphicon glyph="wrench" />
-        <span>&nbsp;&nbsp;Unlock to Edit</span>
       </NavItem>
     );
   }
@@ -152,7 +150,7 @@ export default class DashboardPage extends React.Component<Props, State> {
                   </div>
                 ) : null;
 
-                const showNav = component.showTitle || !locked;
+                const showNav = (component.showTitle && !!component.title || !locked);
 
                 const titlebar = showNav ? (
                   <div className={"titlebar" + (!locked ? " draggable" : "")}>
@@ -161,7 +159,19 @@ export default class DashboardPage extends React.Component<Props, State> {
                   </div>
                 ) : null;
 
-                return <div className={"component" + (showNav ? " visible-titlebar" : "")} key={component.id}>
+                var componentClasses = "component";
+
+                if (showNav) {
+                  componentClasses += " visible-titlebar";
+                }
+
+                if (!locked) {
+                  componentClasses += " editing";
+                } else {
+                  componentClasses += " locked";
+                }
+
+                return <div className={componentClasses} key={component.id}>
                   {titlebar}
                   <Visualization visualization={component.visualization} />
                 </div>;
@@ -177,9 +187,9 @@ export default class DashboardPage extends React.Component<Props, State> {
         <Navbar collapseOnSelect staticTop={true}>
           <Navbar.Collapse>
             <Nav pullRight>
-              {lock}
               {plus}
               {save}
+              {lock}
             </Nav>
           </Navbar.Collapse>
         </Navbar>

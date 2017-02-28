@@ -53,6 +53,8 @@ export default class EditVisualization extends React.Component<Props, State> {
         <Row>
           <Col sm={12}>{chart}</Col>
         </Row>
+
+        {visualization.map(v => v.renderEdit()).get()}
       </div>
     );
   }
