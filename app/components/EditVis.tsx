@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Vis, ReferenceVis, LineChart, BarChart, VisComponent, DEFAULT_REFERENCE, DEFAULT_BAR_CHART, DEFAULT_LINE_CHART } from 'api/model';
+import { Vis, VisComponent, VISUALIZATION_TYPES } from 'api/model';
 import { Row, Col, FormGroup, FormControl, ButtonGroup, InputGroup, Button } from 'react-bootstrap';
 import { clone } from 'mapping';
 import TypeButton from 'components/TypeButton';
@@ -30,19 +30,22 @@ export default class EditVis extends React.Component<Props, {}> {
               Visualization Type:
             </InputGroup.Addon>
             <ButtonGroup>
-              <TypeButton
-                style={{ borderRadius: 0 }}
-                instance={vis}
-                model={ReferenceVis}
-                onChangeType={type => this.changeType(type)} />
-              <TypeButton
-                instance={vis}
-                model={LineChart}
-                onChangeType={type => this.changeType(type)} />
-              <TypeButton
-                instance={vis}
-                model={BarChart}
-                onChangeType={type => this.changeType(type)} />
+              {VISUALIZATION_TYPES.map(([model, defaultInstance], index) => {
+                const onChange = () => {
+                  const { onChange } = this.props;
+                  // remember old if coming back later
+                  this.old[vis.type] = clone(vis);
+                  onChange(clone(this.old[model.type] || defaultInstance));
+                }
+
+                return (
+                  <TypeButton
+                    style={{ borderRadius: index === 0 ? 1 : null }}
+                    instance={vis}
+                    model={model}
+                    onChangeType={onChange} />
+                );
+              })}
             </ButtonGroup>
           </InputGroup>
         </FormControl.Static>
@@ -70,25 +73,5 @@ export default class EditVis extends React.Component<Props, {}> {
         </Row>
       </div>
     );
-  }
-
-  private changeType(type: string) {
-    const { onChange, vis } = this.props;
-
-    this.old[vis.type] = vis;
-
-    switch (type) {
-      case ReferenceVis.type:
-        onChange(clone(this.old[type] || DEFAULT_REFERENCE));
-        break;
-      case BarChart.type:
-        onChange(clone(this.old[type] || DEFAULT_BAR_CHART));
-        break;
-      case LineChart.type:
-        onChange(clone(this.old[type] || DEFAULT_LINE_CHART));
-        break;
-      default:
-        throw new Error("Unsupported type: " + type);
-    }
   }
 };

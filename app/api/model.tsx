@@ -381,12 +381,25 @@ export const DEFAULT_BAR_CHART = decode({
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, BarChart);
 
-interface VisualizationConstructor extends Constructor<Vis> {
+interface DataSourceConstructor extends Constructor<DataSource> {
   type: string;
+  font: string;
+  description: string;
 }
 
-export const VISUALIZATION_TYPES: VisualizationConstructor[] = [
-  ReferenceVis,
-  LineChart,
-  BarChart
+interface VisualizationConstructor extends Constructor<Vis> {
+  type: string;
+  font: string;
+  description: string;
+}
+
+export const DATA_SOURCE_TYPES: [DataSourceConstructor, DataSource][] = [
+  [ReferenceDataSource, DEFAULT_REFERENCE_DATA_SOURCE],
+  [EmbeddedDataSource, DEFAULT_EMBEDDED_DATA_SOURCE],
+];
+
+export const VISUALIZATION_TYPES: [VisualizationConstructor, Vis][] = [
+  [ReferenceVis, DEFAULT_REFERENCE],
+  [LineChart, DEFAULT_LINE_CHART],
+  [BarChart, DEFAULT_BAR_CHART]
 ];

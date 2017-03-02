@@ -15,7 +15,7 @@ interface Model {
 interface Props extends ButtonProps {
   instance: Instance;
   model: Model;
-  onChangeType: (type: string) => void;
+  onChangeType: () => void;
 }
 
 export default class VisTypeButton extends React.Component<Props, {}> {
@@ -26,7 +26,7 @@ export default class VisTypeButton extends React.Component<Props, {}> {
       <Button
         active={instance.type === model.type}
         onClick={(_: any) => {
-          onChangeType(model.type)
+          onChangeType()
         }}
         {...extra}
       >
