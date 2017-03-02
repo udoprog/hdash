@@ -8,6 +8,8 @@ import { QualitativePaired9 as QualitativePaired, ColorIterator } from 'api/colo
 import { Domain } from 'api/domain';
 import { Optional } from 'optional';
 
+const DEFAULT_PADDING = 10;
+
 interface Model {
   dataSource: DataSource;
   stacked: boolean;
@@ -15,6 +17,7 @@ interface Model {
 }
 
 export interface CanvasChartProps<T extends Model> {
+  padding?: number;
   model: T;
   visualOptions: VisualOptions;
 }
@@ -25,6 +28,7 @@ export interface CanvasChartDrawState {
   xScale?: Domain;
   yScale?: Domain;
   stacked?: boolean;
+  padding: number;
 }
 
 abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> extends React.Component<P, {}> {
@@ -59,8 +63,8 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
   constructor(props: P) {
     super(props);
 
-    this.next = this.initialDrawState();
-    this.drawn = this.initialDrawState();
+    this.next = this.initialDrawState(props.padding || DEFAULT_PADDING);
+    this.drawn = this.initialDrawState(props.padding || DEFAULT_PADDING);
   }
 
   /**
@@ -75,8 +79,10 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
   }
 
   public componentWillReceiveProps(nextProps: P) {
-    const { model } = nextProps;
+    const { model, padding } = nextProps;
+
     this.next.stacked = model.stacked;
+    this.next.padding = padding || DEFAULT_PADDING;
 
     if (this.next.result) {
       this.redraw();
@@ -191,17 +197,19 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
 
   protected newXScale(): Domain {
     const { width, range } = this;
-    return new Domain(range.start, range.end, 10, width - 10);
+    const { padding } = this.next;
+    return new Domain(range.start, range.end, padding, width - padding);
   }
 
   private redraw() {
     const { width, height } = this;
+    const { padding } = this.next;
 
     const { min, max } = this.calcMinMax();
 
     // calculate scales
     this.next.xScale = this.newXScale();
-    this.next.yScale = new Domain(max, min, 10, height - 10);
+    this.next.yScale = new Domain(max, min, padding, height - padding);
 
     const { xScale, yScale, result, stacked } = this.next;
 
@@ -211,7 +219,8 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
       xScale: drawnXScale,
       yScale: drawnYScale,
       result: drawnResult,
-      stacked: drawnStacked
+      stacked: drawnStacked,
+      padding: drawnPadding,
     } = this.drawn;
 
     if (!xScale.equals(drawnXScale)) {
@@ -226,6 +235,11 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
 
     if (stacked !== drawnStacked) {
       this.drawn.stacked = stacked;
+      redraw = true;
+    }
+
+    if (padding !== drawnPadding) {
+      this.drawn.padding = padding;
       redraw = true;
     }
 
@@ -380,8 +394,10 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
   /**
    * Initial draw state to be implemented by extending classes.
    */
-  private initialDrawState(): CanvasChartDrawState {
-    return {};
+  private initialDrawState(padding: number): CanvasChartDrawState {
+    return {
+      padding: padding
+    };
   }
 };
 
