@@ -19,11 +19,8 @@ interface State {
 
 export default class DashboardPage extends React.Component<Props, State> {
   context: PagesContext;
-
-  refs: {
-    import: any;
-    export: any;
-  };
+  importForm: FormControl;
+  exportLink: HTMLAnchorElement;
 
   public static contextTypes: any = {
     db: React.PropTypes.object,
@@ -62,7 +59,7 @@ export default class DashboardPage extends React.Component<Props, State> {
               <Col sm={6}>
                 <FormGroup validationState={importState}>
                   <ControlLabel>Import</ControlLabel>
-                  <FormControl ref="import" type="file" bsClass="btn btn-default" onChange={e => this.setImportFiles(e)}></FormControl>
+                  <FormControl ref={(form: FormControl) => this.importForm = form} type="file" bsClass="btn btn-default" onChange={e => this.setImportFiles(e)}></FormControl>
 
                   <FormControl.Static>
                     <Button disabled={!this.state.importFiles.present} onClick={() => this.import()} bsStyle="primary">Import</Button>
@@ -77,7 +74,7 @@ export default class DashboardPage extends React.Component<Props, State> {
                   <ControlLabel>Export</ControlLabel>
                   <FormControl.Static>
                     <Button onClick={() => this.export()} bsStyle="primary">Export</Button>
-                    <a ref="export"></a>
+                    <a ref={a => this.exportLink = a}></a>
                   </FormControl.Static>
                 </FormGroup>
               </Col>
@@ -125,9 +122,9 @@ export default class DashboardPage extends React.Component<Props, State> {
       var blob = new Blob([JSON.stringify(encoded, null, 2)], { type: "application/json" });
       var url = URL.createObjectURL(blob);
 
-      this.refs.export.href = url;
-      this.refs.export.download = "hdash.json";
-      this.refs.export.click();
+      this.exportLink.href = url;
+      this.exportLink.download = "hdash.json";
+      this.exportLink.click();
     });
   }
 }

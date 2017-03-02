@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { decode, field, clone, TypeField, ArrayField, Constructor, Values } from 'mapping';
 import { Optional, ofNullable, of } from 'optional';
 import EditBarChart from 'components/EditBarChart';
@@ -17,6 +17,10 @@ const MAX_ATTEMPTS = 1000;
 const RANGE = 1000000;
 
 var randomId = Math.round(Math.random() * RANGE);
+
+export interface VisComponent {
+  requery(): void;
+}
 
 export interface EditOptions<T> {
   onChange: (value: T) => void;
@@ -106,7 +110,7 @@ export interface Vis {
 
   renderEdit(options: EditOptions<this>): any;
 
-  renderVisual(options: VisualOptions): any;
+  renderVisual(options: VisualOptions, ref?: (visual: VisComponent) => void): any;
 }
 
 export class LineChart implements Vis {
@@ -140,8 +144,8 @@ export class LineChart implements Vis {
     );
   }
 
-  renderVisual(options: VisualOptions) {
-    return <ViewLineChart model={this} visualOptions={options} />;
+  renderVisual(options: VisualOptions, ref?: (visual: VisComponent) => void) {
+    return <ViewLineChart model={this} visualOptions={options} ref={ref} />;
   }
 }
 
@@ -169,14 +173,14 @@ export class BarChart implements Vis {
     return "Bar Chart";
   }
 
-  renderEdit(editOptions: EditOptions<BarChart>): any {
+  renderEdit(editOptions: EditOptions<BarChart>) {
     return (
       <EditBarChart barChart={this} editOptions={editOptions} />
     );
   }
 
-  renderVisual(options: VisualOptions) {
-    return <ViewBarChart model={this} visualOptions={options} />;
+  renderVisual(options: VisualOptions, ref?: (visual: VisComponent) => void): any {
+    return <ViewBarChart model={this} visualOptions={options} ref={ref} />;
   }
 }
 
@@ -205,8 +209,8 @@ export class ReferenceVis implements Vis {
     );
   }
 
-  renderVisual(options: VisualOptions) {
-    return <ViewReferenceVis vis={this} visualOptions={options} />;
+  renderVisual(options: VisualOptions, ref?: (visual: VisComponent) => void) {
+    return <ViewReferenceVis vis={this} visualOptions={options} ref={ref} />;
   }
 }
 

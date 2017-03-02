@@ -106,9 +106,13 @@ export class QueryResponse {
   @field({ type: new ArrayField(QueryResult) })
   readonly result: QueryResult[];
 
+  @field({})
+  readonly cadence: number;
+
   constructor(values: Values<QueryResponse>) {
     this.range = values.range;
     this.result = values.result;
+    this.cadence = values.cadence;
   }
 }
 

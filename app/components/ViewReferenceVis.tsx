@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Vis, ReferenceVis, VisualOptions } from 'api/model';
+import { Vis, ReferenceVis, VisualOptions, VisComponent } from 'api/model';
 import { Optional, absent, of } from 'optional';
 import { PagesContext } from 'api/interfaces';
 import FontAwesome from 'react-fontawesome';
@@ -15,8 +15,9 @@ interface State {
   lastId: Optional<string>;
 }
 
-export default class ViewReferenceVis extends React.Component<Props, State> {
+export default class ViewReferenceVis extends React.Component<Props, State> implements VisComponent {
   context: PagesContext;
+  visual?: VisComponent;
 
   public static contextTypes: any = {
     db: React.PropTypes.object
@@ -82,7 +83,7 @@ export default class ViewReferenceVis extends React.Component<Props, State> {
       );
     }
 
-    return visualization.map(v => v.renderVisual(visualOptions)).orElseGet(() => {
+    return visualization.map(v => v.renderVisual(visualOptions, visual => this.visual = visual)).orElseGet(() => {
       return (
         <div style={{ height: visualOptions.height }} className="loading">
           <span>No match for reference:</span><br />
@@ -90,5 +91,11 @@ export default class ViewReferenceVis extends React.Component<Props, State> {
         </div>
       );
     });
+  }
+
+  public requery() {
+    if (this.visual) {
+      this.visual.requery();
+    }
   }
 };

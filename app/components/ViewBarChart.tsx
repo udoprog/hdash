@@ -1,21 +1,22 @@
 import { BarChart } from 'api/model';
+import { Domain } from 'api/domain';
 
-import CanvasChart, { CanvasChartDrawState, CanvasChartProps } from './CanvasChart';
+import CanvasChart, { CanvasChartProps } from './CanvasChart';
 import { ColorIterator } from 'api/colors';
 
 interface Props extends CanvasChartProps<BarChart> {
 }
 
-interface DrawState extends CanvasChartDrawState {
-}
+export default class ViewBarChart extends CanvasChart<BarChart, Props> {
+  protected newXScale(): Domain {
+    const domain = super.newXScale();
 
-export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState> {
-  public initialDrawState(): DrawState {
-    return {};
+    const { cadence } = this.next;
+    return domain.withShiftedSourceMin(-cadence);
   }
 
   public draw(color: ColorIterator): void {
-    const {xScale, yScale, result, stacked} = this.next;
+    const { xScale, yScale, result, stacked } = this.next;
 
     const ctx = this.ctx;
 
@@ -35,7 +36,7 @@ export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState
 
     var filler = (i: number, x: number, y: number) => {
       ctx.fillRect(
-        xScale.map(x + (width * i) - cadence) + 2, yScale.map(0),
+        xScale.map(x + (width * i)) + 2, yScale.map(0),
         xScale.scale(width) - 4, yScale.scale(y)
       );
     };

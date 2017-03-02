@@ -1,23 +1,16 @@
 import { LineChart } from 'api/model';
 
-import CanvasChart, { CanvasChartDrawState, CanvasChartProps } from './CanvasChart';
+import CanvasChart, { CanvasChartProps } from './CanvasChart';
 import { ColorIterator } from 'api/colors';
 
 interface Props extends CanvasChartProps<LineChart> {
 }
 
-interface DrawState extends CanvasChartDrawState {
-}
-
-export default class ViewLineChart extends CanvasChart<LineChart, Props, DrawState> {
-  public initialDrawState(): DrawState {
-    return {};
-  }
-
+export default class ViewLineChart extends CanvasChart<LineChart, Props> {
   public draw(color: ColorIterator): void {
     this.drawGrid();
 
-    const {xScale, yScale, result, stacked} = this.next;
+    const { xScale, yScale, result, stacked } = this.next;
 
     const ctx = this.ctx;
 

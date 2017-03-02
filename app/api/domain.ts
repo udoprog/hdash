@@ -34,6 +34,10 @@ export class Domain {
     return Math.round((value - this.targetMin) * this.source / this.target + this.sourceMin);
   }
 
+  public withShiftedSourceMin(extent: number): Domain {
+    return new Domain(this.sourceMin + extent, this.sourceMax, this.targetMin, this.targetMax);
+  }
+
   public equals(o: Domain) {
     if (o === null || o === undefined) {
       return false;

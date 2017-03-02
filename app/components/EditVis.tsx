@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Vis, ReferenceVis, LineChart, BarChart, DEFAULT_REFERENCE, DEFAULT_BAR_CHART, DEFAULT_LINE_CHART } from 'api/model';
-import { Row, Col, FormGroup, FormControl, ButtonGroup, InputGroup } from 'react-bootstrap';
+import { Vis, ReferenceVis, LineChart, BarChart, VisComponent, DEFAULT_REFERENCE, DEFAULT_BAR_CHART, DEFAULT_LINE_CHART } from 'api/model';
+import { Row, Col, FormGroup, FormControl, ButtonGroup, InputGroup, Button } from 'react-bootstrap';
 import { clone } from 'mapping';
 import TypeButton from 'components/TypeButton';
 
@@ -11,6 +11,7 @@ interface Props {
 
 export default class EditVis extends React.Component<Props, {}> {
   old: { [key: string]: Vis };
+  visual?: VisComponent;
 
   constructor(props: Props) {
     super(props);
@@ -56,11 +57,17 @@ export default class EditVis extends React.Component<Props, {}> {
 
         <Row>
           <Col sm={12}>
-            {vis.renderVisual({ height: 200 })}
+            {vis.renderVisual({ height: 200 }, visual => this.visual = visual)}
           </Col>
         </Row>
 
         {vis.renderEdit(editOptions)}
+
+        <Row>
+          <Col sm={12}>
+            <Button onClick={() => this.visual && this.visual.requery()}>Requery</Button>
+          </Col>
+        </Row>
       </div>
     );
   }
