@@ -8,7 +8,7 @@ import { QualitativePaired9 as QualitativePaired, ColorIterator } from 'api/colo
 import { Domain } from 'api/domain';
 import { Optional } from 'optional';
 
-const DEFAULT_PADDING = 10;
+export const DEFAULT_PADDING = 10;
 
 interface Model {
   dataSource: DataSource;
@@ -31,7 +31,7 @@ export interface CanvasChartDrawState {
   padding: number;
 }
 
-abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> extends React.Component<P, {}> {
+abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D extends CanvasChartDrawState> extends React.Component<P, {}> {
   context: HeroicContext & PagesContext;
   canvas: HTMLCanvasElement;
   ctx?: CanvasRenderingContext2D;
@@ -52,8 +52,8 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
    */
   dataQuery?: Promise<QueryResponse>;
 
-  next: CanvasChartDrawState;
-  drawn: CanvasChartDrawState;
+  next: D;
+  drawn: D;
 
   public static contextTypes: any = {
     db: React.PropTypes.object,
@@ -63,14 +63,29 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
   constructor(props: P) {
     super(props);
 
-    this.next = this.initialDrawState(props.padding || DEFAULT_PADDING);
-    this.drawn = this.initialDrawState(props.padding || DEFAULT_PADDING);
+    this.next = this.initialDrawState(props);
+    this.drawn = this.initialDrawState(props);
   }
+
+  /**
+   * Initial draw state to be implemented by extending classes.
+   */
+  abstract initialDrawState(props: P): D;
 
   /**
    * Primary draw function to be implemented be extending classes.
    */
   abstract draw(color: ColorIterator): void;
+
+  /**
+   * Receive new props.
+   */
+  protected receiveProps(nextProps: P) {
+    const { model, padding } = nextProps;
+
+    this.next.stacked = model.stacked;
+    this.next.padding = padding || DEFAULT_PADDING;
+  }
 
   public componentDidMount() {
     this.ctx = this.canvas.getContext('2d');
@@ -79,14 +94,8 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
   }
 
   public componentWillReceiveProps(nextProps: P) {
-    const { model, padding } = nextProps;
-
-    this.next.stacked = model.stacked;
-    this.next.padding = padding || DEFAULT_PADDING;
-
-    if (this.next.result) {
-      this.redraw();
-    }
+    this.receiveProps(nextProps);
+    this.redraw();
   }
 
   public render() {
@@ -201,19 +210,11 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
     return new Domain(range.start, range.end, padding, width - padding);
   }
 
-  private redraw() {
-    const { width, height } = this;
-    const { padding } = this.next;
-
-    const { min, max } = this.calcMinMax();
-
-    // calculate scales
-    this.next.xScale = this.newXScale();
-    this.next.yScale = new Domain(max, min, padding, height - padding);
-
-    const { xScale, yScale, result, stacked } = this.next;
-
-    var redraw = false;
+  /**
+   * Check if it is time to redraw the graph.
+   */
+  protected checkDrawState(): boolean {
+    const { xScale, yScale, result, stacked, padding } = this.next;
 
     const {
       xScale: drawnXScale,
@@ -222,6 +223,8 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
       stacked: drawnStacked,
       padding: drawnPadding,
     } = this.drawn;
+
+    var redraw = false;
 
     if (!xScale.equals(drawnXScale)) {
       this.drawn.xScale = xScale;
@@ -248,7 +251,24 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
       redraw = true;
     }
 
-    if (!redraw) {
+    return redraw;
+  }
+
+  private redraw() {
+    if (!this.next.result) {
+      return;
+    }
+
+    const { width, height } = this;
+    const { padding } = this.next;
+
+    const { min, max } = this.calcMinMax();
+
+    // calculate scales
+    this.next.xScale = this.newXScale();
+    this.next.yScale = new Domain(max, min, padding, height - padding);
+
+    if (!this.checkDrawState()) {
       return;
     }
 
@@ -389,15 +409,6 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>> exten
     }
 
     ctx.restore();
-  }
-
-  /**
-   * Initial draw state to be implemented by extending classes.
-   */
-  private initialDrawState(padding: number): CanvasChartDrawState {
-    return {
-      padding: padding
-    };
   }
 };
 

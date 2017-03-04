@@ -2,15 +2,15 @@ import { Dashboard, DashboardEntry, EmbeddedDataSource, Vis, VisType } from 'api
 import { InjectedRouter } from 'react-router';
 import { Filter } from 'api/filter';
 import { Optional } from 'optional';
-import { field, MapField } from 'mapping';
+import { field, types } from 'mapping';
 
 /**
  * User descriptor.
  */
 export class User {
-  @field()
+  @field(types.String)
   name: string;
-  @field()
+  @field(types.String)
   email: string;
 
   constructor(values: any) {
@@ -23,15 +23,15 @@ export class User {
  * A complete export of the database.
  */
 export class DatabaseContent {
-  @field({ type: new MapField({ value: Dashboard }) })
+  @field(types.Map(Dashboard))
   dashboards: { [s: string]: Dashboard };
-  @field()
+  @field(types.Map(types.Boolean))
   starred: { [s: string]: boolean };
-  @field({ type: new MapField({ value: VisType }) })
+  @field(types.Map(VisType))
   visualizations: { [s: string]: Vis };
-  @field({ type: new MapField({ value: EmbeddedDataSource }) })
+  @field(types.Map(EmbeddedDataSource))
   dataSources: { [s: string]: EmbeddedDataSource };
-  @field({ type: User })
+  @field(User)
   user: User;
 
   constructor(values: any) {

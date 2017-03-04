@@ -1,12 +1,22 @@
 import { LineChart } from 'api/model';
 
-import CanvasChart, { CanvasChartProps } from './CanvasChart';
+import CanvasChart, { CanvasChartProps, CanvasChartDrawState, DEFAULT_PADDING } from './CanvasChart';
 import { ColorIterator } from 'api/colors';
 
 interface Props extends CanvasChartProps<LineChart> {
 }
 
-export default class ViewLineChart extends CanvasChart<LineChart, Props> {
+interface DrawState extends CanvasChartDrawState {
+
+}
+
+export default class ViewLineChart extends CanvasChart<LineChart, Props, DrawState> {
+  public initialDrawState(props: Props): DrawState {
+    return {
+      padding: props.padding || DEFAULT_PADDING
+    };
+  }
+
   public draw(color: ColorIterator): void {
     this.drawGrid();
 

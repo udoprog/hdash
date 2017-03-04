@@ -38,6 +38,7 @@ export default class EditDataSource extends React.Component<Props, {}> {
 
                 return (
                   <TypeButton
+                    key={model.type}
                     style={{ borderRadius: index === 0 ? 1 : null }}
                     instance={dataSource}
                     model={model}

@@ -6,7 +6,7 @@ import { AndFilter, MetadataFilter, TitleFilter } from 'api/filter';
 import { PagesContext, RouterContext } from 'api/interfaces';
 import { DashboardEntry } from 'api/model';
 import { Filter } from 'api/filter';
-import * as shallowEqual from 'is-equal-shallow';
+import shallowEqual from 'shallowequal';
 import DashboardSearchForm from 'components/DashboardSearchForm';
 import DashboardList from 'components/DashboardList';
 import { RouteComponentProps } from 'react-router';

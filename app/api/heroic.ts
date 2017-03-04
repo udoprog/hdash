@@ -1,4 +1,4 @@
-import { field, TypeField, ArrayField, Values } from 'mapping';
+import { field, types, Values } from 'mapping';
 
 export interface Range {
 }
@@ -6,9 +6,9 @@ export interface Range {
 class RelativeRange implements Range {
   static type = 'relative';
 
-  @field()
+  @field(types.Number)
   readonly value: number;
-  @field()
+  @field(types.String)
   readonly unit: string;
 
   constructor(values: Values<RelativeRange>) {
@@ -18,9 +18,9 @@ class RelativeRange implements Range {
 }
 
 class AbsoluteRange implements Range {
-  @field()
+  @field(types.Number)
   readonly start: number;
-  @field()
+  @field(types.Number)
   readonly end: number;
 
   constructor(values: Values<AbsoluteRange>) {
@@ -31,15 +31,15 @@ class AbsoluteRange implements Range {
   static type = 'absolute';
 }
 
-export const RangeType = TypeField.of<Range>([
+export const RangeType = types.SubTypes<Range>([
   RelativeRange,
   AbsoluteRange
 ]);
 
 export class Sampling {
-  @field()
+  @field(types.Number)
   readonly size: number;
-  @field()
+  @field(types.Number)
   readonly unit: string;
 
   constructor(values: Values<Sampling>) {
@@ -52,7 +52,7 @@ export interface Aggregation {
 }
 
 export class SumAggregation implements Aggregation {
-  @field({ type: Sampling })
+  @field(Sampling)
   readonly sampling: Sampling;
 
   constructor(values: Values<SumAggregation>) {
@@ -62,21 +62,21 @@ export class SumAggregation implements Aggregation {
   static type = 'sum';
 }
 
-export const AggregationType = TypeField.of<Aggregation>([
+export const AggregationType = types.SubTypes<Aggregation>([
   SumAggregation
 ]);
 
 export class QueryResult {
-  @field()
+  @field(types.String)
   readonly type: string;
 
-  @field()
+  @field(types.String)
   readonly hash: string;
 
-  @field()
+  @field(types.Number)
   readonly cadence: number;
 
-  @field()
+  @field(types.Any)
   readonly values: any[];
 
   constructor(values: Values<QueryResult>) {
@@ -88,9 +88,9 @@ export class QueryResult {
 }
 
 export class QueryRange {
-  @field()
+  @field(types.Number)
   readonly start: number;
-  @field()
+  @field(types.Number)
   readonly end: number;
 
   constructor(values: Values<QueryRange>) {
@@ -100,13 +100,13 @@ export class QueryRange {
 }
 
 export class QueryResponse {
-  @field({ type: QueryRange })
+  @field(QueryRange)
   readonly range: QueryRange;
 
-  @field({ type: new ArrayField(QueryResult) })
+  @field(types.Array(QueryResult))
   readonly result: QueryResult[];
 
-  @field({})
+  @field(types.Number)
   readonly cadence: number;
 
   constructor(values: Values<QueryResponse>) {
@@ -117,10 +117,10 @@ export class QueryResponse {
 }
 
 export class Query {
-  @field({ type: RangeType })
+  @field(RangeType)
   readonly range: Range;
 
-  @field()
+  @field(types.String)
   readonly query: string;
 
   constructor(values: Values<Query>) {

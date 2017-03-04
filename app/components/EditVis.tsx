@@ -40,6 +40,7 @@ export default class EditVis extends React.Component<Props, {}> {
 
                 return (
                   <TypeButton
+                    key={model.type}
                     style={{ borderRadius: index === 0 ? 1 : null }}
                     instance={vis}
                     model={model}

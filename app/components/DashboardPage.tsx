@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { Grid, Navbar, Nav, NavItem, Glyphicon, ButtonGroup, Button } from 'react-bootstrap';
+import { Grid, Navbar, Nav, NavItem, Glyphicon, ButtonGroup, Button, Row, Col } from 'react-bootstrap';
 import { PagesContext, RouterContext } from 'api/interfaces';
 import { Dashboard, Component, LayoutEntry } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import ReactGridLayout from 'react-grid-layout';
 import EditComponent from 'components/EditComponent';
 import { RouteComponentProps } from 'react-router';
+import DatePicker from 'components/DatePicker';
 
 const ResponsiveReactGridLayout = ReactGridLayout.WidthProvider(ReactGridLayout);
 
@@ -35,7 +36,7 @@ export default class DashboardPage extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const {query} = this.props.location;
+    const { query } = this.props.location;
 
     this.state = {
       locked: !query.unlocked,
@@ -52,9 +53,9 @@ export default class DashboardPage extends React.Component<Props, State> {
 
   private updateUrl(): () => void {
     return () => {
-      const {locked, editComponent} = this.state;
-      const {pathname, query} = this.props.location;
-      const {router} = this.context;
+      const { locked, editComponent } = this.state;
+      const { pathname, query } = this.props.location;
+      const { router } = this.context;
 
       query.unlocked = !locked ? 'true' : undefined;
       query.edit = editComponent.orElse(undefined);
@@ -85,7 +86,7 @@ export default class DashboardPage extends React.Component<Props, State> {
   }
 
   public render() {
-    const {locked, dashboard, editComponent} = this.state;
+    const { locked, dashboard, editComponent } = this.state;
 
     let title = dashboard
       .map(dashboard => dashboard.title)
@@ -146,6 +147,12 @@ export default class DashboardPage extends React.Component<Props, State> {
     return (
       <Grid fluid={true}>
         <h1>{title}</h1>
+
+        <Row>
+          <Col sm={12}>
+            <DatePicker />
+          </Col>
+        </Row>
 
         <ResponsiveReactGridLayout
           className="layout"

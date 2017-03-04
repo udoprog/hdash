@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { BarChart, EditOptions, DataSource } from 'api/model';
-import { Form, FormGroup, Checkbox } from 'react-bootstrap';
+import { Form, FormGroup, Checkbox, FormControl, ControlLabel } from 'react-bootstrap';
 import { clone, mutate } from 'mapping';
 import EditDataSource from 'components/EditDataSource';
 
@@ -27,6 +27,13 @@ export default class EditBarChart extends React.Component<Props, {}> {
           }>
             Stacked?
           </Checkbox>
+        </FormGroup>
+
+        <FormGroup controlId='gap'>
+          <ControlLabel>Gap:</ControlLabel>
+          <FormControl type="number" value={barChart.gap} onChange={
+            (e: any) => editOptions.onChange(mutate(barChart, { gap: parseInt(e.target.value) }))
+          } />
         </FormGroup>
 
         <EditDataSource dataSource={barChart.dataSource} editOptions={options} />

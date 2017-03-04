@@ -10,7 +10,6 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@types/chart.js": "0.0.14",
     "@types/jest": "^18.1.1",
     "@types/jsdom": "^2.0.30",
     "@types/react": "^15.0.12",

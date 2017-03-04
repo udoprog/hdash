@@ -27,6 +27,10 @@ export interface Target {
   [key: string]: any;
 }
 
+interface FieldOptions {
+  optional?: boolean;
+}
+
 export interface Field<T> {
   optional: boolean;
 
@@ -37,6 +41,10 @@ export interface Field<T> {
   encode(value: T, path: Path): any;
 
   equals(a: T, b: T): boolean;
+}
+
+export interface FieldType<T> {
+  toField(options: FieldOptions): Field<T>;
 }
 
 class Path {
@@ -80,17 +88,26 @@ class Path {
   }
 }
 
+interface TypeCheck {
+  check: (value: any) => boolean;
+  description: string;
+}
+
 class AssignField<T> implements Field<T> {
-  public static __field = true;
+  private readonly typeCheck: TypeCheck;
+  public readonly optional: boolean;
+  public readonly descriptor: string = '=';
 
-  readonly optional: boolean;
-  readonly descriptor: string = '=';
-
-  constructor(optional: boolean) {
+  constructor(typeCheck: TypeCheck, optional: boolean) {
+    this.typeCheck = typeCheck;
     this.optional = optional;
   }
 
-  public decode(value: any): any {
+  public decode(value: any, path: Path): any {
+    if (!this.typeCheck.check(value)) {
+      throw path.error(`value has wrong type: ${typeof value}, expected: ${this.typeCheck.description}`);
+    }
+
     return value;
   }
 
@@ -103,60 +120,49 @@ class AssignField<T> implements Field<T> {
   }
 }
 
-export type ToField<T> = Field<T> | Constructor<T>;
+class AssignFieldType<T> implements FieldType<T> {
+  public static __ft = true;
 
-function toField<T>(argument: ToField<T>, optional: boolean): Field<T> {
-  if (!argument) {
-    return new AssignField<T>(optional);
+  readonly typeCheck: TypeCheck;
+
+  constructor(typeCheck: TypeCheck) {
+    this.typeCheck = typeCheck;
   }
 
-  if (argument.constructor && (argument.constructor as any).__field) {
-    return argument as Field<T>;
+  toField(options: FieldOptions) {
+    return new AssignField<T>(this.typeCheck, options.optional);
+  }
+}
+
+export type ToFieldType<T> = FieldType<T> | Constructor<T>;
+
+function toField<T>(argument: ToFieldType<T>): FieldType<T> {
+  if (argument.constructor && (argument.constructor as any).__ft) {
+    return argument as FieldType<T>;
   }
 
-  return new ClassField<T>(argument as Constructor<T>, optional);
+  return new ClassFieldType<T>(argument as Constructor<T>);
 }
 
 interface TypeMapping<T> {
   type: string;
-  target: ToField<T>;
+  target: ToFieldType<T>;
 }
 
 interface HasType {
   type: string;
 }
 
-export class TypeField<T extends Target> implements Field<T> {
-  public static __field = true;
-
+class SubField<T extends Target> implements Field<T> {
   readonly typeFunction: (input: T) => string;
   readonly types: { [s: string]: Field<any> };
   readonly optional: boolean;
   readonly descriptor: string;
 
-  /**
-   * Build a simplified type mapping.
-   */
-  static of<T>(types: (HasType & Constructor<T>)[]): TypeField<T> {
-    return new TypeField<T>(
-      input => (<any>input).constructor.type,
-      types.map(t => {
-        return { type: t.type, target: t } as TypeMapping<T>;
-      })
-    );
-  }
-
-  constructor(typeFunction: (input: T) => string, types: TypeMapping<any>[], options?: { optional?: boolean }) {
-    const mapTypes: { [s: string]: Field<any> } = {};
-    const {optional}: { optional?: boolean } = (options || {});
-
-    types.forEach(type => {
-      mapTypes[type.type] = toField(type.target, false);
-    })
-
+  constructor(typeFunction: (input: T) => string, types: { [s: string]: Field<any> }, optional: boolean) {
     this.typeFunction = typeFunction;
-    this.types = mapTypes;
-    this.optional = !!optional;
+    this.types = types;
+    this.optional = optional;
     this.descriptor = '?';
   }
 
@@ -199,17 +205,43 @@ export class TypeField<T extends Target> implements Field<T> {
   }
 }
 
-export class ArrayField<T extends Target> implements Field<Array<T>> {
-  public static __field = true;
+class SubFieldType<T extends Target> implements FieldType<T> {
+  public static __ft = true;
 
-  readonly field: Field<T>;
+  readonly typeFunction: (input: T) => string;
+  readonly types: { [s: string]: FieldType<any> };
+
+  constructor(typeFunction: (input: T) => string, types: TypeMapping<any>[]) {
+    const mapTypes: { [s: string]: FieldType<any> } = {};
+
+    types.forEach(type => {
+      mapTypes[type.type] = toField(type.target);
+    })
+
+    this.typeFunction = typeFunction;
+    this.types = mapTypes;
+  }
+
+  public toField(options: FieldOptions): Field<T> {
+    const types: { [key: string]: Field<T> } = {};
+
+    Object.keys(this.types).forEach(key => {
+      types[key] = this.types[key].toField(options);
+    });
+
+    return new SubField<T>(this.typeFunction, types, options.optional);
+  }
+}
+
+class ArrayField<T extends Target> implements Field<Array<T>> {
+  readonly inner: Field<T>;
   readonly optional: boolean;
   readonly descriptor: string;
 
-  constructor(field: ToField<T>, optional?: boolean) {
-    this.field = toField(field, !!optional);
-    this.optional = !!optional;
-    this.descriptor = `[${this.field.descriptor}]`
+  constructor(inner: Field<T>, optional: boolean) {
+    this.inner = inner;
+    this.optional = optional;
+    this.descriptor = `[${this.inner.descriptor}]`
   }
 
   public decode(value: any, path: Path): Array<T> {
@@ -218,13 +250,13 @@ export class ArrayField<T extends Target> implements Field<Array<T>> {
     }
 
     return value.map((v: any, index: number) => {
-      return this.field.decode(v, path.extend(`[${index}]`));
+      return this.inner.decode(v, path.extend(`[${index}]`));
     });
   }
 
   public encode(value: Array<T>, path: Path): any {
     return value.map((v: any, index: number) => {
-      return this.field.encode(v, path.extend(`[${index}]`));
+      return this.inner.encode(v, path.extend(`[${index}]`));
     });
   }
 
@@ -234,21 +266,33 @@ export class ArrayField<T extends Target> implements Field<Array<T>> {
     }
 
     return a.every((value, index) => {
-      return this.field.equals(value, b[index]);
+      return this.inner.equals(value, b[index]);
     });
   }
 }
 
-export class MapField<T extends Target> implements Field<{ [key: string]: T }> {
-  public static __field = true;
+class ArrayFieldType<T extends Target> implements FieldType<Array<T>> {
+  public static __ft = true;
 
+  readonly inner: FieldType<T>;
+
+  constructor(inner: FieldType<T>) {
+    this.inner = inner;
+  }
+
+  public toField(options: FieldOptions): Field<Array<T>> {
+    return new ArrayField<T>(this.inner.toField(options), options.optional);
+  }
+}
+
+class MapField<T extends Target> implements Field<{ [key: string]: T }> {
   readonly value: Field<T>;
   readonly optional: boolean;
   readonly descriptor: string;
 
-  constructor({value, optional}: { value: ToField<T>, optional?: boolean }) {
-    this.value = toField<T>(value, optional);
-    this.optional = this.value.optional;
+  constructor(value: Field<T>, optional: boolean) {
+    this.value = value;
+    this.optional = optional;
     this.descriptor = `{[key: string]: ${this.value.descriptor}}`;
   }
 
@@ -277,9 +321,21 @@ export class MapField<T extends Target> implements Field<{ [key: string]: T }> {
   }
 }
 
-export class ClassField<T extends Target> implements Field<T> {
-  public static __field = true;
+class MapFieldType<T extends Target> implements FieldType<{ [key: string]: T }> {
+  public static __ft = true;
 
+  readonly value: FieldType<T>;
+
+  constructor(value: FieldType<T>) {
+    this.value = value;
+  }
+
+  public toField(options: FieldOptions): Field<{ [key: string]: T }> {
+    return new MapField<T>(this.value.toField(options), options.optional);
+  }
+}
+
+class ClassField<T extends Target> implements Field<T> {
   readonly con: Constructor<T>;
   readonly optional: boolean;
   readonly descriptor: string;
@@ -347,6 +403,20 @@ export class ClassField<T extends Target> implements Field<T> {
   }
 }
 
+class ClassFieldType<T extends Target> implements FieldType<T> {
+  public static __ft = true;
+
+  readonly con: Constructor<T>;
+
+  constructor(con: Constructor<T>) {
+    this.con = con;
+  }
+
+  public toField(options: FieldOptions): Field<T> {
+    return new ClassField<T>(this.con, options.optional);
+  }
+}
+
 export function equals<T extends Target>(a: T, b: T): boolean {
   if (a === null || b === null) {
     return a === b;
@@ -369,26 +439,24 @@ export function equals<T extends Target>(a: T, b: T): boolean {
   });
 }
 
-export function field(options?: { type?: ToField<any>, optional?: boolean }): any {
-  const {type, optional}: { type?: ToField<any>, optional?: boolean } = options || {};
-
-  return function (target: any, fieldKey: any) {
-    const fields: { [s: string]: Field<any> } = target.__fields = target.__fields || {};
-    fields[fieldKey] = type && toField(type, !!optional) || new AssignField(!!optional);
+export function field<T>(type: ToFieldType<T>, options?: FieldOptions): any {
+  return function (target: T, fieldKey: any) {
+    const fields: { [s: string]: Field<any> } = (target as any).__fields = (target as any).__fields || {};
+    fields[fieldKey] = toField(type).toField(options || {});
   };
 }
 
 /**
  * Decode the given object.
  */
-export function decode<T>(input: any, type: ToField<T>): T {
-  const field = toField(type, false);
+export function decode<T>(input: any, type: ToFieldType<T>): T {
+  const field = toField(type).toField({ optional: false });
   const p: Path = new Path(field.descriptor);
   return field.decode(input, p);
 }
 
-export function encode<T extends Target>(input: T, type?: ToField<T>): { [s: string]: any } {
-  const field = (type && toField(type, false) || toField((<any>input).constructor as Constructor<T>, false));
+export function encode<T extends Target>(input: T, type?: ToFieldType<T>): { [s: string]: any } {
+  const field = (type && toField(type) || toField((<any>input).constructor as Constructor<T>)).toField({ optional: false });
   const p: Path = new Path(field.descriptor);
   return field.encode(input, p);
 }
@@ -401,7 +469,7 @@ export function clone<T extends Target, K extends keyof T>(input: T, overrides?:
 
   const constructor = (<any>input).constructor;
   const proto = constructor.prototype;
-  const fields: { [s: string]: Field<any> } = proto.__fields || {};
+  const fields: { [s: string]: FieldType<any> } = proto.__fields || {};
 
   Object.keys(fields).forEach(key => {
     values[key] = input[key];
@@ -424,15 +492,54 @@ export function clone<T extends Target, K extends keyof T>(input: T, overrides?:
 export function mutate<T extends Target, K extends keyof T>(input: T, overrides: Pick<T, K>): T {
   const constructor = (<any>input).constructor;
   const proto = constructor.prototype;
-  const fields: { [s: string]: Field<any> } = proto.__fields || {};
+  const fields: { [s: string]: FieldType<any> } = proto.__fields || {};
 
   Object.keys(overrides).forEach(key => {
     if (fields[key] === undefined) {
-      throw new Error(String(constructor.name) + ": field does not exist: " + key);
+      throw new Error(`${String(constructor.name)}: field does not exist: ${key}`);
     }
 
     input[key] = overrides[key];
   });
 
   return input;
+}
+
+export namespace types {
+  export const String: FieldType<string> = new AssignFieldType({
+    check: (value: any) => typeof value === 'string',
+    description: 'string'
+  })
+
+  export const Number: FieldType<number> = new AssignFieldType({
+    check: (value: any) => typeof value === 'number',
+    description: 'number'
+  })
+
+  export const Boolean: FieldType<boolean> = new AssignFieldType({
+    check: (value: any) => typeof value === 'boolean',
+    description: 'boolean'
+  })
+
+  export const Any: FieldType<any> = new AssignFieldType({
+    check: (_value: any) => true,
+    description: 'any'
+  })
+
+  export function Map<T>(value: ToFieldType<T>): MapFieldType<T> {
+    return new MapFieldType<T>(toField<T>(value));
+  };
+
+  export function Array<T>(inner: ToFieldType<T>): ArrayFieldType<T> {
+    return new ArrayFieldType<T>(toField<T>(inner));
+  };
+
+  export function SubTypes<T>(types: (HasType & Constructor<T>)[]): SubFieldType<T> {
+    return new SubFieldType<T>(
+      input => (<any>input).constructor.type,
+      types.map(t => {
+        return { type: t.type, target: t } as TypeMapping<T>;
+      })
+    );
+  }
 }

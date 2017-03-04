@@ -29,14 +29,21 @@ const dashboards: any = {
     metadata: { owner: "bar", relation: "loose" },
     components: [
       {
-        id: "some",
-        title: "A title",
+        id: "a",
+        title: "Bar Chart (Referenced)",
         showTitle: true,
         visualization: { type: "reference", id: "vis1" }
+      },
+      {
+        id: "b",
+        title: "Bar Chart (Embedded)",
+        showTitle: true,
+        visualization: { type: "reference", id: "vis2" }
       }
     ],
     layout: [
-      { i: "some", x: 0, y: 0, w: 6, h: 2 }
+      { i: "a", x: 0, y: 0, w: 6, h: 2 },
+      { i: "b", x: 6, y: 0, w: 6, h: 2 }
     ]
   }
 };
@@ -49,13 +56,20 @@ const visualizations: any = {
   "vis1": {
     type: "bar-chart",
     stacked: false,
+    gap: 5,
     dataSource: { type: "reference", id: "datasource" }
+  },
+  "vis2": {
+    type: "bar-chart",
+    stacked: false,
+    gap: 5,
+    dataSource: { type: "embedded", query: "average(size=1h) by role from points(1d)" }
   }
 };
 
 const dataSources: any = {
   "datasource": {
-    query: "average by host"
+    query: "average(size=1h) by role from points(1d)"
   }
 };
 

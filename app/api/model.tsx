@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { decode, field, clone, TypeField, ArrayField, Constructor, Values } from 'mapping';
+import { decode, field, clone, types, Constructor, Values } from 'mapping';
 import { Optional, ofNullable, of } from 'optional';
 import EditBarChart from 'components/EditBarChart';
 import ViewBarChart from 'components/ViewBarChart';
@@ -45,7 +45,7 @@ export class EmbeddedDataSource implements DataSource {
 
   type: string;
 
-  @field()
+  @field(types.String)
   readonly query: string;
 
   constructor(values: Values<EmbeddedDataSource>) {
@@ -71,7 +71,7 @@ export class ReferenceDataSource implements DataSource {
 
   type: string;
 
-  @field()
+  @field(types.String)
   readonly id: string;
 
   constructor(values: Values<ReferenceDataSource>) {
@@ -90,7 +90,7 @@ export class ReferenceDataSource implements DataSource {
   }
 }
 
-export const DataSourceType = TypeField.of<DataSource>([
+export const DataSourceType = types.SubTypes<DataSource>([
   EmbeddedDataSource,
   ReferenceDataSource
 ]);
@@ -120,11 +120,11 @@ export class LineChart implements Vis {
 
   type: string;
 
-  @field()
+  @field(types.Boolean)
   stacked: boolean;
-  @field()
+  @field(types.Boolean)
   zeroBased: boolean;
-  @field({ type: DataSourceType })
+  @field(DataSourceType)
   dataSource: DataSource;
 
   constructor(values: Values<LineChart>) {
@@ -157,15 +157,18 @@ export class BarChart implements Vis {
   type: string;
   zeroBased: boolean;
 
-  @field()
+  @field(types.Boolean)
   stacked: boolean;
-  @field({ type: DataSourceType })
+  @field(types.Number)
+  gap: number;
+  @field(DataSourceType)
   dataSource: DataSource;
 
   constructor(values: Values<BarChart>) {
     this.type = BarChart.type;
     this.zeroBased = true;
     this.stacked = values.stacked;
+    this.gap = values.gap;
     this.dataSource = values.dataSource;
   }
 
@@ -191,7 +194,7 @@ export class ReferenceVis implements Vis {
 
   type: string;
 
-  @field()
+  @field(types.String)
   readonly id: string;
 
   constructor(values: Values<ReferenceVis>) {
@@ -214,22 +217,22 @@ export class ReferenceVis implements Vis {
   }
 }
 
-export const VisType = TypeField.of<Vis>([
+export const VisType = types.SubTypes<Vis>([
   LineChart,
   BarChart,
   ReferenceVis
 ]);
 
 export class LayoutEntry {
-  @field()
+  @field(types.String)
   readonly i: string;
-  @field()
+  @field(types.Number)
   readonly x: number;
-  @field()
+  @field(types.Number)
   readonly y: number;
-  @field()
+  @field(types.Number)
   readonly w: number;
-  @field()
+  @field(types.Number)
   readonly h: number;
 
   constructor(values: Values<LayoutEntry>) {
@@ -242,11 +245,11 @@ export class LayoutEntry {
 }
 
 export class Component {
-  @field()
+  @field(types.String)
   readonly id: string;
-  @field()
+  @field(types.String)
   readonly title: string;
-  @field({ type: VisType })
+  @field(VisType)
   readonly visualization: Vis;
 
   constructor(values: Values<Component>) {
@@ -257,15 +260,15 @@ export class Component {
 }
 
 export class Dashboard {
-  @field()
+  @field(types.String)
   readonly id: string;
-  @field()
+  @field(types.String)
   readonly title: string;
-  @field()
+  @field(types.Map(types.String))
   readonly metadata: { [key: string]: string; };
-  @field({ type: new ArrayField(Component) })
+  @field(types.Array(Component))
   readonly components: Component[];
-  @field({ type: new ArrayField(LayoutEntry) })
+  @field(types.Array(LayoutEntry))
   readonly layout: Array<LayoutEntry>;
 
   constructor(values: Values<Dashboard>) {
@@ -356,13 +359,13 @@ export class Dashboard {
 }
 
 export class DashboardEntry {
-  @field()
+  @field(types.String)
   id: string;
-  @field()
+  @field(types.String)
   title: string;
-  @field()
+  @field(types.Map(types.String))
   metadata: { [key: string]: string; };
-  @field()
+  @field(types.Boolean)
   starred: boolean;
 }
 
@@ -377,6 +380,7 @@ export const DEFAULT_LINE_CHART = decode({
 }, LineChart);
 
 export const DEFAULT_BAR_CHART = decode({
+  gap: 5,
   stacked: false,
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, BarChart);
