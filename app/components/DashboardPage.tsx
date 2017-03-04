@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { Grid, Navbar, Nav, NavItem, Glyphicon, ButtonGroup, Button, Row, Col } from 'react-bootstrap';
+import { Grid, Navbar, Nav, NavItem, Glyphicon, ButtonGroup, Button } from 'react-bootstrap';
+import FontAwesome from 'react-fontawesome';
 import { PagesContext, RouterContext } from 'api/interfaces';
-import { Dashboard, Component, LayoutEntry } from 'api/model';
+import { Dashboard, Component, LayoutEntry, Range } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import ReactGridLayout from 'react-grid-layout';
 import EditComponent from 'components/EditComponent';
 import { RouteComponentProps } from 'react-router';
 import RangePicker from 'components/RangePicker';
-import { RelativeRange } from 'api/model';
 
 const ResponsiveReactGridLayout = ReactGridLayout.WidthProvider(ReactGridLayout);
 
@@ -24,6 +24,7 @@ interface State {
   locked: boolean;
   dashboard: Optional<Dashboard>;
   editComponent: Optional<string>;
+  editRange: boolean;
 }
 
 export default class DashboardPage extends React.Component<Props, State> {
@@ -40,9 +41,10 @@ export default class DashboardPage extends React.Component<Props, State> {
     const { query } = this.props.location;
 
     this.state = {
-      locked: !query.unlocked,
+      locked: query.unlocked !== 'true',
       dashboard: absent<Dashboard>(),
-      editComponent: ofNullable(query.edit)
+      editComponent: ofNullable(query.edit),
+      editRange: query.editRange === 'true',
     };
   }
 
@@ -54,12 +56,13 @@ export default class DashboardPage extends React.Component<Props, State> {
 
   private updateUrl(): () => void {
     return () => {
-      const { locked, editComponent } = this.state;
+      const { locked, editComponent, editRange } = this.state;
       const { pathname, query } = this.props.location;
       const { router } = this.context;
 
       query.unlocked = !locked ? 'true' : undefined;
       query.edit = editComponent.orElse(undefined);
+      query.editRange = editRange ? 'true' : undefined;
 
       router.replace({
         pathname: pathname,
@@ -72,7 +75,7 @@ export default class DashboardPage extends React.Component<Props, State> {
     return (
       <NavItem title="Lock" onClick={() => this.setState({ locked: true, editComponent: absent<string>() }, this.updateUrl())}>
         <Glyphicon glyph="lock" />
-        <span>&nbsp;&nbsp;Lock</span>
+        <span className='icon-text'>Lock</span>
       </NavItem>
     );
   }
@@ -81,31 +84,52 @@ export default class DashboardPage extends React.Component<Props, State> {
     return (
       <NavItem title="Unlock to Edit" onClick={() => this.setState({ locked: false }, this.updateUrl())}>
         <Glyphicon glyph="wrench" />
-        <span>&nbsp;&nbsp;Unlock</span>
+        <span className='icon-text'>Unlock</span>
       </NavItem>
     );
   }
 
   public render() {
-    const { locked, dashboard, editComponent } = this.state;
+    const { locked, dashboard, editComponent, editRange } = this.state;
 
     let title = dashboard
       .map(dashboard => dashboard.title)
       .orElse(`Dashboard with ID '${this.props.params.id}' does not exist`);
 
-    const lock = locked ? this.renderUnlock() : this.renderLock();
+    const rangeToggle = (
+      <NavItem onClick={() => this.setState({ editRange: !editRange }, this.updateUrl())} active={editRange}>
+        <FontAwesome name="clock-o" />
+        <span className='icon-text'>
+          {dashboard.map(d => {
+            return (
+              <span>
+                <b>{d.range.renderStart()}</b> until <b>{d.range.renderEnd()}</b>
+              </span>
+            );
+          }).orElseGet(() => <em>unknown</em>)}
+        </span>
+      </NavItem>
+    );
 
-    const plus = !locked ? (
+    const editRangeComponent = dashboard.map(d => editRange ? (
+      <Grid className='range-picker-menu'>
+        <RangePicker range={d.range} onChange={(range: Range) => this.rangeChanged(range)}></RangePicker>
+      </Grid>
+    ) : null).get();
+
+    const lockToggle = locked ? this.renderUnlock() : this.renderLock();
+
+    const addComponent = !locked ? (
       <NavItem onClick={() => this.addComponent()}>
         <Glyphicon glyph="plus" />
-        <span>&nbsp;&nbsp;Add Component</span>
+        <span className='icon-text'>Add Component</span>
       </NavItem>
     ) : null;
 
     const save = !locked ? (
       <NavItem onClick={() => this.save()}>
         <Glyphicon glyph="save" />
-        <span>&nbsp;&nbsp;Save</span>
+        <span className='icon-text'>Save</span>
       </NavItem>
     ) : null;
 
@@ -133,11 +157,14 @@ export default class DashboardPage extends React.Component<Props, State> {
       <div>
         <Navbar collapseOnSelect staticTop={true}>
           <Nav pullRight>
-            {plus}
+            {addComponent}
             {save}
-            {lock}
+            {lockToggle}
+            {rangeToggle}
           </Nav>
         </Navbar>
+
+        {editRangeComponent}
 
         {main}
       </div>
@@ -145,17 +172,9 @@ export default class DashboardPage extends React.Component<Props, State> {
   }
 
   private renderLayoutGrid(title: string, locked: boolean, dashboard: Dashboard) {
-    const r = new RelativeRange({ value: 10, unit: 'HOURS' });
-
     return (
       <Grid fluid={true}>
         <h1>{title}</h1>
-
-        <Row>
-          <Col sm={12}>
-            <RangePicker range={r} />
-          </Col>
-        </Row>
 
         <ResponsiveReactGridLayout
           className="layout"
@@ -266,6 +285,12 @@ export default class DashboardPage extends React.Component<Props, State> {
   private addComponent() {
     this.setState((prev, _) => {
       return { dashboard: prev.dashboard.map(dashboard => dashboard.withNewComponent()) };
+    });
+  }
+
+  private rangeChanged(range: Range) {
+    this.setState((prev, _) => {
+      return { dashboard: prev.dashboard.map(dashboard => dashboard.withRange(range)) };
     });
   }
 

@@ -19,3 +19,92 @@ body {
   text-align: center;
   font-size: @loading-font-size;
 }
+
+@icon-text-margin: ceil(@line-height-computed * 0.5);
+
+.icon-text {
+  margin-left: @icon-text-margin;
+}
+
+@range-picker-margin: floor((@grid-gutter-width / 2));
+
+.range-picker-menu {
+  .range-picker {
+    background-color: @body-bg;
+    border-bottom: 1px solid @table-border-color;
+  }
+}
+
+@quick-range-list-margin: ceil(@line-height-computed * 0.5);
+
+ul.quick-range-list {
+  list-style: none;
+  padding: 0;
+
+  li {
+    padding-bottom: 2px;
+
+    &.active {
+      border-bottom: 2px solid #101060;
+      padding-bottom: 0;
+    }
+
+    .set-range {
+      cursor: pointer;
+    }
+  }
+}
+
+.date-picker {
+  .clearfix();
+
+  .title {
+    .clearfix();
+    text-align: center;
+
+    .month-year {
+      font-weight: bold;
+    }
+  }
+
+  .day-title {
+    text-align: center;
+    display: block;
+    float: left;
+    font-weight: bold;
+    width: percentage(round(1.0 / 7.0, 2));
+  }
+
+  .week {
+    .clearfix();
+
+    .day {
+      display: block;
+      float: left;
+      text-align: center;
+      width: percentage(round(1.0 / 7.0, 2));
+      padding: 2px 2px;
+
+      .button {
+        .button-variant(@btn-default-color, @btn-default-bg, @btn-default-border);
+
+        display: inline-block;
+        width: 100%;
+
+        border-width: 1px;
+        border-style: solid;
+        border-radius: 2px;
+
+        cursor: pointer;
+
+        &.other-month {
+          color: #999999;
+        }
+
+        &.today {
+          color: #2222ff;
+        }
+      }
+    }
+  }
+}

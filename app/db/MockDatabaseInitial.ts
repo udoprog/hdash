@@ -6,20 +6,7 @@ const dashboards: any = {
     id: "a",
     title: "Simple Title",
     metadata: { owner: "foo" },
-    components: [],
-    layout: []
-  },
-  "b": {
-    id: "b",
-    title: "Complex Title",
-    metadata: { owner: "foo", relation: "tough" },
-    components: [],
-    layout: []
-  },
-  "c": {
-    id: "c",
-    title: "Foo Title",
-    metadata: { owner: "bar" },
+    range: { type: 'now-relative', value: 10, unit: 'hours' },
     components: [],
     layout: []
   },
@@ -27,6 +14,7 @@ const dashboards: any = {
     id: "d",
     title: "Has Visualization",
     metadata: { owner: "bar", relation: "loose" },
+    range: { type: 'now-relative', value: 10, unit: 'hours' },
     components: [
       {
         id: "a",

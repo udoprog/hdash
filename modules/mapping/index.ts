@@ -233,6 +233,111 @@ class SubFieldType<T extends Target & HasType> implements FieldType<T> {
   }
 }
 
+class OneOfField<T> implements Field<T> {
+  readonly field: Field<T>;
+  readonly values: T[];
+  readonly optional: boolean;
+  readonly descriptor: string;
+
+  constructor(field: Field<T>, values: T[], optional: boolean) {
+    this.field = field;
+    this.values = values;
+    this.optional = optional;
+    this.descriptor = `[${values.map(v => String(v))}]`;
+  }
+
+  public decode(value: any, path: Path): T {
+    const v = this.field.decode(value, path);
+
+    if (this.values.find(expected => this.field.equals(expected, v)) === null) {
+      throw path.error(`found value ${v}, but expected one of: ${this.values}`);
+    }
+
+    return v;
+  }
+
+  public encode(value: T, path?: Path): any {
+    if (this.values.find(expected => this.field.equals(expected, value)) === null) {
+      throw path.error(`found value ${value}, but expected one of: ${this.values}`);
+    }
+
+    return this.field.encode(value, path);
+  }
+
+  public equals(a: T, b: T): boolean {
+    return this.field.equals(a, b);
+  }
+}
+
+class OneOfFieldType<T> implements FieldType<T> {
+  public static __ft = true;
+
+  readonly type: FieldType<T>;
+  readonly values: T[];
+
+  constructor(type: FieldType<T>, values: T[]) {
+    this.type = type;
+    this.values = values;
+  }
+
+  public toField(options: FieldOptions): OneOfField<T> {
+    return new OneOfField<T>(this.type.toField(options), this.values, options.optional);
+  }
+}
+
+interface HasConstant<T> {
+  constant: T;
+}
+
+class ConstField<T, U extends HasConstant<T>> implements Field<U> {
+  readonly field: Field<T>;
+  readonly constants: U[];
+  readonly optional: boolean;
+  readonly descriptor: string;
+
+  constructor(field: Field<T>, constants: U[], optional: boolean) {
+    this.field = field;
+    this.constants = constants;
+    this.optional = optional;
+    this.descriptor = `[${constants.map(v => String(v.constant))}]`;
+  }
+
+  public decode(input: any, path: Path): U {
+    const v = this.field.decode(input, path);
+    const out: U = this.constants.find(expected => this.field.equals(expected.constant, v));
+
+    if (out === null) {
+      throw path.error(`found value ${v}, but expected one of: ${this.constants}`);
+    }
+
+    return out;
+  }
+
+  public encode(value: U, path?: Path): any {
+    return this.field.encode(value.constant, path);
+  }
+
+  public equals(a: U, b: U): boolean {
+    return this.field.equals(a.constant, b.constant);
+  }
+}
+
+class ConstFieldType<T, U extends HasConstant<T>> implements FieldType<U> {
+  public static __ft = true;
+
+  readonly type: FieldType<T>;
+  readonly constants: U[];
+
+  constructor(type: FieldType<T>, constants: U[]) {
+    this.type = type;
+    this.constants = constants;
+  }
+
+  public toField(options: FieldOptions): ConstField<T, U> {
+    return new ConstField<T, U>(this.type.toField(options), this.constants, options.optional);
+  }
+}
+
 class ArrayField<T extends Target> implements Field<Array<T>> {
   readonly inner: Field<T>;
   readonly optional: boolean;
@@ -541,5 +646,13 @@ export namespace types {
         return { type: t.type, target: t } as TypeMapping<T>;
       })
     );
+  }
+
+  export function OneOf<T>(type: FieldType<T>, values: T[]): OneOfFieldType<T> {
+    return new OneOfFieldType<T>(type, values);
+  }
+
+  export function Const<T, U extends HasConstant<T>>(type: FieldType<T>, constants: U[]): ConstFieldType<T, U> {
+    return new ConstFieldType<T, U>(type, constants);
   }
 }
