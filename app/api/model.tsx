@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { decode, field, clone, types, Constructor, Values } from 'mapping';
+import { decode, field, clone, types, Constructor, Values, FieldType, Field, FieldOptions } from 'mapping';
 import { Optional, ofNullable, of } from 'optional';
 import EditBarChart from 'components/EditBarChart';
 import ViewBarChart from 'components/ViewBarChart';
@@ -12,11 +12,86 @@ import EditEmbeddedDataSource from 'components/EditEmbeddedDataSource';
 import EditReferenceDataSource from 'components/EditReferenceDataSource';
 
 import { PagesContext } from 'api/interfaces';
+import * as moment from 'moment';
 
 const MAX_ATTEMPTS = 1000;
 const RANGE = 1000000;
 
 var randomId = Math.round(Math.random() * RANGE);
+
+class MomentField implements Field<moment.Moment> {
+  public readonly optional: boolean;
+  public readonly descriptor: string;
+
+  constructor(optional: boolean) {
+    this.optional = optional;
+    this.descriptor = 'Moment';
+  }
+
+  decode(value: any): moment.Moment {
+    return moment(value);
+  }
+
+  encode(value: moment.Moment): any {
+    return value.milliseconds();
+  }
+
+  equals(_a: moment.Moment, _b: moment.Moment): boolean {
+    return false;
+  }
+}
+
+class MomentFieldType implements FieldType<moment.Moment> {
+  public static __ft: boolean = true;
+
+  toField(options: FieldOptions): MomentField {
+    return new MomentField(options.optional);
+  }
+}
+
+export interface Range {
+}
+
+export class RelativeRange implements Range {
+  static type: string = 'relative';
+
+  get type(): string {
+    return RelativeRange.type;
+  }
+
+  @field(types.Number)
+  public readonly value: number;
+  @field(types.String)
+  public readonly unit: string;
+
+  constructor(values: Values<RelativeRange>) {
+    this.value = values.value;
+    this.unit = values.unit;
+  }
+}
+
+export class AbsoluteRange implements Range {
+  static type: string = 'absolute';
+
+  get type(): string {
+    return RelativeRange.type;
+  }
+
+  @field(new MomentFieldType())
+  public readonly start: moment.Moment;
+  @field(new MomentFieldType())
+  public readonly end: moment.Moment;
+
+  constructor(values: Values<AbsoluteRange>) {
+    this.start = values.start;
+    this.end = values.end;
+  }
+}
+
+export const RangeType = types.SubTypes<Range>([
+  AbsoluteRange,
+  RelativeRange
+]);
 
 export interface VisComponent {
   requery(): void;
@@ -31,8 +106,6 @@ export interface VisualOptions {
 }
 
 export interface DataSource {
-  type: string;
-
   renderEdit(options: EditOptions<this>): any;
 
   toEmbedded(context: PagesContext): Promise<Optional<EmbeddedDataSource>>;
@@ -43,13 +116,14 @@ export class EmbeddedDataSource implements DataSource {
   static font = 'database';
   static description = 'Embedded';
 
-  type: string;
+  get type(): string {
+    return EmbeddedDataSource.type;
+  }
 
   @field(types.String)
   readonly query: string;
 
   constructor(values: Values<EmbeddedDataSource>) {
-    this.type = EmbeddedDataSource.type;
     this.query = values.query;
   }
 
@@ -69,13 +143,14 @@ export class ReferenceDataSource implements DataSource {
   static font = 'link';
   static description = 'Reference';
 
-  type: string;
+  get type(): string {
+    return ReferenceDataSource.type;
+  }
 
   @field(types.String)
   readonly id: string;
 
   constructor(values: Values<ReferenceDataSource>) {
-    this.type = ReferenceDataSource.type;
     this.id = values.id;
   }
 
@@ -104,8 +179,6 @@ export const DEFAULT_REFERENCE_DATA_SOURCE = decode({
 }, ReferenceDataSource);
 
 export interface Vis {
-  type: string;
-
   typeTitle(): string;
 
   renderEdit(options: EditOptions<this>): any;
@@ -118,17 +191,18 @@ export class LineChart implements Vis {
   static font = 'line-chart';
   static description = 'Line Chart';
 
-  type: string;
+  get type(): string {
+    return LineChart.type;
+  }
 
   @field(types.Boolean)
   stacked: boolean;
   @field(types.Boolean)
   zeroBased: boolean;
   @field(DataSourceType)
-  dataSource: DataSource;
+  dataSource: DataSource & HasType;
 
   constructor(values: Values<LineChart>) {
-    this.type = LineChart.type;
     this.stacked = values.stacked;
     this.zeroBased = values.zeroBased;
     this.dataSource = values.dataSource;
@@ -154,7 +228,10 @@ export class BarChart implements Vis {
   static font = 'bar-chart';
   static description = 'Bar Chart';
 
-  type: string;
+  get type(): string {
+    return BarChart.type;
+  }
+
   zeroBased: boolean;
 
   @field(types.Boolean)
@@ -162,10 +239,9 @@ export class BarChart implements Vis {
   @field(types.Number)
   gap: number;
   @field(DataSourceType)
-  dataSource: DataSource;
+  dataSource: DataSource & HasType;
 
   constructor(values: Values<BarChart>) {
-    this.type = BarChart.type;
     this.zeroBased = true;
     this.stacked = values.stacked;
     this.gap = values.gap;
@@ -192,13 +268,14 @@ export class ReferenceVis implements Vis {
   static font = 'link';
   static description = 'Reference';
 
-  type: string;
+  get type(): string {
+    return ReferenceVis.type;
+  }
 
   @field(types.String)
   readonly id: string;
 
   constructor(values: Values<ReferenceVis>) {
-    this.type = ReferenceVis.type;
     this.id = values.id;
   }
 
@@ -250,7 +327,7 @@ export class Component {
   @field(types.String)
   readonly title: string;
   @field(VisType)
-  readonly visualization: Vis;
+  readonly visualization: Vis & HasType;
 
   constructor(values: Values<Component>) {
     this.id = values.id;
@@ -385,6 +462,10 @@ export const DEFAULT_BAR_CHART = decode({
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, BarChart);
 
+export interface HasType {
+  type: string;
+}
+
 interface DataSourceConstructor extends Constructor<DataSource> {
   type: string;
   font: string;
@@ -397,12 +478,12 @@ interface VisualizationConstructor extends Constructor<Vis> {
   description: string;
 }
 
-export const DATA_SOURCE_TYPES: [DataSourceConstructor, DataSource][] = [
+export const DATA_SOURCE_TYPES: [DataSourceConstructor, DataSource & HasType][] = [
   [ReferenceDataSource, DEFAULT_REFERENCE_DATA_SOURCE],
   [EmbeddedDataSource, DEFAULT_EMBEDDED_DATA_SOURCE],
 ];
 
-export const VISUALIZATION_TYPES: [VisualizationConstructor, Vis][] = [
+export const VISUALIZATION_TYPES: [VisualizationConstructor, Vis & HasType][] = [
   [ReferenceVis, DEFAULT_REFERENCE],
   [LineChart, DEFAULT_LINE_CHART],
   [BarChart, DEFAULT_BAR_CHART]

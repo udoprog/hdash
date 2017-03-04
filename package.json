@@ -12,6 +12,7 @@
   "devDependencies": {
     "@types/jest": "^18.1.1",
     "@types/jsdom": "^2.0.30",
+    "@types/moment": "^2.13.0",
     "@types/react": "^15.0.12",
     "@types/react-addons-test-utils": "^0.14.17",
     "@types/react-bootstrap": "0.0.45",
@@ -52,6 +53,7 @@
     "axios": "^0.15.3",
     "bootstrap": "^3.3.7",
     "font-awesome": "^4.7.0",
+    "moment": "^2.17.1",
     "react": "^15.4.2",
     "react-bootstrap": "^0.30.7",
     "react-bootstrap-typeahead": "^1.1.0",

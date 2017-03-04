@@ -1,10 +1,15 @@
 import { field, types, Values } from 'mapping';
 
 export interface Range {
+  type: string;
 }
 
 class RelativeRange implements Range {
   static type = 'relative';
+
+  get type(): string {
+    return RelativeRange.type;
+  }
 
   @field(types.Number)
   readonly value: number;
@@ -18,6 +23,12 @@ class RelativeRange implements Range {
 }
 
 class AbsoluteRange implements Range {
+  static type = 'absolute';
+
+  get type(): string {
+    return AbsoluteRange.type;
+  }
+
   @field(types.Number)
   readonly start: number;
   @field(types.Number)
@@ -27,13 +38,10 @@ class AbsoluteRange implements Range {
     this.start = values.start;
     this.end = values.end;
   }
-
-  static type = 'absolute';
 }
 
 export const RangeType = types.SubTypes<Range>([
-  RelativeRange,
-  AbsoluteRange
+  RelativeRange, AbsoluteRange
 ]);
 
 export class Sampling {
@@ -49,17 +57,22 @@ export class Sampling {
 }
 
 export interface Aggregation {
+  type: string;
 }
 
 export class SumAggregation implements Aggregation {
+  static type = 'sum';
+
+  get type(): string {
+    return SumAggregation.type;
+  }
+
   @field(Sampling)
   readonly sampling: Sampling;
 
   constructor(values: Values<SumAggregation>) {
     this.sampling = values.sampling;
   }
-
-  static type = 'sum';
 }
 
 export const AggregationType = types.SubTypes<Aggregation>([

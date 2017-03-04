@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { PagesContext } from 'api/interfaces';
-import { Component, Vis } from 'api/model';
+import { Component, Vis, HasType } from 'api/model';
 import { Row, Col, Grid, Button, Glyphicon, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import EditVis from './EditVis';
 import { mutate } from 'mapping';
@@ -57,7 +57,7 @@ export default class EditComponent extends React.Component<Props, State> {
     );
   }
 
-  private changeVisualization(visualization: Vis) {
+  private changeVisualization(visualization: Vis & HasType) {
     this.mutate({ visualization: visualization });
   }
 

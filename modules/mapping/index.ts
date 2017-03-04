@@ -1,6 +1,6 @@
 import { Optional, of, absent } from 'optional';
 
-export type Values<T> = Pick<T, keyof T>;
+export type Values<T> = Partial<T>;
 
 export class PathError extends Error {
   readonly path: Path;
@@ -27,7 +27,7 @@ export interface Target {
   [key: string]: any;
 }
 
-interface FieldOptions {
+export interface FieldOptions {
   optional?: boolean;
 }
 
@@ -205,7 +205,7 @@ class SubField<T extends Target> implements Field<T> {
   }
 }
 
-class SubFieldType<T extends Target> implements FieldType<T> {
+class SubFieldType<T extends Target & HasType> implements FieldType<T> {
   public static __ft = true;
 
   readonly typeFunction: (input: T) => string;
@@ -534,9 +534,9 @@ export namespace types {
     return new ArrayFieldType<T>(toField<T>(inner));
   };
 
-  export function SubTypes<T>(types: (HasType & Constructor<T>)[]): SubFieldType<T> {
-    return new SubFieldType<T>(
-      input => (<any>input).constructor.type,
+  export function SubTypes<T>(types: (HasType & Constructor<T>)[]): SubFieldType<T & HasType> {
+    return new SubFieldType<T & HasType>(
+      input => input.type,
       types.map(t => {
         return { type: t.type, target: t } as TypeMapping<T>;
       })

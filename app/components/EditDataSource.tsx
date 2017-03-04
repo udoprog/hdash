@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { FormGroup, FormControl, ButtonGroup, InputGroup } from 'react-bootstrap';
-import { DataSource, EditOptions, DATA_SOURCE_TYPES } from 'api/model';
+import { DataSource, EditOptions, HasType, DATA_SOURCE_TYPES } from 'api/model';
 import { clone } from 'mapping';
 import TypeButton from 'components/TypeButton';
 
 interface Props {
-  dataSource: DataSource;
+  dataSource: DataSource & HasType;
   editOptions: EditOptions<DataSource>;
 }
 

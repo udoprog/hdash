@@ -6,7 +6,8 @@ import { Optional, absent, of, ofNullable } from 'optional';
 import ReactGridLayout from 'react-grid-layout';
 import EditComponent from 'components/EditComponent';
 import { RouteComponentProps } from 'react-router';
-import DatePicker from 'components/DatePicker';
+import RangePicker from 'components/RangePicker';
+import { RelativeRange } from 'api/model';
 
 const ResponsiveReactGridLayout = ReactGridLayout.WidthProvider(ReactGridLayout);
 
@@ -144,13 +145,15 @@ export default class DashboardPage extends React.Component<Props, State> {
   }
 
   private renderLayoutGrid(title: string, locked: boolean, dashboard: Dashboard) {
+    const r = new RelativeRange({ value: 10, unit: 'HOURS' });
+
     return (
       <Grid fluid={true}>
         <h1>{title}</h1>
 
         <Row>
           <Col sm={12}>
-            <DatePicker />
+            <RangePicker range={r} />
           </Col>
         </Row>
 

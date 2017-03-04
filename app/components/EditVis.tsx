@@ -1,16 +1,16 @@
 import * as React from 'react';
-import { Vis, VisComponent, VISUALIZATION_TYPES } from 'api/model';
+import { Vis, HasType, VisComponent, VISUALIZATION_TYPES } from 'api/model';
 import { Row, Col, FormGroup, FormControl, ButtonGroup, InputGroup, Button } from 'react-bootstrap';
 import { clone } from 'mapping';
 import TypeButton from 'components/TypeButton';
 
 interface Props {
-  vis: Vis;
-  onChange: (visualization: Vis) => void;
+  vis: Vis & HasType;
+  onChange: (visualization: Vis & HasType) => void;
 }
 
 export default class EditVis extends React.Component<Props, {}> {
-  old: { [key: string]: Vis };
+  old: { [key: string]: Vis & HasType };
   visual?: VisComponent;
 
   constructor(props: Props) {

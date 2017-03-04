@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BarChart, EditOptions, DataSource } from 'api/model';
+import { BarChart, EditOptions, DataSource, HasType } from 'api/model';
 import { Form, FormGroup, Checkbox, FormControl, ControlLabel } from 'react-bootstrap';
 import { clone, mutate } from 'mapping';
 import EditDataSource from 'components/EditDataSource';
@@ -14,7 +14,7 @@ export default class EditBarChart extends React.Component<Props, {}> {
     const { barChart, editOptions } = this.props;
 
     const options = {
-      onChange: (dataSource: DataSource) => {
+      onChange: (dataSource: DataSource & HasType) => {
         editOptions.onChange(clone(barChart, { dataSource: dataSource }))
       }
     };

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { LineChart, EditOptions, DataSource } from 'api/model';
+import { LineChart, EditOptions, DataSource, HasType } from 'api/model';
 import { Form, FormGroup, FormControl, Checkbox } from 'react-bootstrap';
 import { clone, mutate } from 'mapping';
 import EditDataSource from 'components/EditDataSource';
@@ -14,7 +14,7 @@ export default class EditLineChart extends React.Component<Props, {}> {
     const { lineChart, editOptions } = this.props;
 
     const options = {
-      onChange: (dataSource: DataSource) => {
+      onChange: (dataSource: DataSource & HasType) => {
         editOptions.onChange(clone(lineChart, { dataSource: dataSource }))
       }
     };
