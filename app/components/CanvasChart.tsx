@@ -11,6 +11,13 @@ import * as moment from 'moment';
 import FontAwesome from 'react-fontawesome';
 
 export const DEFAULT_PADDING = 10;
+const TEXT_FONT = '16px Sans';
+
+interface Step {
+  start: number;
+  end: number;
+  step: number;
+}
 
 interface Model {
   dataSource: DataSource;
@@ -20,6 +27,8 @@ interface Model {
 
 interface State {
   queryInProgress: boolean;
+  width: number;
+  height: number;
 }
 
 export interface CanvasChartProps<T extends Model> {
@@ -75,7 +84,9 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     this.drawn = this.initialDrawState(props);
 
     this.state = {
-      queryInProgress: true
+      queryInProgress: true,
+      width: 0,
+      height: 0
     }
   }
 
@@ -111,14 +122,16 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
   }
 
   public render() {
-    const { queryInProgress } = this.state;
+    const { queryInProgress, width, height } = this.state;
     const { height: fixedHeight } = this.props.visualOptions;
 
     return (
       <Measure onMeasure={dimension => {
         this.next.width = dimension.width;
         this.next.height = fixedHeight || dimension.height;
-        this.refresh();
+        this.setState({ width: this.next.width, height: this.next.height }, () => {
+          this.refresh();
+        });
       }}>
         <div style={{ display: "block", width: "100%", height: "100%" }}>
           <div className="query-feedback">
@@ -128,7 +141,7 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
           </div>
 
           <div style={{ display: "block", width: "100%", height: "100%" }}>
-            <canvas ref={canvas => this.canvas = canvas} width="0" height="0" onMouseMove={(e: any) => this.mouseMove(e)} />
+            <canvas ref={canvas => this.canvas = canvas} width={width} height={height} onMouseMove={(e: any) => this.mouseMove(e)} />
           </div>
         </div>
       </Measure >
@@ -233,9 +246,18 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     return { x: x, y: y };
   }
 
-  protected newXScale(): Domain {
+  protected newXScale(_min: number, max: number): Domain {
     const { padding, width, responseRange } = this.next;
-    return new Domain(responseRange.start, responseRange.end, padding, width - padding);
+    const { ctx } = this;
+
+    const exp = Math.floor(Math.log(max) / Math.log(10));
+    const w = Math.pow(10, exp);
+    const number = max - (max % w);
+
+    ctx.font = TEXT_FONT;
+    const labelWidth = ctx.measureText(String(number)).width;
+
+    return new Domain(responseRange.start, responseRange.end, padding + labelWidth, width - padding);
   }
 
   /**
@@ -293,23 +315,22 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
       return;
     }
 
-    const { padding, width, height } = this.next;
+    const { padding, height } = this.next;
     const { min, max } = this.calcMinMax();
 
     // calculate scales
-    this.next.xScale = this.newXScale();
+    this.next.xScale = this.newXScale(min, max);
     this.next.yScale = new Domain(max, min, padding, height - padding);
 
     if (!this.checkDrawState()) {
       return;
     }
 
-    const ctx = this.ctx;
-    ctx.canvas.width = width;
-    ctx.canvas.height = height;
-
     const color = QualitativePaired.iterate();
 
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+    this.drawGrid();
     this.draw(color);
   }
 
@@ -366,81 +387,75 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     20 * CanvasChart.DAYS
   ];
 
-  protected drawGrid() {
-    if (1 === 1) {
-      return;
+  private stepDivisor(accuracy: number) {
+    if (accuracy >= 10) {
+      return 10;
     }
 
-    const { xScale, yScale, result, width, height } = this.next;
+    if (accuracy > 5) {
+      return 5;
+    }
+
+    if (accuracy > 2) {
+      return 2;
+    }
+
+    return 1;
+  }
+
+  private calcStep(): Step {
+    const pixels = 20;
+
+    const { yScale } = this.next;
+
+    const desiredHeight = Math.abs(yScale.scaleInverse(pixels));
+    const desiredExp = Math.ceil(Math.log(desiredHeight) / Math.log(10));
+    const stepMagnitude = Math.pow(10, desiredExp);
+    const step = stepMagnitude / this.stepDivisor(stepMagnitude / desiredHeight);
+
+    const start = yScale.sourceMax < 0 ? (
+      yScale.sourceMax - (step - Math.abs(yScale.sourceMax) % step)
+    ) : (yScale.sourceMax - yScale.sourceMax % step);
+    const end = yScale.sourceMin;
+
+    return {
+      step: step,
+      start: start,
+      end: end
+    } as Step;
+  }
+
+  protected drawGrid() {
+    const { yScale, xScale, height } = this.next;
+
     const { ctx } = this;
 
-    const yMid = yScale.map(0);
-    const xMid = xScale.map(0);
+    const step = this.calcStep();
 
-    ctx.save();
+    ctx.fillStyle = '#888888';
+    ctx.font = TEXT_FONT;
 
-    ctx.strokeStyle = '#cccccc';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#777777';
+    ctx.lineWidth = 1;
 
-    ctx.beginPath();
-    ctx.moveTo(0, yMid);
-    ctx.lineTo(width, yMid);
-    ctx.stroke();
+    ctx.translate(0.5, 0.5);
 
-    ctx.beginPath();
-    ctx.moveTo(xMid, 0);
-    ctx.lineTo(xMid, height);
-    ctx.stroke();
+    for (var i = step.start; i < step.end; i += step.step) {
+      const y = Math.round(yScale.map(i));
 
-    var cadence;
-
-    var xStep = xScale.scaleInverse(20);
-    var yStep = yScale.scaleInverse(40);
-
-    /**
-     * Inform the y-step using the given cadence.
-     */
-    if (result[0]) {
-      cadence = result[0].cadence;
-
-      while (cadence < xStep) {
-        cadence *= 2;
+      if (y >= height || y <= 0) {
+        continue;
       }
 
-      xStep = cadence;
-    }
-
-    const xStart = xScale.sourceMin - xScale.sourceMin % xStep;
-    const xEnd = xScale.sourceMax + (xScale.sourceMax - xScale.sourceMax % cadence);
-
-    const yStart = yScale.sourceMin - yScale.sourceMin % Math.abs(yStep);
-    const yEnd = yScale.sourceMax + (yScale.sourceMax - yScale.sourceMax % Math.abs(yStep));
-
-    ctx.strokeStyle = '#cccccc';
-    ctx.lineWidth = 2;
-
-    for (var i = xStart; i < xEnd; i += cadence) {
-      const x = xScale.map(i);
-
       ctx.beginPath();
-      ctx.moveTo(x, yScale.map(yStart));
-      ctx.lineTo(x, yScale.map(yEnd));
+      ctx.moveTo(xScale.targetMin, y);
+      ctx.lineTo(xScale.targetMax, y);
       ctx.stroke();
+
+      ctx.fillText(String(i), 5, y + 6);
     }
 
-    ctx.strokeStyle = '#cccccc';
-    ctx.lineWidth = 2;
-
-    for (var i = yStart; i > yEnd; i += yStep) {
-      const y = yScale.map(i);
-
-      ctx.beginPath();
-      ctx.moveTo(xScale.map(xStart), y);
-      ctx.lineTo(xScale.map(xEnd), y);
-      ctx.stroke();
-    }
-
-    ctx.restore();
+    ctx.translate(-0.5, -0.5);
   }
 };
 

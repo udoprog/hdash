@@ -19,19 +19,19 @@ export class Domain {
    * Scale a value from one domain to another.
    */
   public scale(value: number) {
-    return Math.round(value * this.target / this.source);
+    return value * this.target / this.source;
   }
 
   public scaleInverse(value: number) {
-    return Math.round(value / this.target * this.source);
+    return value / this.target * this.source;
   }
 
   public map(value: number) {
-    return Math.round((value - this.sourceMin) * this.target / this.source + this.targetMin);
+    return (value - this.sourceMin) * this.target / this.source + this.targetMin;
   }
 
   public invert(value: number) {
-    return Math.round((value - this.targetMin) * this.source / this.target + this.sourceMin);
+    return (value - this.targetMin) * this.source / this.target + this.sourceMin;
   }
 
   public withShiftedSourceMin(extent: number): Domain {

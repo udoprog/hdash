@@ -84,24 +84,6 @@ export default class DashboardPage extends React.Component<Props, State> {
     };
   }
 
-  private renderLock() {
-    return (
-      <NavItem title="Lock" onClick={() => this.setState({ locked: true, editComponent: absent<string>() }, this.updateUrl())}>
-        <FontAwesome name="lock" />
-        <span className='icon-text'>Lock</span>
-      </NavItem>
-    );
-  }
-
-  private renderUnlock() {
-    return (
-      <NavItem title="Unlock to Edit" onClick={() => this.setState({ locked: false }, this.updateUrl())}>
-        <FontAwesome name="wrench" />
-        <span className='icon-text'>Unlock</span>
-      </NavItem>
-    );
-  }
-
   public render() {
     const { locked, dashboard, editComponent, editRange, queryInProgress } = this.state;
 
@@ -130,7 +112,15 @@ export default class DashboardPage extends React.Component<Props, State> {
       </Grid>
     ) : null).get();
 
-    const lockToggle = locked ? this.renderUnlock() : this.renderLock();
+    const lockToggle = (
+      <NavItem title={locked ? "Unlock to Edit" : "Lock"} onClick={() => this.setState({ locked: !locked }, () => {
+        this.updateUrl();
+        this.query();
+      })}>
+        <FontAwesome name={locked ? 'wrench' : 'lock'} />
+        <span className='icon-text'>{locked ? "Unlock" : "Lock"}</span>
+      </NavItem>
+    );
 
     const addComponent = !locked ? (
       <NavItem onClick={() => this.addComponent()}>

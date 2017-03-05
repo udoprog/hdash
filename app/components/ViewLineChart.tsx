@@ -18,8 +18,6 @@ export default class ViewLineChart extends CanvasChart<LineChart, Props, DrawSta
   }
 
   public draw(color: ColorIterator): void {
-    this.drawGrid();
-
     const { xScale, yScale, result, stacked } = this.next;
 
     const ctx = this.ctx;

@@ -12,8 +12,8 @@ interface DrawState extends CanvasChartDrawState {
 }
 
 export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState> {
-  protected newXScale(): Domain {
-    const domain = super.newXScale()
+  protected newXScale(min: number, max: number): Domain {
+    const domain = super.newXScale(min, max)
     const { cadence } = this.next;
     return domain.withShiftedSourceMin(-cadence);
   }
@@ -119,10 +119,5 @@ export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState
 
       ctx.fill();
     }
-
-    ctx.strokeStyle = '#000000';
-    ctx.moveTo(xScale.targetMin - 10, yScale.map(0));
-    ctx.lineTo(xScale.targetMax + 10, yScale.map(0));
-    ctx.stroke();
   }
 };
