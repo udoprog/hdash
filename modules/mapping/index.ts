@@ -47,7 +47,7 @@ export interface FieldType<T> {
   toField(options: FieldOptions): Field<T>;
 }
 
-class Path {
+export class Path {
   readonly name: string | null;
   readonly parent?: Path;
 
@@ -104,11 +104,17 @@ class AssignField<T> implements Field<T> {
   }
 
   public decode(value: any, path: Path): any {
+    if (value === undefined || value === null) {
+      if (this.optional) {
+        return absent();
+      }
+    }
+
     if (!this.typeCheck.check(value)) {
       throw path.error(`value has wrong type: ${typeof value}, expected: ${this.typeCheck.description}`);
     }
 
-    return value;
+    return this.optional ? of(value) : value;
   }
 
   public encode(value: any): any {

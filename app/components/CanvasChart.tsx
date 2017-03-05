@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { VisualOptions, DataSource, EmbeddedDataSource } from 'api/model';
+import { VisualOptions, DataSource, EmbeddedDataSource, Range } from 'api/model';
 import { Query, QueryResult, HeroicContext, QueryRange, QueryResponse } from 'api/heroic';
 import { PagesContext } from 'api/interfaces';
 import { decode, equals } from 'mapping';
@@ -7,6 +7,8 @@ import Measure from 'react-measure';
 import { QualitativePaired9 as QualitativePaired, ColorIterator } from 'api/colors';
 import { Domain } from 'api/domain';
 import { Optional } from 'optional';
+import * as moment from 'moment';
+import FontAwesome from 'react-fontawesome';
 
 export const DEFAULT_PADDING = 10;
 
@@ -16,6 +18,10 @@ interface Model {
   zeroBased: boolean;
 }
 
+interface State {
+  queryInProgress: boolean;
+}
+
 export interface CanvasChartProps<T extends Model> {
   padding?: number;
   model: T;
@@ -23,6 +29,12 @@ export interface CanvasChartProps<T extends Model> {
 }
 
 export interface CanvasChartDrawState {
+  width?: number;
+  height?: number;
+  range?: Range;
+  query?: Query;
+
+  responseRange?: QueryRange;
   result?: QueryResult[];
   cadence?: number;
   xScale?: Domain;
@@ -31,15 +43,12 @@ export interface CanvasChartDrawState {
   padding: number;
 }
 
-abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D extends CanvasChartDrawState> extends React.Component<P, {}> {
+abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D extends CanvasChartDrawState> extends React.Component<P, State> {
   context: HeroicContext & PagesContext;
   canvas: HTMLCanvasElement;
   ctx?: CanvasRenderingContext2D;
 
-  width?: number;
-  height?: number;
   lastQuery?: Query;
-  range?: QueryRange;
   lastFetcheDataSource?: DataSource;
   currentDataSource?: EmbeddedDataSource;
 
@@ -65,6 +74,10 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
 
     this.next = this.initialDrawState(props);
     this.drawn = this.initialDrawState(props);
+
+    this.state = {
+      queryInProgress: true
+    }
   }
 
   /**
@@ -81,34 +94,43 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
    * Receive new props.
    */
   protected receiveProps(nextProps: P) {
-    const { model, padding } = nextProps;
+    const { model, padding, visualOptions } = nextProps;
 
     this.next.stacked = model.stacked;
     this.next.padding = padding || DEFAULT_PADDING;
+    this.next.range = visualOptions.range;
   }
 
   public componentDidMount() {
     this.ctx = this.canvas.getContext('2d');
     this.componentWillReceiveProps(this.props);
-    this.requery();
   }
 
   public componentWillReceiveProps(nextProps: P) {
     this.receiveProps(nextProps);
-    this.redraw();
+    this.requery();
   }
 
   public render() {
+    const { queryInProgress } = this.state;
     const { height: fixedHeight } = this.props.visualOptions;
 
     return (
       <Measure onMeasure={dimension => {
-        this.width = dimension.width;
-        this.height = fixedHeight || dimension.height;
-        this.maybeUpdate();
+        this.next.width = dimension.width;
+        this.next.height = fixedHeight || dimension.height;
+        this.requery();
       }}>
         <div style={{ display: "block", width: "100%", height: "100%" }}>
-          <canvas ref={canvas => this.canvas = canvas} width="0" height="0" onMouseMove={(e: any) => this.mouseMove(e)} />
+          <div className="query-feedback">
+            {queryInProgress ? <div className='in-progress'>
+              <FontAwesome name='circle-o-notch' spin={true} />
+            </div> : null}
+          </div>
+
+          <div style={{ display: "block", width: "100%", height: "100%" }}>
+            <canvas ref={canvas => this.canvas = canvas} width="0" height="0" onMouseMove={(e: any) => this.mouseMove(e)} />
+          </div>
         </div>
       </Measure >
     );
@@ -117,35 +139,96 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
   /**
    * Run a new query.
    */
-  public async requery(): Promise<{}> {
+  public async requery(force?: boolean): Promise<{}> {
     const { lastFetcheDataSource } = this;
     const { model } = this.props;
 
     /* no need to refresh datasource */
-    if (equals(lastFetcheDataSource, model.dataSource)) {
-      return this.maybeUpdate();
+    if (!equals(lastFetcheDataSource, model.dataSource)) {
+      /* query already in progress */
+      if (this.dataSourceQuery) {
+        return Promise.resolve({});
+      }
+
+      this.setState({ queryInProgress: true })
+
+      /* also check if dataSource should be updated... */
+      var dataSource;
+
+      try {
+        dataSource = await (this.dataSourceQuery = model.dataSource.toEmbedded(this.context));
+      } finally {
+        this.dataSourceQuery = null;
+        this.setState({ queryInProgress: false })
+      }
+
+      dataSource.accept(dataSource => {
+        this.lastFetcheDataSource = model.dataSource;
+        this.currentDataSource = dataSource;
+      });
     }
 
-    /* query already in progress */
-    if (this.dataSourceQuery) {
+    const { currentDataSource } = this;
+
+    // no data source loaded yet
+    if (!currentDataSource) {
       return Promise.resolve({});
     }
 
-    /* also check if dataSource should be updated... */
-    var dataSource;
-
-    try {
-      dataSource = await (this.dataSourceQuery = model.dataSource.toEmbedded(this.context));
-    } finally {
-      this.dataSourceQuery = null;
+    if (!currentDataSource.query) {
+      return Promise.resolve({});
     }
 
-    dataSource.accept(dataSource => {
-      this.lastFetcheDataSource = model.dataSource;
-      this.currentDataSource = dataSource;
-    });
+    const { range } = this.next;
+    const { range: drawnRange } = this.drawn;
 
-    return this.maybeUpdate();
+    if (!equals(range, drawnRange) || force) {
+      const now = moment();
+      const start = range.start.moment(now).valueOf();
+      const end = range.end.moment(now).valueOf();
+
+      const query = decode({
+        query: currentDataSource.query,
+        range: { type: 'absolute', start: start, end: end }
+      }, Query);
+
+      if (!equals(query, this.lastQuery)) {
+        // already updating
+        if (this.dataQuery) {
+          return Promise.resolve({});
+        }
+
+        this.setState({
+          queryInProgress: true
+        });
+
+        var response: QueryResponse;
+
+        try {
+          response = await (this.dataQuery = this.context.heroic.queryMetrics(query));
+        } finally {
+          this.dataQuery = null;
+
+          this.setState({
+            queryInProgress: false
+          });
+        }
+
+        const result = response.result.slice();
+        result.sort((a, b) => a.hash.localeCompare(b.hash));
+
+        this.next.query = query;
+        this.next.result = result;
+        this.next.cadence = response.cadence.orElse(-1);
+        this.next.responseRange = response.range;
+
+        this.drawn.range = range;
+        this.lastQuery = query;
+      }
+    }
+
+    this.redraw();
+    return Promise.resolve({});
   }
 
   private mouseMove(e: any) {
@@ -155,70 +238,28 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     return { x: x, y: y };
   }
 
-  private async maybeUpdate(): Promise<{}> {
-    const { currentDataSource } = this;
-
-    // no data source loaded yet
-    if (!currentDataSource) {
-      return Promise.resolve({});
-    }
-
-    // const { lastQuery } = this;
-
-    if (!currentDataSource.query) {
-      return Promise.resolve({});
-    }
-
-    const nextQuery = decode({
-      query: currentDataSource.query,
-      range: { type: 'relative', value: 24, unit: 'HOURS' }
-    }, Query);
-
-    return this.query(nextQuery);
-  }
-
-  private async query(query: Query): Promise<{}> {
-    // already updating
-    if (this.dataQuery) {
-      return Promise.resolve({});
-    }
-
-    var response: QueryResponse;
-
-    try {
-      response = await (this.dataQuery = this.context.heroic.queryMetrics(query));
-    } finally {
-      this.dataQuery = null;
-    }
-
-    const result = response.result.slice();
-    result.sort((a, b) => a.hash.localeCompare(b.hash));
-
-    this.next.result = result;
-    this.next.cadence = response.cadence;
-    this.range = response.range;
-
-    this.lastQuery = query;
-
-    this.redraw();
-    return Promise.resolve({});
-  }
-
   protected newXScale(): Domain {
-    const { width, range } = this;
-    const { padding } = this.next;
-    return new Domain(range.start, range.end, padding, width - padding);
+    const { padding, width, responseRange } = this.next;
+    return new Domain(responseRange.start, responseRange.end, padding, width - padding);
   }
 
   /**
    * Check if it is time to redraw the graph.
    */
   protected checkDrawState(): boolean {
-    const { xScale, yScale, result, stacked, padding } = this.next;
+    const {
+      xScale,
+      yScale,
+      query,
+      result,
+      stacked,
+      padding
+    } = this.next;
 
     const {
       xScale: drawnXScale,
       yScale: drawnYScale,
+      query: drawnQuery,
       result: drawnResult,
       stacked: drawnStacked,
       padding: drawnPadding,
@@ -236,6 +277,16 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
       redraw = true;
     }
 
+    if (!equals(query, drawnQuery)) {
+      this.drawn.query = query;
+      redraw = true;
+    }
+
+    if (result !== drawnResult) {
+      this.drawn.result = result;
+      redraw = true;
+    }
+
     if (stacked !== drawnStacked) {
       this.drawn.stacked = stacked;
       redraw = true;
@@ -243,11 +294,6 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
 
     if (padding !== drawnPadding) {
       this.drawn.padding = padding;
-      redraw = true;
-    }
-
-    if (result !== drawnResult) {
-      this.drawn.result = result;
       redraw = true;
     }
 
@@ -259,9 +305,7 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
       return;
     }
 
-    const { width, height } = this;
-    const { padding } = this.next;
-
+    const { padding, width, height } = this.next;
     const { min, max } = this.calcMinMax();
 
     // calculate scales
@@ -339,8 +383,8 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
       return;
     }
 
-    const { xScale, yScale, result } = this.next;
-    const { ctx, width, height } = this;
+    const { xScale, yScale, result, width, height } = this.next;
+    const { ctx } = this;
 
     const yMid = yScale.map(0);
     const xMid = xScale.map(0);

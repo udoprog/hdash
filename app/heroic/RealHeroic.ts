@@ -10,7 +10,7 @@ export default class RealHeroic implements Heroic {
   }
 
   queryMetrics(query: Query): Promise<QueryResponse> {
-    return axios.post(this.buildUrl('/query/metrics'), encode(query))
+    return axios.post(this.buildUrl('query/metrics'), encode(query))
       .then(response => {
         return decode(response.data, QueryResponse);
       }) as Promise<QueryResponse>;

@@ -11,7 +11,7 @@ body {
     cursor: pointer;
 }
 
-@loading-font-size: ceil((@font-size-large * 1.5));
+@loading-font-size: ceil((@font-size-large * 2.0));
 
 .loading {
   padding-top: @loading-font-size;
@@ -102,9 +102,20 @@ ul.quick-range-list {
         }
 
         &.today {
-          color: #2222ff;
+          .button-variant(@btn-primary-color, @btn-primary-bg, @btn-primary-border);
         }
       }
     }
+  }
+}
+
+.query-feedback {
+  position: relative;
+
+  .in-progress {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: @loading-font-size;
   }
 }

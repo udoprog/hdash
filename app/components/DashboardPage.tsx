@@ -2,10 +2,10 @@ import * as React from 'react';
 import { Grid, Navbar, Nav, NavItem, Glyphicon, ButtonGroup, Button } from 'react-bootstrap';
 import FontAwesome from 'react-fontawesome';
 import { PagesContext, RouterContext } from 'api/interfaces';
-import { Dashboard, Component, LayoutEntry, Range } from 'api/model';
+import { Dashboard, Component, LayoutEntry, Range, VisualOptions } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import ReactGridLayout from 'react-grid-layout';
-import EditComponent from 'components/EditComponent';
+import EditComponent, { EditComponentOptions } from 'components/EditComponent';
 import { RouteComponentProps } from 'react-router';
 import RangePicker from 'components/RangePicker';
 
@@ -103,7 +103,7 @@ export default class DashboardPage extends React.Component<Props, State> {
           {dashboard.map(d => {
             return (
               <span>
-                <b>{d.range.renderStart()}</b> until <b>{d.range.renderEnd()}</b>
+                <b>{d.range.start.render()}</b> until <b>{d.range.end.render()}</b>
               </span>
             );
           }).orElseGet(() => <em>unknown</em>)}
@@ -134,9 +134,18 @@ export default class DashboardPage extends React.Component<Props, State> {
     ) : null;
 
     const main = dashboard.map(dashboard => {
+      const options: EditComponentOptions = {
+        range: dashboard.range
+      };
+
       return editComponent.map(componentId => {
         return dashboard.getComponent(componentId).map(component => {
-          return <EditComponent component={component} onBack={(component) => this.back(component)} />;
+          return (
+            <EditComponent
+              component={component}
+              options={options}
+              onBack={(component) => this.back(component)} />
+          );
         }).orElseGet(() => {
           return (
             <Grid>
@@ -164,7 +173,9 @@ export default class DashboardPage extends React.Component<Props, State> {
           </Nav>
         </Navbar>
 
-        {editRangeComponent}
+        <div>
+          {editRangeComponent}
+        </div>
 
         {main}
       </div>
@@ -218,7 +229,7 @@ export default class DashboardPage extends React.Component<Props, State> {
             </ButtonGroup>
           </div>
         </div>
-      ) : null;
+      ) : <div />;
 
       const showTitleBar = !!component.title || !locked;
 
@@ -227,7 +238,7 @@ export default class DashboardPage extends React.Component<Props, State> {
           <span className="text">{component.title}</span>
           {buttons}
         </div>
-      ) : null;
+      ) : <div />;
 
       var componentClasses = "component";
 
@@ -241,13 +252,12 @@ export default class DashboardPage extends React.Component<Props, State> {
         componentClasses += " locked";
       }
 
-      const visualOptions = {
-        width: 0,
-        height: 0,
+      const visualOptions: VisualOptions = {
+        range: dashboard.range,
       };
 
       return (
-        <div className={componentClasses} key={component.id}>
+        <div key={component.id} className={componentClasses}>
           {titlebar}
           {component.visualization.renderVisual(visualOptions)}
         </div>

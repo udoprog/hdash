@@ -1,4 +1,5 @@
 import { field, types, Values } from 'mapping';
+import { Optional } from 'optional';
 
 export interface Range {
   type: string;
@@ -119,8 +120,8 @@ export class QueryResponse {
   @field(types.Array(QueryResult))
   readonly result: QueryResult[];
 
-  @field(types.Number)
-  readonly cadence: number;
+  @field(types.Number, { optional: true })
+  readonly cadence: Optional<number>;
 
   constructor(values: Values<QueryResponse>) {
     this.range = values.range;

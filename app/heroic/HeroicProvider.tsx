@@ -15,7 +15,7 @@ export default class DatabaseProvider extends React.Component<Props, {}> {
   }
 
   heroic(): Heroic {
-    return new RealHeroic("http://localhost:8080");
+    return new RealHeroic("/heroic");
   }
 
   getChildContext(): HeroicContext {

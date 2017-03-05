@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { decode, field, clone, types, Constructor, Values, FieldType, Field, FieldOptions } from 'mapping';
+import { decode, field, clone, types, Constructor, Values } from 'mapping';
 import { Optional, ofNullable, of } from 'optional';
 import EditBarChart from 'components/EditBarChart';
 import ViewBarChart from 'components/ViewBarChart';
@@ -12,310 +12,37 @@ import EditEmbeddedDataSource from 'components/EditEmbeddedDataSource';
 import EditReferenceDataSource from 'components/EditReferenceDataSource';
 
 import { PagesContext } from 'api/interfaces';
-import * as moment from 'moment';
-import * as unit from './unit';
+import { Instant, InstantType } from './instant';
 
 const MAX_ATTEMPTS = 1000;
 const RANGE = 1000000;
 
 var randomId = Math.round(Math.random() * RANGE);
 
-class MomentField implements Field<moment.Moment> {
-  public readonly optional: boolean;
-  public readonly descriptor: string;
-
-  constructor(optional: boolean) {
-    this.optional = optional;
-    this.descriptor = 'Moment';
-  }
-
-  decode(value: any): moment.Moment {
-    return moment(value);
-  }
-
-  encode(value: moment.Moment): any {
-    return value.milliseconds();
-  }
-
-  equals(_a: moment.Moment, _b: moment.Moment): boolean {
-    return false;
-  }
-}
-
-class MomentFieldType implements FieldType<moment.Moment> {
-  public static __ft: boolean = true;
-
-  toField(options: FieldOptions): MomentField {
-    return new MomentField(options.optional);
-  }
-}
-
-export interface Range {
-  renderStart(): string;
-
-  renderEnd(): string;
-
-  momentStart(now: moment.Moment): moment.Moment;
-
-  momentEnd(now: moment.Moment): moment.Moment;
-
-  equals(other: Range): boolean;
-}
-
-export class RangeOffset {
-  @field(types.Number)
-  public readonly value: number;
-  @field(unit.UnitType)
-  public readonly unit: unit.Unit;
-
-  constructor(values: Values<RangeOffset>) {
-    this.value = values.value;
-    this.unit = values.unit;
-  }
-
-  equals(other: RangeOffset): boolean {
-    return other.value === this.value && other.unit.equals(this.unit);
-  }
-}
-
-/**
- * A relative range that has a specific offset.
- */
-export class RoundedStartRelativeRange implements Range {
-  static type: string = 'rounded-start-relative';
-
-  get type(): string {
-    return RoundedStartRelativeRange.type;
-  }
-
-  @field(unit.UnitType)
-  public readonly unit: unit.Unit;
-
-  constructor(values: Values<RoundedRelativeRange>) {
-    this.unit = values.unit;
-  }
-
-  momentStart(now: moment.Moment): moment.Moment {
-    return now.clone().startOf(this.unit.singular);
-  }
-
-  momentEnd(now: moment.Moment): moment.Moment {
-    return now;
-  }
-
-  renderStart(): string {
-    if (this.unit === unit.Days) {
-      return `beginning of today`;
-    }
-
-    return `beginning of this ${this.unit.singular}`;
-  }
-
-  renderEnd(): string {
-    return 'now';
-  }
-
-  equals(other: Range): boolean {
-    return other instanceof RoundedStartRelativeRange && other.unit.equals(this.unit);
-  }
-}
-
-/**
- * A relative range, rounded to the given unit that has a specific offset.
- */
-export class RoundedRelativeRange implements Range {
-  static type: string = 'rounded-relative';
-
-  get type(): string {
-    return RoundedRelativeRange.type;
-  }
-
-  @field(unit.UnitType)
-  public readonly unit: unit.Unit;
-  @field(RangeOffset)
-  public readonly offset: RangeOffset;
-
-  constructor(values: Values<RoundedRelativeRange>) {
-    this.unit = values.unit;
-    this.offset = values.offset;
-  }
-
-  renderStart(): string {
-    if (this.offset.value === 0) {
-      if (this.unit === unit.Days) {
-        return 'beginning of today';
-      }
-
-      return `beginning of this ${this.unit.singular}`;
-    }
-
-    if (this.offset.value === 1) {
-      if (this.offset.unit === unit.Days) {
-        return 'beginning of yesterday';
-      }
-
-      if (this.unit === unit.Days) {
-        return `beginning of this day last ${this.offset.unit.singular}`;
-      }
-
-      return `beginning of last ${this.offset.unit.singular}`;
-    }
-
-    if (this.offset.value === 2 && this.offset.unit === unit.Days) {
-      return `beginning of the ${this.unit.singular} before yesterday`;
-    }
-
-    return `beginning of a ${this.unit.singular} ${this.offset.unit.format(this.offset.value)} ago`;
-  }
-
-  renderEnd(): string {
-    if (this.offset.value === 0) {
-      if (this.unit === unit.Days) {
-        return 'end of today';
-      }
-
-      return `end of this ${this.unit.singular}`;
-    }
-
-    if (this.offset.value === 1) {
-      if (this.offset.unit === unit.Days) {
-        return 'end of yesterday';
-      }
-
-      if (this.unit === unit.Days) {
-        return `end of this day last ${this.offset.unit.singular}`;
-      }
-
-      return `end of last ${this.offset.unit.singular}`;
-    }
-
-    if (this.offset.value === 2 && this.offset.unit === unit.Days) {
-      return `end of the ${this.unit.singular} before yesterday`;
-    }
-
-    return `end of a ${this.unit.singular} ${this.offset.unit.format(this.offset.value)} ago`;
-  }
-
-  momentStart(now: moment.Moment): moment.Moment {
-    return now.clone()
-      .subtract(this.offset.value, this.offset.unit.singular)
-      .startOf(this.unit.singular);
-  }
-
-  momentEnd(now: moment.Moment): moment.Moment {
-    return now.clone()
-      .subtract(this.offset.value, this.offset.unit.singular)
-      .endOf(this.unit.singular);
-  }
-
-  equals(other: Range): boolean {
-    return (
-      other instanceof RoundedRelativeRange &&
-      other.unit.equals(this.unit) &&
-      other.offset.equals(this.offset)
-    );
-  }
-}
-
-/**
- * A range that goes back in time the given unit and value.
- */
-export class NowRelativeRange implements Range {
-  static type: string = 'now-relative';
-
-  get type(): string {
-    return NowRelativeRange.type;
-  }
-
-  @field(types.Number)
-  public readonly value: number;
-  @field(unit.UnitType)
-  public readonly unit: unit.Unit;
-
-  constructor(values: Values<NowRelativeRange>) {
-    this.value = values.value;
-    this.unit = values.unit;
-  }
-
-  renderStart(): string {
-    return `${this.unit.format(this.value)} ago`;
-  }
-
-  renderEnd(): string {
-    return "now";
-  }
-
-  momentStart(now: moment.Moment): moment.Moment {
-    return now.clone().subtract(this.value, this.unit.singular);
-  }
-
-  momentEnd(now: moment.Moment): moment.Moment {
-    return now;
-  }
-
-  equals(other: Range): boolean {
-    return (
-      other instanceof NowRelativeRange &&
-      other.value === this.value &&
-      other.unit.equals(this.unit)
-    );
-  }
-}
-
 /**
  * A range that has an exact starting and stopping.
  */
-export class AbsoluteRange implements Range {
-  static type: string = 'absolute';
+export class Range {
+  @field(InstantType)
+  public readonly start: Instant;
+  @field(InstantType)
+  public readonly end: Instant;
 
-  get type(): string {
-    return NowRelativeRange.type;
-  }
-
-  @field(new MomentFieldType())
-  public readonly start: moment.Moment;
-  @field(new MomentFieldType())
-  public readonly end: moment.Moment;
-
-  constructor(values: Values<AbsoluteRange>) {
+  constructor(values: Values<Range>) {
     this.start = values.start;
     this.end = values.end;
   }
 
-  renderStart(): string {
-    return this.start.format();
-  }
-
-  renderEnd(): string {
-    return this.end.format();
-  }
-
-  momentStart(_now: moment.Moment): moment.Moment {
-    return this.start;
-  }
-
-  momentEnd(_now: moment.Moment): moment.Moment {
-    return this.end;
-  }
-
   equals(other: Range): boolean {
     return (
-      other instanceof AbsoluteRange &&
-      other.start === this.start &&
-      other.end === this.end
+      other.start.equals(this.start) &&
+      other.end.equals(this.end)
     );
   }
 }
 
-export const RangeType = types.SubTypes<Range>([
-  AbsoluteRange,
-  NowRelativeRange,
-  RoundedRelativeRange,
-  RoundedStartRelativeRange
-]);
-
 export interface VisComponent {
-  requery(): void;
+  requery(force?: boolean): void;
 }
 
 export interface EditOptions<T> {
@@ -324,6 +51,7 @@ export interface EditOptions<T> {
 
 export interface VisualOptions {
   height?: number;
+  range: Range;
 }
 
 export interface DataSource {
@@ -568,7 +296,7 @@ export class Dashboard {
   readonly components: Component[];
   @field(types.Array(LayoutEntry))
   readonly layout: Array<LayoutEntry>;
-  @field(RangeType)
+  @field(Range)
   readonly range: Range;
 
   constructor(values: Values<Dashboard>) {
