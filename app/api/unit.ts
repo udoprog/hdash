@@ -26,11 +26,14 @@ class MillisecondsUnit implements Unit {
   }
 
   format(value: number): string {
-    if (value == 1) {
-      return `${value} ${this.singular}`
+    switch (value) {
+      case 1:
+        return `one ${this.singular}`;
+      case 2:
+        return `two ${this.plural}`;
+      default:
+        return `${value} ${this.plural}`;
     }
-
-    return `${value} ${this.plural}`;
   }
 
   equals(other: Unit): boolean {

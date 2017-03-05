@@ -112,10 +112,6 @@ export class Relative implements Instant {
   }
 
   render(): string {
-    if (this.offset.value === 1) {
-      return `one ${this.offset.unit.singular} ago`;
-    }
-
     return `${this.offset.unit.format(this.offset.value)} ago`;
   }
 
@@ -128,7 +124,7 @@ export class Relative implements Instant {
 }
 
 /**
- * A relative range that has a specific offset.
+ * An instant relative to now, rounded to the start of a given unit.
  */
 export class StartOf implements Instant {
   static type: string = 'start-of';
@@ -191,7 +187,7 @@ export class StartOf implements Instant {
 }
 
 /**
- * A relative range, rounded to the given unit that has a specific offset.
+ * An instant relative to now, rounded to the end of a given unit.
  */
 export class EndOf implements Instant {
   static type: string = 'end-of';
@@ -254,7 +250,7 @@ export class EndOf implements Instant {
 }
 
 /**
- * A range that goes back in time the given unit and value.
+ * An instant exactly matching now.
  */
 export class Now implements Instant {
   static type: string = 'now';
