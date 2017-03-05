@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { PagesContext } from 'api/interfaces';
-import { Component, Vis, HasType, Range } from 'api/model';
-import { Row, Col, Grid, Button, Glyphicon, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
+import { Component, Vis, HasType, Range, VisComponent } from 'api/model';
+import { Row, Col, Grid, Button, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import EditVis, { EditVisOptions } from './EditVis';
 import { mutate } from 'mapping';
+import FontAwesome from 'react-fontawesome';
 
 export interface EditComponentOptions {
   range: Range;
@@ -19,8 +20,9 @@ interface State {
   component: Component;
 }
 
-export default class EditComponent extends React.Component<Props, State> {
+export default class EditComponent extends React.Component<Props, State> implements VisComponent {
   context: PagesContext;
+  visual?: VisComponent;
 
   public static contextTypes: any = {
     db: React.PropTypes.object
@@ -55,18 +57,28 @@ export default class EditComponent extends React.Component<Props, State> {
         <EditVis
           vis={component.visualization}
           options={options}
-          onChange={visualization => this.changeVisualization(visualization)} />
+          onChange={visualization => this.changeVisualization(visualization)}
+          ref={visual => this.visual = visual} />
 
         <Row>
           <Col sm={12}>
             <Button bsStyle="primary" onClick={() => this.back()}>
-              <Glyphicon glyph="arrow-left" />
-              <span>&nbsp;&nbsp;Back</span>
+              <FontAwesome name="arrow-left" />
+              <span className='icon-text'>Back</span>
+            </Button>
+
+            <Button onClick={() => this.visual && this.visual.refresh(true)}>
+              <FontAwesome name='play' />
+              <span className='icon-text'>Query</span>
             </Button>
           </Col>
         </Row>
       </Grid>
     );
+  }
+
+  public refresh(query?: boolean): Promise<{}> {
+    return this.visual.refresh(query);
   }
 
   private changeVisualization(visualization: Vis & HasType) {

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Vis, HasType, VisComponent, Range, VISUALIZATION_TYPES } from 'api/model';
-import { Row, Col, FormGroup, FormControl, ButtonGroup, InputGroup, Button } from 'react-bootstrap';
+import { Row, Col, FormGroup, FormControl, ButtonGroup, InputGroup } from 'react-bootstrap';
 import { clone } from 'mapping';
 import TypeButton from 'components/TypeButton';
 
@@ -14,7 +14,7 @@ interface Props {
   onChange: (visualization: Vis & HasType) => void;
 }
 
-export default class EditVis extends React.Component<Props, {}> {
+export default class EditVis extends React.Component<Props, {}> implements VisComponent {
   old: { [key: string]: Vis & HasType };
   visual?: VisComponent;
 
@@ -22,6 +22,10 @@ export default class EditVis extends React.Component<Props, {}> {
     super(props);
 
     this.old = {};
+  }
+
+  public componentDidMount() {
+    this.visual.refresh(true);
   }
 
   public render() {
@@ -75,13 +79,11 @@ export default class EditVis extends React.Component<Props, {}> {
         </Row>
 
         {vis.renderEdit(editOptions)}
-
-        <Row>
-          <Col sm={12}>
-            <Button onClick={() => this.visual && this.visual.requery(true)}>Requery</Button>
-          </Col>
-        </Row>
       </div>
     );
+  }
+
+  public refresh(query?: boolean): Promise<{}> {
+    return this.visual.refresh(query);
   }
 };

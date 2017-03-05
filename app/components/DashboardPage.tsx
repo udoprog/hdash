@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { Grid, Navbar, Nav, NavItem, Glyphicon, ButtonGroup, Button } from 'react-bootstrap';
+import { Grid, Navbar, Nav, NavItem, ButtonGroup, Button } from 'react-bootstrap';
 import FontAwesome from 'react-fontawesome';
 import { PagesContext, RouterContext } from 'api/interfaces';
-import { Dashboard, Component, LayoutEntry, Range, VisualOptions } from 'api/model';
+import { Dashboard, Component, LayoutEntry, Range, VisualOptions, VisComponent } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import ReactGridLayout from 'react-grid-layout';
 import EditComponent, { EditComponentOptions } from 'components/EditComponent';
@@ -25,10 +25,20 @@ interface State {
   dashboard: Optional<Dashboard>;
   editComponent: Optional<string>;
   editRange: boolean;
+  queryInProgress: boolean;
 }
 
 export default class DashboardPage extends React.Component<Props, State> {
   context: PagesContext & RouterContext;
+  /**
+   * Collection of components in view.
+   */
+  visuals: { [key: string]: VisComponent };
+  /**
+   * When focusing on a single component.
+   */
+  visual?: VisComponent;
+  queryInProgress: Promise<any>;
 
   public static contextTypes: any = {
     db: React.PropTypes.object,
@@ -45,12 +55,15 @@ export default class DashboardPage extends React.Component<Props, State> {
       dashboard: absent<Dashboard>(),
       editComponent: ofNullable(query.edit),
       editRange: query.editRange === 'true',
+      queryInProgress: false,
     };
+
+    this.visuals = {};
   }
 
   public componentDidMount(): void {
     this.context.db.get(this.props.params.id).then(dashboard => {
-      this.setState({ dashboard: dashboard });
+      this.setState({ dashboard: dashboard }, () => this.query());
     });
   }
 
@@ -74,7 +87,7 @@ export default class DashboardPage extends React.Component<Props, State> {
   private renderLock() {
     return (
       <NavItem title="Lock" onClick={() => this.setState({ locked: true, editComponent: absent<string>() }, this.updateUrl())}>
-        <Glyphicon glyph="lock" />
+        <FontAwesome name="lock" />
         <span className='icon-text'>Lock</span>
       </NavItem>
     );
@@ -83,14 +96,14 @@ export default class DashboardPage extends React.Component<Props, State> {
   private renderUnlock() {
     return (
       <NavItem title="Unlock to Edit" onClick={() => this.setState({ locked: false }, this.updateUrl())}>
-        <Glyphicon glyph="wrench" />
+        <FontAwesome name="wrench" />
         <span className='icon-text'>Unlock</span>
       </NavItem>
     );
   }
 
   public render() {
-    const { locked, dashboard, editComponent, editRange } = this.state;
+    const { locked, dashboard, editComponent, editRange, queryInProgress } = this.state;
 
     let title = dashboard
       .map(dashboard => dashboard.title)
@@ -121,17 +134,29 @@ export default class DashboardPage extends React.Component<Props, State> {
 
     const addComponent = !locked ? (
       <NavItem onClick={() => this.addComponent()}>
-        <Glyphicon glyph="plus" />
+        <FontAwesome name="plus" />
         <span className='icon-text'>Add Component</span>
       </NavItem>
     ) : null;
 
     const save = !locked ? (
       <NavItem onClick={() => this.save()}>
-        <Glyphicon glyph="save" />
+        <FontAwesome name="save" />
         <span className='icon-text'>Save</span>
       </NavItem>
     ) : null;
+
+    const query = queryInProgress ? (
+      <NavItem onClick={() => this.query()} disabled={true}>
+        <FontAwesome name='circle-o-notch' spin={true} />
+        <span className='icon-text'>Query</span>
+      </NavItem>
+    ) : (
+        <NavItem onClick={() => this.query()}>
+          <FontAwesome name="play" />
+          <span className='icon-text'>Query</span>
+        </NavItem>
+      );
 
     const main = dashboard.map(dashboard => {
       const options: EditComponentOptions = {
@@ -144,7 +169,8 @@ export default class DashboardPage extends React.Component<Props, State> {
             <EditComponent
               component={component}
               options={options}
-              onBack={(component) => this.back(component)} />
+              onBack={(component) => this.back(component)}
+              ref={visual => this.visual = visual} />
           );
         }).orElseGet(() => {
           return (
@@ -165,10 +191,14 @@ export default class DashboardPage extends React.Component<Props, State> {
     return (
       <div>
         <Navbar collapseOnSelect staticTop={true}>
-          <Nav pullRight>
-            {addComponent}
-            {save}
+          <Nav>
             {lockToggle}
+            {save}
+            {addComponent}
+          </Nav>
+
+          <Nav pullRight>
+            {query}
             {rangeToggle}
           </Nav>
         </Navbar>
@@ -220,11 +250,11 @@ export default class DashboardPage extends React.Component<Props, State> {
           <div className="buttons">
             <ButtonGroup bsSize="xs">
               <Button onClick={() => this.edit(component.id)}>
-                <Glyphicon glyph="edit" />
+                <FontAwesome name="edit" />
               </Button>
 
               <Button bsStyle="danger" onClick={() => this.remove(component)}>
-                <Glyphicon glyph="remove" />
+                <FontAwesome name="remove" />
               </Button>
             </ButtonGroup>
           </div>
@@ -259,7 +289,7 @@ export default class DashboardPage extends React.Component<Props, State> {
       return (
         <div key={component.id} className={componentClasses}>
           {titlebar}
-          {component.visualization.renderVisual(visualOptions)}
+          {component.visualization.renderVisual(visualOptions, ref => this.visuals[component.id] = ref)}
         </div>
       );
     })
@@ -273,7 +303,10 @@ export default class DashboardPage extends React.Component<Props, State> {
           return dashboard.withReplacedComponent(component);
         })
       }
-    }, this.updateUrl());
+    }, () => {
+      this.updateUrl();
+      this.query();
+    });
   }
 
   private edit(componentId: string) {
@@ -290,6 +323,30 @@ export default class DashboardPage extends React.Component<Props, State> {
     this.state.dashboard.accept(dashboard => {
       this.context.db.save(dashboard);
     })
+  }
+
+  private async query(): Promise<{}> {
+    if (this.queryInProgress) {
+      return Promise.resolve({});
+    }
+
+    var promise;
+
+    if (this.visual) {
+      promise = this.visual.refresh(true);
+    } else {
+      promise = Promise.all(Object.keys(this.visuals).map(key => {
+        return this.visuals[key].refresh(true);
+      }));
+    }
+
+    try {
+      await (this.queryInProgress = promise);
+    } finally {
+      this.queryInProgress = null;
+    }
+
+    return Promise.resolve({});
   }
 
   private addComponent() {

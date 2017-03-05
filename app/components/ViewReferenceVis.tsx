@@ -93,9 +93,7 @@ export default class ViewReferenceVis extends React.Component<Props, State> impl
     });
   }
 
-  public requery() {
-    if (this.visual) {
-      this.visual.requery();
-    }
+  public refresh(): Promise<{}> {
+    return this.visual.refresh();
   }
 };

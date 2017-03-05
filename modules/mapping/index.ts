@@ -469,20 +469,7 @@ class ClassField<T extends Target> implements Field<T> {
     Object.keys(fields).forEach(key => {
       const field = fields[key];
       const value = input[key];
-
-      if (value === undefined || value == null) {
-        if (!field.optional) {
-          throw path.extend(key).error("missing value");
-        } else {
-          values[key] = absent<any>();
-        }
-      }
-
-      if (field.optional) {
-        values[key] = of(field.decode(value, path.extend(key)));
-      } else {
-        values[key] = field.decode(value, path.extend(key));
-      }
+      values[key] = field.decode(value, path.extend(key));
     });
 
     return new this.con(values);

@@ -42,7 +42,7 @@ export class Range {
 }
 
 export interface VisComponent {
-  requery(force?: boolean): void;
+  refresh(query?: boolean): Promise<{}>;
 }
 
 export interface EditOptions<T> {

@@ -14,9 +14,8 @@ interface DrawState extends CanvasChartDrawState {
 export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState> {
   protected newXScale(): Domain {
     const domain = super.newXScale()
-
-    const { cadence } = this.next
-    return domain.withShiftedSourceMin(-cadence)
+    const { cadence } = this.next;
+    return domain.withShiftedSourceMin(-cadence);
   }
 
   /**
@@ -29,10 +28,10 @@ export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState
   }
 
   protected checkDrawState(): boolean {
-    var redraw = super.checkDrawState()
+    var redraw = super.checkDrawState();
 
-    const { gap } = this.next
-    const { gap: drawnGap } = this.drawn
+    const { gap } = this.next;
+    const { gap: drawnGap } = this.drawn;
 
     if (gap !== drawnGap) {
       redraw = true;
@@ -49,73 +48,81 @@ export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState
   }
 
   public draw(color: ColorIterator): void {
-    const { xScale, yScale, result, stacked } = this.next
+    const { xScale, yScale, result, stacked } = this.next;
 
-    const ctx = this.ctx
+    const ctx = this.ctx;
 
     if (result.length <= 0) {
       /* indicate that there are no results */
       return
     }
 
-    var cadence = result[0].cadence
+    const { cadence } = this.next;
 
     if (cadence <= 0) {
       /* indicate that there is nothing to do */
       return
     }
 
-    const { gap } = this.props.model
+    const { gap } = this.next;
+    const barGroupGap = xScale.scaleInverse(gap);
 
-    const barGroupGap = xScale.scaleInverse(gap)
-    const barWidth = ((cadence - barGroupGap) / result.length)
-
-    var filler = (bi: number, _si: number, x: number, y: number) => {
-      ctx.fillRect(
-        Math.round(xScale.map(x + (barWidth * bi) - cadence)), Math.round(yScale.map(0)),
-        Math.round(xScale.scale(barWidth)), Math.round(yScale.scale(y))
-      )
-    }
+    var filler: (bi: number, _si: number, x: number, y: number) => void;
 
     if (stacked) {
-      const floors: { [key: number]: number } = {}
+      const floors: { [key: number]: number } = {};
 
       filler = (_bi: number, _si: number, x: number, y: number) => {
-        const prevY = (floors[x] || yScale.map(0))
-        const height = Math.round(yScale.scale(Math.abs(y)))
+        const prevY = (floors[x] || yScale.map(0));
+        const height = Math.round(yScale.scale(Math.abs(y)));
 
         ctx.fillRect(
           Math.round(xScale.map(x - cadence)), prevY,
           Math.round(xScale.scale(cadence - barGroupGap)), height
-        )
+        );
 
-        floors[x] = Math.round(prevY + height)
+        floors[x] = Math.round(prevY + height);
+      }
+    } else {
+      const barWidth = ((cadence - barGroupGap) / result.length);
+      const barWidthPixels = Math.round(xScale.scale(barWidth));
+      const yPos = Math.round(yScale.map(0));
+
+      if (barWidthPixels <= 0) {
+        throw new Error('bars too narrow');
+      }
+
+      var filler = (bi: number, _si: number, x: number, y: number) => {
+        ctx.fillRect(
+          Math.round(xScale.map(x + (barWidth * bi) - cadence)), yPos,
+          barWidthPixels, Math.round(yScale.scale(y))
+        );
       }
     }
 
     /* bi = bar index */
     for (var bi = 0, l = result.length; bi < l; bi++) {
-      const res = result[bi]
-      const d = res.values
+      const res = result[bi];
+      const d = res.values;
 
       if (d.length <= 0) {
         continue
       }
 
-      ctx.fillStyle = color.next()
+      ctx.fillStyle = color.next();
 
       /* si = series index */
       for (var si = 0, dl = d.length; si < dl; si++) {
-        const [x, y] = d[si]
-        filler(bi, si, x, y)
+        const [x, y] = d[si];
+        filler(bi, si, x, y);
       }
 
-      ctx.fill()
+      ctx.fill();
     }
 
-    ctx.strokeStyle = '#000000'
-    ctx.moveTo(xScale.targetMin - 10, yScale.map(0))
-    ctx.lineTo(xScale.targetMax + 10, yScale.map(0))
-    ctx.stroke()
+    ctx.strokeStyle = '#000000';
+    ctx.moveTo(xScale.targetMin - 10, yScale.map(0));
+    ctx.lineTo(xScale.targetMax + 10, yScale.map(0));
+    ctx.stroke();
   }
 };

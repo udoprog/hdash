@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { VisualOptions, DataSource, EmbeddedDataSource, Range } from 'api/model';
+import { VisualOptions, DataSource, EmbeddedDataSource, VisComponent } from 'api/model';
 import { Query, QueryResult, HeroicContext, QueryRange, QueryResponse } from 'api/heroic';
 import { PagesContext } from 'api/interfaces';
 import { decode, equals } from 'mapping';
@@ -31,8 +31,6 @@ export interface CanvasChartProps<T extends Model> {
 export interface CanvasChartDrawState {
   width?: number;
   height?: number;
-  range?: Range;
-  query?: Query;
 
   responseRange?: QueryRange;
   result?: QueryResult[];
@@ -43,12 +41,13 @@ export interface CanvasChartDrawState {
   padding: number;
 }
 
-abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D extends CanvasChartDrawState> extends React.Component<P, State> {
+abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D extends CanvasChartDrawState>
+  extends React.Component<P, State>
+  implements VisComponent {
   context: HeroicContext & PagesContext;
   canvas: HTMLCanvasElement;
   ctx?: CanvasRenderingContext2D;
 
-  lastQuery?: Query;
   lastFetcheDataSource?: DataSource;
   currentDataSource?: EmbeddedDataSource;
 
@@ -94,21 +93,21 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
    * Receive new props.
    */
   protected receiveProps(nextProps: P) {
-    const { model, padding, visualOptions } = nextProps;
+    const { model, padding } = nextProps;
 
     this.next.stacked = model.stacked;
     this.next.padding = padding || DEFAULT_PADDING;
-    this.next.range = visualOptions.range;
   }
 
   public componentDidMount() {
     this.ctx = this.canvas.getContext('2d');
-    this.componentWillReceiveProps(this.props);
+    this.receiveProps(this.props);
+    this.refresh();
   }
 
   public componentWillReceiveProps(nextProps: P) {
     this.receiveProps(nextProps);
-    this.requery();
+    this.refresh();
   }
 
   public render() {
@@ -119,7 +118,7 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
       <Measure onMeasure={dimension => {
         this.next.width = dimension.width;
         this.next.height = fixedHeight || dimension.height;
-        this.requery();
+        this.refresh();
       }}>
         <div style={{ display: "block", width: "100%", height: "100%" }}>
           <div className="query-feedback">
@@ -139,17 +138,17 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
   /**
    * Run a new query.
    */
-  public async requery(force?: boolean): Promise<{}> {
+  public async refresh(reload?: boolean): Promise<{}> {
     const { lastFetcheDataSource } = this;
     const { model } = this.props;
 
+    /* always wait for data source to load, if it hasn't already */
+    while (this.dataSourceQuery) {
+      await this.dataSourceQuery;
+    }
+
     /* no need to refresh datasource */
     if (!equals(lastFetcheDataSource, model.dataSource)) {
-      /* query already in progress */
-      if (this.dataSourceQuery) {
-        return Promise.resolve({});
-      }
-
       this.setState({ queryInProgress: true })
 
       /* also check if dataSource should be updated... */
@@ -171,18 +170,18 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     const { currentDataSource } = this;
 
     // no data source loaded yet
-    if (!currentDataSource) {
+    if (!currentDataSource || !currentDataSource.query) {
       return Promise.resolve({});
     }
 
-    if (!currentDataSource.query) {
-      return Promise.resolve({});
+    /* always wait for data to load */
+    while (this.dataQuery) {
+      await this.dataQuery;
     }
 
-    const { range } = this.next;
-    const { range: drawnRange } = this.drawn;
+    if (reload) {
+      const range = this.props.visualOptions.range;
 
-    if (!equals(range, drawnRange) || force) {
       const now = moment();
       const start = range.start.moment(now).valueOf();
       const end = range.end.moment(now).valueOf();
@@ -192,39 +191,35 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
         range: { type: 'absolute', start: start, end: end }
       }, Query);
 
-      if (!equals(query, this.lastQuery)) {
-        // already updating
-        if (this.dataQuery) {
-          return Promise.resolve({});
-        }
+      // already updating
+      if (this.dataQuery) {
+        return Promise.resolve({});
+      }
+
+      this.setState({
+        queryInProgress: true
+      });
+
+      var response: QueryResponse;
+
+      try {
+        response = await (this.dataQuery = this.context.heroic.queryMetrics(query));
+      } finally {
+        this.dataQuery = null;
 
         this.setState({
-          queryInProgress: true
+          queryInProgress: false
         });
-
-        var response: QueryResponse;
-
-        try {
-          response = await (this.dataQuery = this.context.heroic.queryMetrics(query));
-        } finally {
-          this.dataQuery = null;
-
-          this.setState({
-            queryInProgress: false
-          });
-        }
-
-        const result = response.result.slice();
-        result.sort((a, b) => a.hash.localeCompare(b.hash));
-
-        this.next.query = query;
-        this.next.result = result;
-        this.next.cadence = response.cadence.orElse(-1);
-        this.next.responseRange = response.range;
-
-        this.drawn.range = range;
-        this.lastQuery = query;
       }
+
+      const result = response.result.slice();
+      result.sort((a, b) => a.hash.localeCompare(b.hash));
+
+      this.next.result = result;
+      this.next.cadence = response.cadence.orElseGet(() => {
+        return response.result.length > 0 ? response.result[0].cadence : 0;
+      });
+      this.next.responseRange = response.range;
     }
 
     this.redraw();
@@ -250,7 +245,6 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     const {
       xScale,
       yScale,
-      query,
       result,
       stacked,
       padding
@@ -259,7 +253,6 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     const {
       xScale: drawnXScale,
       yScale: drawnYScale,
-      query: drawnQuery,
       result: drawnResult,
       stacked: drawnStacked,
       padding: drawnPadding,
@@ -274,11 +267,6 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
 
     if (!yScale.equals(drawnYScale)) {
       this.drawn.yScale = yScale;
-      redraw = true;
-    }
-
-    if (!equals(query, drawnQuery)) {
-      this.drawn.query = query;
       redraw = true;
     }
 
