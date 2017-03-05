@@ -67,21 +67,19 @@ export default class DashboardPage extends React.Component<Props, State> {
     });
   }
 
-  private updateUrl(): () => void {
-    return () => {
-      const { locked, editComponent, editRange } = this.state;
-      const { pathname, query } = this.props.location;
-      const { router } = this.context;
+  private updateUrl(): void {
+    const { locked, editComponent, editRange } = this.state;
+    const { pathname, query } = this.props.location;
+    const { router } = this.context;
 
-      query.unlocked = !locked ? 'true' : undefined;
-      query.edit = editComponent.orElse(undefined);
-      query.editRange = editRange ? 'true' : undefined;
+    query.unlocked = !locked ? 'true' : undefined;
+    query.edit = editComponent.orElse(undefined);
+    query.editRange = editRange ? 'true' : undefined;
 
-      router.replace({
-        pathname: pathname,
-        query: query
-      });
-    };
+    router.replace({
+      pathname: pathname,
+      query: query
+    });
   }
 
   public render() {
@@ -92,7 +90,7 @@ export default class DashboardPage extends React.Component<Props, State> {
       .orElse(`Dashboard with ID '${this.props.params.id}' does not exist`);
 
     const rangeToggle = (
-      <NavItem onClick={() => this.setState({ editRange: !editRange }, this.updateUrl())} active={editRange}>
+      <NavItem onClick={() => this.setState({ editRange: !editRange }, () => this.updateUrl())} active={editRange}>
         <FontAwesome name="clock-o" />
         <span className='icon-text'>
           {dashboard.map(d => {
@@ -296,7 +294,7 @@ export default class DashboardPage extends React.Component<Props, State> {
   }
 
   private edit(componentId: string) {
-    this.setState({ editComponent: of(componentId) }, this.updateUrl());
+    this.setState({ editComponent: of(componentId) }, () => this.updateUrl());
   }
 
   private remove(component: Component) {
@@ -343,7 +341,9 @@ export default class DashboardPage extends React.Component<Props, State> {
 
   private rangeChanged(range: Range) {
     this.setState((prev, _) => {
-      return { dashboard: prev.dashboard.map(dashboard => dashboard.withRange(range)) };
+      return { dashboard: prev.dashboard.map(dashboard => dashboard.withRange(range)), editRange: false };
+    }, () => {
+      this.query();
     });
   }
 

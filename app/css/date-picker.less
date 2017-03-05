@@ -1,0 +1,53 @@
+.date-picker {
+  .clearfix();
+
+  .title {
+    .clearfix();
+    text-align: center;
+
+    .month-year {
+      font-weight: bold;
+    }
+  }
+
+  .day-title {
+    text-align: center;
+    display: block;
+    float: left;
+    font-weight: bold;
+    width: percentage(round(1.0 / 7.0, 2));
+  }
+
+  .week {
+    .clearfix();
+
+    .day {
+      display: block;
+      float: left;
+      text-align: center;
+      width: percentage(round(1.0 / 7.0, 2));
+      padding: 2px 2px;
+
+      .button {
+        .button-variant(@btn-default-color, @btn-default-bg, @btn-default-border);
+
+        display: inline-block;
+        width: 100%;
+
+        border-width: 1px;
+        border-style: solid;
+        border-radius: 2px;
+
+        cursor: pointer;
+
+        &.other-month {
+          color: #999999;
+        }
+
+        &.today {
+          .button-variant(@btn-primary-color, @btn-primary-bg, @btn-primary-border);
+        }
+      }
+    }
+  }
+}

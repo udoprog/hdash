@@ -18,9 +18,6 @@ import { Instant, InstantType } from './instant';
 const MAX_ATTEMPTS = 1000;
 const RANGE = 1000000;
 
-export const DEFAULT_PADDING = 10;
-export const DEFAULT_GRID_LINE_SPACE = 20;
-
 var randomId = Math.round(Math.random() * RANGE);
 
 /**
@@ -151,6 +148,8 @@ export class LineChart implements CanvasChartModel, Vis {
   @field(types.Number)
   padding: number;
   @field(types.Number)
+  ticksGoal: number;
+  @field(types.Number)
   gridLineSpace: number;
   @field(DataSourceType)
   dataSource: DataSource & HasType;
@@ -159,6 +158,7 @@ export class LineChart implements CanvasChartModel, Vis {
     this.stacked = values.stacked;
     this.zeroBased = values.zeroBased;
     this.padding = values.padding;
+    this.ticksGoal = values.ticksGoal;
     this.gridLineSpace = values.gridLineSpace;
     this.dataSource = values.dataSource;
   }
@@ -194,6 +194,8 @@ export class BarChart implements Vis {
   @field(types.Number)
   padding: number;
   @field(types.Number)
+  ticksGoal: number;
+  @field(types.Number)
   gridLineSpace: number;
   @field(types.Number)
   gap: number;
@@ -204,6 +206,7 @@ export class BarChart implements Vis {
     this.zeroBased = true;
     this.stacked = values.stacked;
     this.padding = values.padding;
+    this.ticksGoal = values.ticksGoal;
     this.gridLineSpace = values.gridLineSpace;
     this.gap = values.gap;
     this.dataSource = values.dataSource;
@@ -420,16 +423,18 @@ export const DEFAULT_REFERENCE = decode({
 
 export const DEFAULT_LINE_CHART = decode({
   stacked: false,
-  padding: DEFAULT_PADDING,
-  gridLineSpace: DEFAULT_GRID_LINE_SPACE,
+  padding: 10,
+  ticksGoal: 120,
+  gridLineSpace: 30,
   zeroBased: false,
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, LineChart);
 
 export const DEFAULT_BAR_CHART = decode({
   stacked: false,
-  padding: DEFAULT_PADDING,
-  gridLineSpace: DEFAULT_GRID_LINE_SPACE,
+  padding: 10,
+  ticksGoal: 30,
+  gridLineSpace: 30,
   gap: 5,
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, BarChart);

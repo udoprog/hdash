@@ -18,6 +18,7 @@ export interface CanvasChartModel {
   stacked: boolean;
   zeroBased: boolean;
   padding: number;
+  ticksGoal: number;
   gridLineSpace: number;
 }
 
@@ -47,6 +48,7 @@ export interface CanvasChartDrawState {
   stacked?: boolean;
   zeroBased?: boolean;
   padding?: number;
+  ticksGoal?: number;
   gridLineSpace?: number;
 }
 
@@ -113,6 +115,7 @@ abstract class CanvasChart<
     this.next.stacked = model.stacked;
     this.next.zeroBased = model.zeroBased;
     this.next.padding = model.padding;
+    this.next.ticksGoal = model.ticksGoal;
     this.next.gridLineSpace = model.gridLineSpace;
   }
 
@@ -200,6 +203,7 @@ abstract class CanvasChart<
 
     if (reload) {
       const range = this.props.visualOptions.range;
+      const { ticksGoal } = this.next;
 
       const now = moment();
       const start = range.start.moment(now).valueOf();
@@ -207,7 +211,8 @@ abstract class CanvasChart<
 
       const query = decode({
         query: currentDataSource.query,
-        range: { type: 'absolute', start: start, end: end }
+        range: { type: 'absolute', start: start, end: end },
+        options: { ticksGoal: ticksGoal }
       }, Query);
 
       // already updating

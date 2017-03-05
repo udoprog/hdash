@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, Button } from 'react-bootstrap';
 import { Range } from 'api/model';
 import * as instant from 'api/instant';
 import * as unit from 'api/unit';
 import InstantPicker from './InstantPicker';
+import FontAwesome from 'react-fontawesome';
 
 function relativeNow(unit: unit.Unit, value: number) {
   return new Range({
@@ -93,51 +94,81 @@ interface Props {
 }
 
 interface State {
+  customRange: Range;
 }
 
 export default class RangePicker extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      customRange: null
+    }
+  }
+
   render() {
     const { range } = this.props;
+    const { customRange } = this.state;
 
     const quickRangeWidth = 12 / COLS.length;
 
     return (
       <Row className='range-picker'>
-        <Col sm={4}>
-          <h4>Custom Range</h4>
+        <Row>
+          <Col sm={4}>
+            <h4>Custom Range</h4>
 
-          <InstantPicker label="From:" instant={range.start} onChange={instant => {
-            this.props.onChange(new Range({ start: instant, end: range.end }))
-          }} />
+            <InstantPicker label="From:" instant={(customRange || range).start} onChange={instant => {
+              const r = (customRange || range);
+              this.setState({ customRange: new Range({ start: instant, end: r.end }) });
+            }} />
 
-          <InstantPicker label="To:" instant={range.end} onChange={instant => {
-            this.props.onChange(new Range({ start: range.start, end: instant }))
-          }} />
-        </Col>
-        <Col sm={8}>
-          <h4>Quick Range</h4>
+            <InstantPicker label="To:" instant={(customRange || range).end} onChange={instant => {
+              const r = (customRange || range);
+              this.setState({ customRange: new Range({ start: r.start, end: instant }) });
+            }} />
+          </Col>
 
-          <Row>
-            {COLS.map((col, index) => (
-              <Col key={index} sm={quickRangeWidth}>
-                <ul className="quick-range-list">
-                  {col.map(([r, title], index) => {
-                    return (
-                      <li className={r.equals(range) ? "active" : ""} key={index}>
-                        <a className='set-range' onClick={() => this.setRange(r)}>{title}</a>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </Col>
-            ))}
-          </Row>
-        </Col>
+          <Col sm={8}>
+            <h4>Quick Range</h4>
+
+            <Row>
+              {COLS.map((col, index) => (
+                <Col key={index} sm={quickRangeWidth}>
+                  <ul className="quick-range-list">
+                    {col.map(([r, title], index) => {
+                      return (
+                        <li className={r.equals(range) ? "active" : ""} key={index}>
+                          <a className='set-range' onClick={() => this.setRange(r)}>{title}</a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </Col>
+              ))}
+            </Row>
+          </Col>
+        </Row>
+
+        <Row className='button-row'>
+          <Col sm={12}>
+            <div className='pull-right'>
+              <Button bsStyle='primary' disabled={!customRange} onClick={() => this.setRange(customRange)}>
+                <FontAwesome name='save' />
+                <span className='icon-text'>Apply</span>
+              </Button>
+            </div>
+
+            <div className='clearfix' />
+          </Col>
+        </Row>
       </Row>
     );
   }
 
   private setRange(range: Range) {
-    this.props.onChange(range);
+    this.setState({ customRange: null }, () => {
+      this.props.onChange(range);
+    })
   }
 };

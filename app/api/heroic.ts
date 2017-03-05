@@ -130,6 +130,15 @@ export class QueryResponse {
   }
 }
 
+export class QueryOptions {
+  @field(types.Number)
+  readonly ticksGoal: number;
+
+  constructor(values: Values<QueryOptions>) {
+    this.ticksGoal = values.ticksGoal;
+  }
+}
+
 export class Query {
   @field(RangeType)
   readonly range: Range;
@@ -137,9 +146,13 @@ export class Query {
   @field(types.String)
   readonly query: string;
 
+  @field(QueryOptions)
+  readonly options: QueryOptions;
+
   constructor(values: Values<Query>) {
     this.range = values.range;
     this.query = values.query;
+    this.options = values.options;
   }
 }
 

@@ -1,0 +1,31 @@
+@range-picker-margin: floor((@grid-gutter-width / 2));
+
+.range-picker-menu {
+  .range-picker {
+    background-color: @body-bg;
+    border-bottom: 1px solid @table-border-color;
+
+    .button-row {
+      margin-top: @range-picker-margin;
+      margin-bottom: @range-picker-margin;
+    }
+  }
+
+  ul.quick-range-list {
+    list-style: none;
+    padding: 0;
+
+    li {
+      padding-bottom: 2px;
+
+      &.active {
+        border-bottom: 2px solid #101060;
+        padding-bottom: 0;
+      }
+
+      .set-range {
+        cursor: pointer;
+      }
+    }
+  }
+}

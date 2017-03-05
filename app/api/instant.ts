@@ -96,7 +96,7 @@ export class Relative implements Instant {
   static type: string = 'relative';
 
   get type(): string {
-    return StartOf.type;
+    return Relative.type;
   }
 
   @field(Duration)
