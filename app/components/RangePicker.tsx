@@ -7,8 +7,7 @@ import InstantPicker from './InstantPicker';
 
 function relativeNow(unit: unit.Unit, value: number) {
   return new Range({
-    start: new instant.StartOf({
-      unit: unit,
+    start: new instant.Relative({
       offset: new instant.Duration({ value: value, unit: unit })
     }),
     end: new instant.Now({})

@@ -90,6 +90,44 @@ export class Absolute implements Instant {
 }
 
 /**
+ * An instant relative to now.
+ */
+export class Relative implements Instant {
+  static type: string = 'relative';
+
+  get type(): string {
+    return StartOf.type;
+  }
+
+  @field(Duration)
+  public readonly offset: Duration;
+
+  constructor(values: Values<EndOf>) {
+    this.offset = values.offset;
+  }
+
+  moment(now: moment.Moment): moment.Moment {
+    return now.clone()
+      .subtract(this.offset.value, this.offset.unit.singular);
+  }
+
+  render(): string {
+    if (this.offset.value === 1) {
+      return `one ${this.offset.unit.singular} ago`;
+    }
+
+    return `${this.offset.unit.format(this.offset.value)} ago`;
+  }
+
+  equals(other: Instant): boolean {
+    return (
+      other instanceof Relative &&
+      other.offset.equals(this.offset)
+    );
+  }
+}
+
+/**
  * A relative range that has a specific offset.
  */
 export class StartOf implements Instant {
@@ -245,5 +283,6 @@ export const InstantType = types.SubTypes<Instant>([
   EndOf,
   StartOf,
   Now,
+  Relative,
   Absolute
 ]);
