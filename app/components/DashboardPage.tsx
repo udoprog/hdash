@@ -5,7 +5,7 @@ import { PagesContext, RouterContext } from 'api/interfaces';
 import { Dashboard, Component, LayoutEntry, Range, VisualOptions, VisComponent } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import ReactGridLayout from 'react-grid-layout';
-import EditComponent, { EditComponentOptions } from 'components/EditComponent';
+import EditComponent from 'components/EditComponent';
 import { RouteComponentProps } from 'react-router';
 import RangePicker from 'components/RangePicker';
 
@@ -149,16 +149,12 @@ export default class DashboardPage extends React.Component<Props, State> {
       );
 
     const main = dashboard.map(dashboard => {
-      const options: EditComponentOptions = {
-        range: dashboard.range
-      };
-
       return editComponent.map(componentId => {
         return dashboard.getComponent(componentId).map(component => {
           return (
             <EditComponent
               component={component}
-              options={options}
+              range={dashboard.range}
               onBack={(component) => this.back(component)}
               ref={visual => this.visual = visual} />
           );

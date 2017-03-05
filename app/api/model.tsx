@@ -10,7 +10,7 @@ import EditReferenceVis from 'components/EditReferenceVis';
 
 import EditEmbeddedDataSource from 'components/EditEmbeddedDataSource';
 import EditReferenceDataSource from 'components/EditReferenceDataSource';
-import { Model } from 'components/CanvasChart';
+import { CanvasChartModel } from 'components/CanvasChart';
 
 import { PagesContext } from 'api/interfaces';
 import { Instant, InstantType } from './instant';
@@ -49,17 +49,13 @@ export interface VisComponent {
   refresh(query?: boolean): Promise<{}>;
 }
 
-export interface EditOptions<T> {
-  onChange: (value: T) => void;
-}
-
 export interface VisualOptions {
   height?: number;
   range: Range;
 }
 
 export interface DataSource {
-  renderEdit(options: EditOptions<this>): any;
+  renderEdit(onChange: (model: this) => void): any;
 
   toEmbedded(context: PagesContext): Promise<Optional<EmbeddedDataSource>>;
 }
@@ -80,9 +76,9 @@ export class EmbeddedDataSource implements DataSource {
     this.query = values.query;
   }
 
-  renderEdit(options: EditOptions<EmbeddedDataSource>): any {
+  renderEdit(onChange: (model: EmbeddedDataSource) => void): any {
     return (
-      <EditEmbeddedDataSource dataSource={this} editOptions={options} />
+      <EditEmbeddedDataSource dataSource={this} onChange={onChange} />
     );
   }
 
@@ -107,9 +103,9 @@ export class ReferenceDataSource implements DataSource {
     this.id = values.id;
   }
 
-  renderEdit(options: EditOptions<ReferenceDataSource>): any {
+  renderEdit(onChange: (model: ReferenceDataSource) => void): any {
     return (
-      <EditReferenceDataSource dataSource={this} editOptions={options} />
+      <EditReferenceDataSource dataSource={this} onChange={onChange} />
     );
   }
 
@@ -134,12 +130,12 @@ export const DEFAULT_REFERENCE_DATA_SOURCE = decode({
 export interface Vis {
   typeTitle(): string;
 
-  renderEdit(options: EditOptions<this>): any;
+  renderEdit(onChange: (model: this) => void): any;
 
-  renderVisual(options: VisualOptions, ref?: (visual: VisComponent) => void): any;
+  renderVisual(onChange: VisualOptions, ref?: (visual: VisComponent) => void): any;
 }
 
-export class LineChart implements Model, Vis {
+export class LineChart implements CanvasChartModel, Vis {
   static type = 'line-chart';
   static font = 'line-chart';
   static description = 'Line Chart';
@@ -171,14 +167,14 @@ export class LineChart implements Model, Vis {
     return "Line Chart";
   }
 
-  renderEdit(options: EditOptions<LineChart>): any {
+  renderEdit(onChange: (model: LineChart) => void): any {
     return (
-      <EditLineChart lineChart={this} editOptions={options} />
+      <EditLineChart lineChart={this} onChange={onChange} />
     );
   }
 
-  renderVisual(options: VisualOptions, ref?: (visual: VisComponent) => void) {
-    return <ViewLineChart model={this} visualOptions={options} ref={ref} />;
+  renderVisual(onChange: VisualOptions, ref?: (visual: VisComponent) => void) {
+    return <ViewLineChart model={this} visualOptions={onChange} ref={ref} />;
   }
 }
 
@@ -217,14 +213,14 @@ export class BarChart implements Vis {
     return "Bar Chart";
   }
 
-  renderEdit(editOptions: EditOptions<BarChart>) {
+  renderEdit(onChange: (model: BarChart) => void) {
     return (
-      <EditBarChart barChart={this} editOptions={editOptions} />
+      <EditBarChart barChart={this} onChange={onChange} />
     );
   }
 
-  renderVisual(options: VisualOptions, ref?: (visual: VisComponent) => void): any {
-    return <ViewBarChart model={this} visualOptions={options} ref={ref} />;
+  renderVisual(onChange: VisualOptions, ref?: (visual: VisComponent) => void): any {
+    return <ViewBarChart model={this} visualOptions={onChange} ref={ref} />;
   }
 }
 
@@ -248,14 +244,14 @@ export class ReferenceVis implements Vis {
     return "Reference title";
   }
 
-  renderEdit(options: EditOptions<ReferenceVis>): any {
+  renderEdit(onChange: (model: ReferenceVis) => void): any {
     return (
-      <EditReferenceVis vis={this} editOptions={options} />
+      <EditReferenceVis vis={this} onChange={onChange} />
     );
   }
 
-  renderVisual(options: VisualOptions, ref?: (visual: VisComponent) => void) {
-    return <ViewReferenceVis vis={this} visualOptions={options} ref={ref} />;
+  renderVisual(onChange: VisualOptions, ref?: (visual: VisComponent) => void) {
+    return <ViewReferenceVis vis={this} visualOptions={onChange} ref={ref} />;
   }
 }
 

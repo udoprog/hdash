@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { EmbeddedDataSource, EditOptions } from 'api/model';
+import { EmbeddedDataSource } from 'api/model';
 import { Row, Col, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import { clone } from 'mapping';
 
 interface Props {
   dataSource: EmbeddedDataSource;
-  editOptions: EditOptions<EmbeddedDataSource>;
+  onChange: (model: EmbeddedDataSource) => void;
 }
 
 export default class EditEmbeddedDataSource extends React.Component<Props, {}> {
@@ -31,7 +31,7 @@ export default class EditEmbeddedDataSource extends React.Component<Props, {}> {
   }
 
   private changeQuery(query: string) {
-    const {dataSource, editOptions} = this.props;
-    editOptions.onChange(clone(dataSource, { query: query }));
+    const { dataSource, onChange } = this.props;
+    onChange(clone(dataSource, { query: query }));
   }
 };

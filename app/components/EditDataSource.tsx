@@ -1,16 +1,16 @@
 import * as React from 'react';
 import { FormGroup, FormControl, ButtonGroup, InputGroup } from 'react-bootstrap';
-import { DataSource, EditOptions, HasType, DATA_SOURCE_TYPES } from 'api/model';
+import { DataSource, HasType, DATA_SOURCE_TYPES } from 'api/model';
 import { clone } from 'mapping';
 import TypeButton from 'components/TypeButton';
 
 interface Props {
   dataSource: DataSource & HasType;
-  editOptions: EditOptions<DataSource>;
+  onChange: (model: DataSource & HasType) => void;
 }
 
 export default class EditDataSource extends React.Component<Props, {}> {
-  old: { [key: string]: DataSource };
+  old: { [key: string]: DataSource & HasType };
 
   constructor(props: Props) {
     super(props);
@@ -19,7 +19,7 @@ export default class EditDataSource extends React.Component<Props, {}> {
   }
 
   public render() {
-    const { dataSource, editOptions } = this.props;
+    const { dataSource, onChange } = this.props;
 
     const typePicker = (
       <FormGroup >
@@ -30,10 +30,10 @@ export default class EditDataSource extends React.Component<Props, {}> {
             </InputGroup.Addon>
             <ButtonGroup>
               {DATA_SOURCE_TYPES.map(([model, defaultInstance], index) => {
-                const onChange = () => {
+                const onChangeType = () => {
                   // remember old if coming back later
                   this.old[dataSource.type] = clone(dataSource);
-                  editOptions.onChange(clone(this.old[model.type] || defaultInstance));
+                  onChange(clone(this.old[model.type] || defaultInstance));
                 }
 
                 return (
@@ -42,7 +42,7 @@ export default class EditDataSource extends React.Component<Props, {}> {
                     style={{ borderRadius: index === 0 ? 1 : null }}
                     instance={dataSource}
                     model={model}
-                    onChangeType={onChange} />
+                    onChangeType={onChangeType} />
                 );
               })}
             </ButtonGroup>
@@ -54,7 +54,7 @@ export default class EditDataSource extends React.Component<Props, {}> {
     return (
       <div>
         {typePicker}
-        {dataSource.renderEdit(editOptions)}
+        {dataSource.renderEdit(onChange)}
       </div>
     );
   }

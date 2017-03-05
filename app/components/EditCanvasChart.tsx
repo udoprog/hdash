@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { FormGroup, FormControl, Checkbox, ControlLabel } from 'react-bootstrap';
 import { clone } from 'mapping';
-import { Model } from './CanvasChart';
+import { CanvasChartModel } from 'components/CanvasChart';
 
-interface Props<T extends Model> {
+interface Props<T extends CanvasChartModel> {
   canvasChart: T;
   onChange: (value: T) => void;
 }
 
-export default class EditLineChart<T extends Model> extends React.Component<Props<T>, {}> {
+export default class EditLineChart<T extends CanvasChartModel> extends React.Component<Props<T>, {}> {
   public render() {
     const { canvasChart, onChange } = this.props;
 

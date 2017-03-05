@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { ReferenceDataSource, EditOptions } from 'api/model';
+import { ReferenceDataSource } from 'api/model';
 import { Row, Col, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import { clone } from 'mapping';
 
 interface Props {
   dataSource: ReferenceDataSource;
-  editOptions: EditOptions<ReferenceDataSource>;
+  onChange: (model: ReferenceDataSource) => void;
 }
 
 export default class EditReferenceDataSource extends React.Component<Props, {}> {
@@ -27,7 +27,7 @@ export default class EditReferenceDataSource extends React.Component<Props, {}> 
   }
 
   private changeId(id: string) {
-    const {dataSource, editOptions} = this.props;
-    editOptions.onChange(clone(dataSource, { id: id }));
+    const { dataSource, onChange } = this.props;
+    onChange(clone(dataSource, { id: id }));
   }
 };

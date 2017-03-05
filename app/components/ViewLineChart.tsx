@@ -1,12 +1,10 @@
 import { LineChart } from 'api/model';
 
-import CanvasChart, {
-  CanvasChartProps, CanvasChartDrawState
-} from './CanvasChart';
+import CanvasChart, { HasModel, CanvasChartProps, CanvasChartDrawState } from 'components/CanvasChart';
 
 import { ColorIterator } from 'api/colors';
 
-interface Props extends CanvasChartProps<LineChart> {
+interface Props extends CanvasChartProps, HasModel<LineChart> {
 }
 
 export default class ViewLineChart extends CanvasChart<LineChart, Props, CanvasChartDrawState> {

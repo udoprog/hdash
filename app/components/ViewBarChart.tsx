@@ -1,11 +1,9 @@
 import { BarChart } from 'api/model'
 import { Domain } from 'api/domain'
-
-import CanvasChart, { CanvasChartProps, CanvasChartDrawState } from './CanvasChart'
-
 import { ColorIterator } from 'api/colors'
+import CanvasChart, { HasModel, CanvasChartProps, CanvasChartDrawState } from 'components/CanvasChart'
 
-interface Props extends CanvasChartProps<BarChart> {
+interface Props extends CanvasChartProps, HasModel<BarChart> {
 }
 
 interface DrawState extends CanvasChartDrawState {

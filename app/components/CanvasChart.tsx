@@ -13,7 +13,7 @@ import * as steps from 'api/step';
 
 const TEXT_FONT = '16px Sans';
 
-export interface Model {
+export interface CanvasChartModel {
   dataSource: DataSource;
   stacked: boolean;
   zeroBased: boolean;
@@ -27,8 +27,11 @@ interface State {
   height: number;
 }
 
-export interface CanvasChartProps<T extends Model> {
+export interface HasModel<T> {
   model: T;
+}
+
+export interface CanvasChartProps {
   visualOptions: VisualOptions;
 }
 
@@ -48,8 +51,8 @@ export interface CanvasChartDrawState {
 }
 
 abstract class CanvasChart<
-  T extends Model,
-  P extends CanvasChartProps<T>,
+  T extends CanvasChartModel,
+  P extends CanvasChartProps & HasModel<T>,
   D extends CanvasChartDrawState
   >
   extends React.Component<P, State>

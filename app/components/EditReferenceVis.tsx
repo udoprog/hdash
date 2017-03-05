@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { ReferenceVis, EditOptions } from 'api/model';
+import { ReferenceVis } from 'api/model';
 import { Form, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import { clone } from 'mapping';
 
 interface Props {
   vis: ReferenceVis;
-  editOptions: EditOptions<ReferenceVis>;
+  onChange: (model: ReferenceVis) => void;
 }
 
 export default class EditReferenceVis extends React.Component<Props, {}> {
@@ -23,7 +23,7 @@ export default class EditReferenceVis extends React.Component<Props, {}> {
   }
 
   private changeId(id: string) {
-    const { vis, editOptions } = this.props;
-    editOptions.onChange(clone(vis, { id: id }));
+    const { vis, onChange } = this.props;
+    onChange(clone(vis, { id: id }));
   }
 };

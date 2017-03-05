@@ -4,13 +4,9 @@ import { Row, Col, FormGroup, FormControl, ButtonGroup, InputGroup } from 'react
 import { clone } from 'mapping';
 import TypeButton from 'components/TypeButton';
 
-export interface EditVisOptions {
-  range: Range;
-}
-
 interface Props {
   vis: Vis & HasType;
-  options: EditVisOptions;
+  range: Range;
   onChange: (visualization: Vis & HasType) => void;
 }
 
@@ -62,11 +58,7 @@ export default class EditVis extends React.Component<Props, {}> implements VisCo
       </FormGroup >
     );
 
-    const editOptions = {
-      onChange: onChange
-    };
-
-    const { options } = this.props;
+    const { range } = this.props;
 
     return (
       <div>
@@ -74,11 +66,11 @@ export default class EditVis extends React.Component<Props, {}> implements VisCo
 
         <Row>
           <Col sm={12}>
-            {vis.renderVisual({ height: 200, range: options.range }, visual => this.visual = visual)}
+            {vis.renderVisual({ height: 200, range: range }, visual => this.visual = visual)}
           </Col>
         </Row>
 
-        {vis.renderEdit(editOptions)}
+        {vis.renderEdit(onChange)}
       </div>
     );
   }

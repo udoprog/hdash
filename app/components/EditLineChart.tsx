@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { LineChart, EditOptions, DataSource, HasType } from 'api/model';
+import { LineChart } from 'api/model';
 import { FormGroup, FormControl, Checkbox } from 'react-bootstrap';
 import { clone, mutate } from 'mapping';
 import EditDataSource from 'components/EditDataSource';
@@ -7,7 +7,7 @@ import EditCanvasChart from 'components/EditCanvasChart';
 
 interface Props {
   lineChart: LineChart;
-  editOptions: EditOptions<LineChart>;
+  onChange: (model: LineChart) => void;
 }
 
 class Extended extends EditCanvasChart<LineChart> {
@@ -15,31 +15,27 @@ class Extended extends EditCanvasChart<LineChart> {
 
 export default class EditLineChart extends React.Component<Props, {}> {
   public render() {
-    const { lineChart, editOptions } = this.props;
-
-    const options = {
-      onChange: (dataSource: DataSource & HasType) => {
-        editOptions.onChange(clone(lineChart, { dataSource: dataSource }))
-      }
-    };
+    const { lineChart, onChange } = this.props;
 
     return (
       <div>
         <Extended canvasChart={lineChart} onChange={lineChart => {
-          editOptions.onChange(lineChart);
+          onChange(lineChart);
         }} />
 
         <FormGroup controlId='zeroBased'>
           <FormControl.Static componentClass="div">
             <Checkbox checked={lineChart.zeroBased} onChange={
-              (e: any) => editOptions.onChange(mutate(lineChart, { zeroBased: e.target.checked }))
+              (e: any) => onChange(mutate(lineChart, { zeroBased: e.target.checked }))
             }>
               Zero Based?
             </Checkbox>
           </FormControl.Static>
         </FormGroup>
 
-        <EditDataSource dataSource={lineChart.dataSource} editOptions={options} />
+        <EditDataSource dataSource={lineChart.dataSource} onChange={dataSource => {
+          onChange(clone(lineChart, { dataSource: dataSource }));
+        }} />
       </div >
     );
   }

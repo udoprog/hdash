@@ -2,17 +2,13 @@ import * as React from 'react';
 import { PagesContext } from 'api/interfaces';
 import { Component, Vis, HasType, Range, VisComponent } from 'api/model';
 import { Row, Col, Grid, Button, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
-import EditVis, { EditVisOptions } from './EditVis';
+import EditVis from './EditVis';
 import { mutate } from 'mapping';
 import FontAwesome from 'react-fontawesome';
 
-export interface EditComponentOptions {
-  range: Range;
-}
-
 interface Props {
   component: Component;
-  options: EditComponentOptions;
+  range: Range;
   onBack: (component: Component) => void;
 }
 
@@ -38,10 +34,7 @@ export default class EditComponent extends React.Component<Props, State> impleme
 
   public render() {
     const { component } = this.state;
-
-    const options: EditVisOptions = {
-      range: this.props.options.range,
-    };
+    const { range } = this.props;
 
     return (
       <Grid>
@@ -56,7 +49,7 @@ export default class EditComponent extends React.Component<Props, State> impleme
 
         <EditVis
           vis={component.visualization}
-          options={options}
+          range={range}
           onChange={visualization => this.changeVisualization(visualization)}
           ref={visual => this.visual = visual} />
 
