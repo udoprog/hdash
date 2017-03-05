@@ -9,20 +9,16 @@ import { Domain } from 'api/domain';
 import { Optional } from 'optional';
 import * as moment from 'moment';
 import FontAwesome from 'react-fontawesome';
+import * as steps from 'api/step';
 
-export const DEFAULT_PADDING = 10;
 const TEXT_FONT = '16px Sans';
 
-interface Step {
-  start: number;
-  end: number;
-  step: number;
-}
-
-interface Model {
+export interface Model {
   dataSource: DataSource;
   stacked: boolean;
   zeroBased: boolean;
+  padding: number;
+  gridLineSpace: number;
 }
 
 interface State {
@@ -32,7 +28,6 @@ interface State {
 }
 
 export interface CanvasChartProps<T extends Model> {
-  padding?: number;
   model: T;
   visualOptions: VisualOptions;
 }
@@ -47,10 +42,16 @@ export interface CanvasChartDrawState {
   xScale?: Domain;
   yScale?: Domain;
   stacked?: boolean;
-  padding: number;
+  zeroBased?: boolean;
+  padding?: number;
+  gridLineSpace?: number;
 }
 
-abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D extends CanvasChartDrawState>
+abstract class CanvasChart<
+  T extends Model,
+  P extends CanvasChartProps<T>,
+  D extends CanvasChartDrawState
+  >
   extends React.Component<P, State>
   implements VisComponent {
   context: HeroicContext & PagesContext;
@@ -80,8 +81,8 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
   constructor(props: P) {
     super(props);
 
-    this.next = this.initialDrawState(props);
-    this.drawn = this.initialDrawState(props);
+    this.next = this.initialDrawState();
+    this.drawn = this.initialDrawState();
 
     this.state = {
       queryInProgress: true,
@@ -93,21 +94,23 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
   /**
    * Initial draw state to be implemented by extending classes.
    */
-  abstract initialDrawState(props: P): D;
+  protected abstract initialDrawState(): D;
 
   /**
    * Primary draw function to be implemented be extending classes.
    */
-  abstract draw(color: ColorIterator): void;
+  protected abstract draw(color: ColorIterator): void;
 
   /**
    * Receive new props.
    */
   protected receiveProps(nextProps: P) {
-    const { model, padding } = nextProps;
+    const { model } = nextProps;
 
     this.next.stacked = model.stacked;
-    this.next.padding = padding || DEFAULT_PADDING;
+    this.next.zeroBased = model.zeroBased;
+    this.next.padding = model.padding;
+    this.next.gridLineSpace = model.gridLineSpace;
   }
 
   public componentDidMount() {
@@ -269,7 +272,9 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
       yScale,
       result,
       stacked,
-      padding
+      zeroBased,
+      padding,
+      gridLineSpace
     } = this.next;
 
     const {
@@ -277,7 +282,9 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
       yScale: drawnYScale,
       result: drawnResult,
       stacked: drawnStacked,
+      zeroBased: drawnZeroBased,
       padding: drawnPadding,
+      gridLineSpace: drawnGridLineSpace
     } = this.drawn;
 
     var redraw = false;
@@ -302,8 +309,18 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
       redraw = true;
     }
 
+    if (zeroBased !== drawnZeroBased) {
+      this.drawn.zeroBased = zeroBased;
+      redraw = true;
+    }
+
     if (padding !== drawnPadding) {
       this.drawn.padding = padding;
+      redraw = true;
+    }
+
+    if (gridLineSpace !== drawnGridLineSpace) {
+      this.drawn.gridLineSpace = drawnGridLineSpace;
       redraw = true;
     }
 
@@ -336,7 +353,7 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
 
   protected calcMinMax(): { min: number, max: number } {
     const { result } = this.next;
-    const { stacked, zeroBased } = this.props.model;
+    const { stacked, zeroBased } = this.next;
 
     const floors: { [key: number]: number } = {};
 
@@ -387,50 +404,14 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
     20 * CanvasChart.DAYS
   ];
 
-  private stepDivisor(accuracy: number) {
-    if (accuracy >= 10) {
-      return 10;
-    }
-
-    if (accuracy > 5) {
-      return 5;
-    }
-
-    if (accuracy > 2) {
-      return 2;
-    }
-
-    return 1;
-  }
-
-  private calcStep(): Step {
-    const pixels = 20;
-
-    const { yScale } = this.next;
-
-    const desiredHeight = Math.abs(yScale.scaleInverse(pixels));
-    const desiredExp = Math.ceil(Math.log(desiredHeight) / Math.log(10));
-    const stepMagnitude = Math.pow(10, desiredExp);
-    const step = stepMagnitude / this.stepDivisor(stepMagnitude / desiredHeight);
-
-    const start = yScale.sourceMax < 0 ? (
-      yScale.sourceMax - (step - Math.abs(yScale.sourceMax) % step)
-    ) : (yScale.sourceMax - yScale.sourceMax % step);
-    const end = yScale.sourceMin;
-
-    return {
-      step: step,
-      start: start,
-      end: end
-    } as Step;
-  }
-
   protected drawGrid() {
-    const { yScale, xScale, height } = this.next;
-
+    const { yScale, xScale, gridLineSpace } = this.next;
     const { ctx } = this;
 
-    const step = this.calcStep();
+    const step = steps.linear(yScale.scaleInverse(gridLineSpace));
+
+    const start = (yScale.sourceMax - yScale.sourceMax % step);
+    const end = yScale.sourceMin;
 
     ctx.fillStyle = '#888888';
     ctx.font = TEXT_FONT;
@@ -440,12 +421,8 @@ abstract class CanvasChart<T extends Model, P extends CanvasChartProps<T>, D ext
 
     ctx.translate(0.5, 0.5);
 
-    for (var i = step.start; i < step.end; i += step.step) {
+    for (var i = start; i < end; i += step) {
       const y = Math.round(yScale.map(i));
-
-      if (y >= height || y <= 0) {
-        continue;
-      }
 
       ctx.beginPath();
       ctx.moveTo(xScale.targetMin, y);

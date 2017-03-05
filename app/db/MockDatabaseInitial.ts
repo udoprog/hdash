@@ -1,5 +1,6 @@
 import { DatabaseContent } from 'api/interfaces';
 import { decode } from 'mapping';
+import { DEFAULT_PADDING, DEFAULT_GRID_LINE_SPACE } from 'api/model';
 
 const dashboards: any = {
   "a": {
@@ -48,22 +49,27 @@ const starred: any = {
 
 const visualizations: any = {
   "vis1": {
-    type: "bar-chart",
+    type: "line-chart",
+    zeroBased: false,
     stacked: false,
+    padding: DEFAULT_PADDING,
+    gridLineSpace: DEFAULT_GRID_LINE_SPACE,
     gap: 5,
     dataSource: { type: "reference", id: "datasource" }
   },
   "vis2": {
     type: "bar-chart",
-    stacked: false,
+    stacked: true,
+    padding: DEFAULT_PADDING,
+    gridLineSpace: DEFAULT_GRID_LINE_SPACE,
     gap: 5,
-    dataSource: { type: "embedded", query: "average(size=1h) by role from points(1d)" }
+    dataSource: { type: "embedded", query: "average(size=1h) by role" }
   }
 };
 
 const dataSources: any = {
   "datasource": {
-    query: "average(size=1h) by role from points(1d)"
+    query: "average(size=1h) by role"
   }
 };
 

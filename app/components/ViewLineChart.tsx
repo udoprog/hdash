@@ -1,23 +1,20 @@
 import { LineChart } from 'api/model';
 
-import CanvasChart, { CanvasChartProps, CanvasChartDrawState, DEFAULT_PADDING } from './CanvasChart';
+import CanvasChart, {
+  CanvasChartProps, CanvasChartDrawState
+} from './CanvasChart';
+
 import { ColorIterator } from 'api/colors';
 
 interface Props extends CanvasChartProps<LineChart> {
 }
 
-interface DrawState extends CanvasChartDrawState {
-
-}
-
-export default class ViewLineChart extends CanvasChart<LineChart, Props, DrawState> {
-  public initialDrawState(props: Props): DrawState {
-    return {
-      padding: props.padding || DEFAULT_PADDING
-    };
+export default class ViewLineChart extends CanvasChart<LineChart, Props, CanvasChartDrawState> {
+  protected initialDrawState() {
+    return {};
   }
 
-  public draw(color: ColorIterator): void {
+  protected draw(color: ColorIterator): void {
     const { xScale, yScale, result, stacked } = this.next;
 
     const ctx = this.ctx;

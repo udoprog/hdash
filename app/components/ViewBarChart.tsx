@@ -1,17 +1,22 @@
 import { BarChart } from 'api/model'
 import { Domain } from 'api/domain'
 
-import CanvasChart, { CanvasChartProps, CanvasChartDrawState, DEFAULT_PADDING } from './CanvasChart'
+import CanvasChart, { CanvasChartProps, CanvasChartDrawState } from './CanvasChart'
+
 import { ColorIterator } from 'api/colors'
 
 interface Props extends CanvasChartProps<BarChart> {
 }
 
 interface DrawState extends CanvasChartDrawState {
-  gap: number
+  gap?: number
 }
 
 export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState> {
+  protected initialDrawState(): DrawState {
+    return {};
+  }
+
   protected newXScale(min: number, max: number): Domain {
     const domain = super.newXScale(min, max)
     const { cadence } = this.next;
@@ -38,13 +43,6 @@ export default class ViewBarChart extends CanvasChart<BarChart, Props, DrawState
     }
 
     return redraw
-  }
-
-  public initialDrawState(props: Props): DrawState {
-    return {
-      padding: props.padding || DEFAULT_PADDING,
-      gap: props.model.gap
-    }
   }
 
   public draw(color: ColorIterator): void {

@@ -1,12 +1,16 @@
 import * as React from 'react';
 import { BarChart, EditOptions, DataSource, HasType } from 'api/model';
-import { Form, FormGroup, Checkbox, FormControl, ControlLabel } from 'react-bootstrap';
+import { Form, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import { clone, mutate } from 'mapping';
 import EditDataSource from 'components/EditDataSource';
+import EditCanvasChart from 'components/EditCanvasChart';
 
 interface Props {
   barChart: BarChart;
   editOptions: EditOptions<BarChart>;
+}
+
+class Extended extends EditCanvasChart<BarChart> {
 }
 
 export default class EditBarChart extends React.Component<Props, {}> {
@@ -21,13 +25,9 @@ export default class EditBarChart extends React.Component<Props, {}> {
 
     return (
       <Form>
-        <FormGroup controlId='stacked'>
-          <Checkbox checked={barChart.stacked} onChange={
-            (e: any) => editOptions.onChange(mutate(barChart, { stacked: e.target.checked }))
-          }>
-            Stacked?
-          </Checkbox>
-        </FormGroup>
+        <Extended canvasChart={barChart} onChange={barChart => {
+          editOptions.onChange(barChart);
+        }} />
 
         <FormGroup controlId='gap'>
           <ControlLabel>Gap:</ControlLabel>

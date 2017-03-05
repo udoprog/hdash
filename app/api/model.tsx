@@ -10,12 +10,16 @@ import EditReferenceVis from 'components/EditReferenceVis';
 
 import EditEmbeddedDataSource from 'components/EditEmbeddedDataSource';
 import EditReferenceDataSource from 'components/EditReferenceDataSource';
+import { Model } from 'components/CanvasChart';
 
 import { PagesContext } from 'api/interfaces';
 import { Instant, InstantType } from './instant';
 
 const MAX_ATTEMPTS = 1000;
 const RANGE = 1000000;
+
+export const DEFAULT_PADDING = 10;
+export const DEFAULT_GRID_LINE_SPACE = 20;
 
 var randomId = Math.round(Math.random() * RANGE);
 
@@ -135,7 +139,7 @@ export interface Vis {
   renderVisual(options: VisualOptions, ref?: (visual: VisComponent) => void): any;
 }
 
-export class LineChart implements Vis {
+export class LineChart implements Model, Vis {
   static type = 'line-chart';
   static font = 'line-chart';
   static description = 'Line Chart';
@@ -148,12 +152,18 @@ export class LineChart implements Vis {
   stacked: boolean;
   @field(types.Boolean)
   zeroBased: boolean;
+  @field(types.Number)
+  padding: number;
+  @field(types.Number)
+  gridLineSpace: number;
   @field(DataSourceType)
   dataSource: DataSource & HasType;
 
   constructor(values: Values<LineChart>) {
     this.stacked = values.stacked;
     this.zeroBased = values.zeroBased;
+    this.padding = values.padding;
+    this.gridLineSpace = values.gridLineSpace;
     this.dataSource = values.dataSource;
   }
 
@@ -186,6 +196,10 @@ export class BarChart implements Vis {
   @field(types.Boolean)
   stacked: boolean;
   @field(types.Number)
+  padding: number;
+  @field(types.Number)
+  gridLineSpace: number;
+  @field(types.Number)
   gap: number;
   @field(DataSourceType)
   dataSource: DataSource & HasType;
@@ -193,6 +207,8 @@ export class BarChart implements Vis {
   constructor(values: Values<BarChart>) {
     this.zeroBased = true;
     this.stacked = values.stacked;
+    this.padding = values.padding;
+    this.gridLineSpace = values.gridLineSpace;
     this.gap = values.gap;
     this.dataSource = values.dataSource;
   }
@@ -408,13 +424,17 @@ export const DEFAULT_REFERENCE = decode({
 
 export const DEFAULT_LINE_CHART = decode({
   stacked: false,
+  padding: DEFAULT_PADDING,
+  gridLineSpace: DEFAULT_GRID_LINE_SPACE,
   zeroBased: false,
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, LineChart);
 
 export const DEFAULT_BAR_CHART = decode({
-  gap: 5,
   stacked: false,
+  padding: DEFAULT_PADDING,
+  gridLineSpace: DEFAULT_GRID_LINE_SPACE,
+  gap: 5,
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, BarChart);
 

@@ -12,12 +12,12 @@ interface Props {
 interface State {
   loading: boolean;
   visualization: Optional<Vis>;
-  lastId: Optional<string>;
 }
 
 export default class ViewReferenceVis extends React.Component<Props, State> implements VisComponent {
   context: PagesContext;
   visual?: VisComponent;
+  visQuery?: Promise<Optional<Vis>>;
 
   public static contextTypes: any = {
     db: React.PropTypes.object
@@ -28,37 +28,8 @@ export default class ViewReferenceVis extends React.Component<Props, State> impl
 
     this.state = {
       loading: true,
-      visualization: absent<Vis>(),
-      lastId: absent<string>()
+      visualization: absent<Vis>()
     };
-  }
-
-  public componentDidMount() {
-    this.componentWillReceiveProps(this.props);
-  }
-
-  public componentWillReceiveProps(nextProps: Props) {
-    const { lastId } = this.state;
-    const { vis } = nextProps;
-
-    if (!vis.id) {
-      return;
-    }
-
-    /* do not update if ID is the same */
-    if (lastId.map(id => id === vis.id).orElse(false)) {
-      return;
-    }
-
-    this.setState({ loading: true }, () => {
-      this.context.db.getVisualization(vis.id).then(visualization => {
-        this.setState({
-          loading: false,
-          visualization: visualization,
-          lastId: of(vis.id)
-        })
-      });
-    });
   }
 
   public render() {
@@ -93,7 +64,43 @@ export default class ViewReferenceVis extends React.Component<Props, State> impl
     });
   }
 
-  public refresh(): Promise<{}> {
-    return this.visual.refresh();
+  public async refresh(query: boolean): Promise<{}> {
+    const { vis } = this.props;
+
+    if (!vis.id) {
+      return;
+    }
+
+    /* do not update if ID is the same */
+    if (!this.visual) {
+      while (this.visQuery) {
+        await this.visQuery;
+      }
+
+      await new Promise((resolve, _) => this.setState({ loading: true }, resolve));
+
+      var visualization: Optional<Vis> = null;
+
+      try {
+        visualization = await (this.visQuery = this.context.db.getVisualization(vis.id));
+      } finally {
+        this.visQuery = null;
+      }
+
+      await visualization.map(visualization => {
+        return new Promise((resolve, _) => this.setState({
+          loading: false,
+          visualization: of(visualization)
+        }, resolve));
+      }).orElseGet(() => {
+        return Promise.reject(new Error('no visualization found for id'));
+      });
+    }
+
+    if (this.visual) {
+      return this.visual.refresh(query);
+    }
+
+    return Promise.resolve({});
   }
 };
