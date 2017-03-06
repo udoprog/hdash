@@ -75,7 +75,7 @@ export default class EditVis extends React.Component<Props, {}> implements VisCo
     );
   }
 
-  public refresh(query?: boolean): Promise<{}> {
+  public refresh(query?: boolean): Promise<void> {
     return this.visual.refresh(query);
   }
 };

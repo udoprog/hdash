@@ -161,7 +161,7 @@ abstract class CanvasChart<
   /**
    * Run a new query.
    */
-  public async refresh(reload?: boolean): Promise<{}> {
+  public async refresh(reload?: boolean): Promise<void> {
     const { lastFetcheDataSource } = this;
     const { model } = this.props;
 
@@ -194,7 +194,7 @@ abstract class CanvasChart<
 
     // no data source loaded yet
     if (!currentDataSource || !currentDataSource.query) {
-      return Promise.resolve({});
+      return Promise.resolve();
     }
 
     /* always wait for data to load */
@@ -218,7 +218,7 @@ abstract class CanvasChart<
 
       // already updating
       if (this.dataQuery) {
-        return Promise.resolve({});
+        return Promise.resolve();
       }
 
       this.setState({
@@ -248,7 +248,7 @@ abstract class CanvasChart<
     }
 
     this.redraw();
-    return Promise.resolve({});
+    return Promise.resolve();
   }
 
   private mouseMove(e: any) {

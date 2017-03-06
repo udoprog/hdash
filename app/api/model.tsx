@@ -44,7 +44,7 @@ export class Range {
 }
 
 export interface VisComponent {
-  refresh(query?: boolean): Promise<{}>;
+  refresh(query?: boolean): Promise<void>;
 }
 
 export interface VisualOptions {

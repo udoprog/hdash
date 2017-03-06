@@ -72,8 +72,9 @@ export default class ViewReferenceVis extends React.Component<Props, State> impl
     });
   }
 
-  public async refresh(query: boolean): Promise<{}> {
+  public async refresh(query: boolean): Promise<void> {
     const { vis } = this.props;
+    const { db } = this.context;
 
     if (!vis.id) {
       return;
@@ -87,13 +88,13 @@ export default class ViewReferenceVis extends React.Component<Props, State> impl
     if (!this.visual) {
       this.setState({ loading: true });
 
-      var visualization: Optional<Vis> = null;
+      let v: Optional<Vis>;
 
       try {
-        visualization = await (this.visQuery = this.context.db.getVisualization(vis.id));
+        v = await (this.visQuery = db.getVisualization(vis.id));
       } catch (e) {
         if (e === Request.CANCELLED) {
-          return Promise.resolve({});
+          return Promise.resolve();
         }
 
         await new Promise((_, reject) => {
@@ -104,16 +105,18 @@ export default class ViewReferenceVis extends React.Component<Props, State> impl
       }
 
       await new Promise((resolve, reject) => {
-        this.setState({ loading: false, visualization: visualization }, () => {
-          visualization.accept(_ => {
-            resolve();
-          }, () => {
+        this.setState({ loading: false, visualization: v }, () => {
+          v.accept(resolve, () => {
             reject(new Error(`no visualization with id '${vis.id}'`));
           })
         });
       });
     }
 
-    return this.visual ? this.visual.refresh(query) : Promise.resolve({});
+    if (!this.visual) {
+      return Promise.resolve();
+    }
+
+    return this.visual.refresh(query);
   }
 };

@@ -70,7 +70,7 @@ export default class EditComponent extends React.Component<Props, State> impleme
     );
   }
 
-  public refresh(query?: boolean): Promise<{}> {
+  public refresh(query?: boolean): Promise<void> {
     return this.visual.refresh(query);
   }
 

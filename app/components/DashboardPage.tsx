@@ -151,7 +151,7 @@ export default class DashboardPage extends React.Component<Props, State> {
 
             return (
               <ListGroupItem>
-                <h4>{error.message} as {error.timestamp.format()}</h4>
+                <h4>{error.message} at {error.timestamp.format()}</h4>
                 <pre><code>{error.error.stack}</code></pre>
               </ListGroupItem>
             );
@@ -400,15 +400,15 @@ export default class DashboardPage extends React.Component<Props, State> {
     var promise: Promise<QueryResult[]>;
 
     if (this.visual) {
-      promise = this.visual.refresh(true).then(result => {
-        return [{ result: result }];
+      promise = this.visual.refresh(true).then(_ => {
+        return [{ type: 'success' }];
       }, error => {
-        return [{ error: error }];
+        return [{ type: 'error', error: error }];
       });
     } else {
       promise = Promise.all(Object.keys(this.visuals).map<Promise<QueryResult>>(key => {
-        return this.visuals[key].refresh(true).then(result => {
-          return { type: 'success', result: result };
+        return this.visuals[key].refresh(true).then(_ => {
+          return { type: 'success' };
         }, error => {
           return { type: 'error', error: error };
         });
