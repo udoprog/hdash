@@ -1,8 +1,9 @@
 import * as React from 'react'
 import { FormControl, FormGroup, InputGroup, ControlLabel, Button } from 'react-bootstrap'
 import FontAwesome from 'react-fontawesome'
-import { Instant, Absolute, Now } from 'api/instant'
+import { Instant, Absolute, Now } from 'instant'
 import * as moment from 'moment'
+
 import DatePicker from './DatePicker'
 
 interface Props {

@@ -11,14 +11,14 @@ var config = require('./webpack.config.js');
 
 var originalEntry = config.entry;
 
-config.entry = []
+var entries = [];
 
 /* dev server client */
-config.entry.push(WebpackDevServerClient + '?http://' + host + ':' + port);
+entries.push(WebpackDevServerClient + '?http://' + host + ':' + port);
 
 if (hot) {
-  config.entry.push('react-hot-loader/patch');
-  config.entry.push('webpack/hot/dev-server');
+  entries.push('react-hot-loader/patch');
+  entries.push('webpack/hot/dev-server');
   config.plugins.push(new webpack.HotModuleReplacementPlugin());
 
   /* add react hot loader to all rules using ts-loader */
@@ -35,24 +35,33 @@ if (hot) {
   });
 }
 
-config.entry.push(originalEntry);
+// insert original entries at end
+if (config.entry instanceof Array) {
+  config.entry = entries.concat(config.entry);
+} else {
+  config.entry = entries.concat([config.entry]);
+}
 
-new WebpackDevServer(webpack(config), {
-  publicPath: config.output.publicPath,
-  historyApiFallback: true,
-  inline: true,
-  hot: hot,
-  proxy: {
-    '/heroic': {
-      target: 'http://localhost:8080',
-      secure: false,
-      pathRewrite: { '^/heroic': '' }
+try {
+  new WebpackDevServer(webpack(config), {
+    publicPath: config.output.publicPath,
+    historyApiFallback: true,
+    inline: true,
+    hot: hot,
+    proxy: {
+      '/heroic': {
+        target: 'http://localhost:8080',
+        secure: false,
+        pathRewrite: { '^/heroic': '' }
+      }
     }
-  }
-}).listen(port, host, function (err, result) {
-  if (err) {
-    return console.log(err);
-  }
+  }).listen(port, host, function (err, result) {
+    if (err) {
+      return console.log(err);
+    }
 
-  console.log('Listening at http://' + host + ':' + port);
-});
+    console.log('Listening at http://' + host + ':' + port);
+  });
+} catch (e) {
+  console.error('Error: ' + e.message, e.stack);
+}

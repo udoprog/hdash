@@ -1,8 +1,8 @@
 import * as interfaces from 'api/interfaces';
 import { clone } from 'mapping';
 import * as model from 'api/model';
-import * as instant from 'api/instant';
-import * as unit from 'api/unit';
+import * as instant from 'instant';
+import * as unit from 'unit';
 
 const RANGE = new model.Range({
   start: new instant.StartOf({ unit: unit.Hours, offset: new instant.Duration({ unit: unit.Hours, value: 12 }) }),

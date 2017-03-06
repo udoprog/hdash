@@ -1,7 +1,6 @@
 import { field, types, Values, FieldType, Field, Path } from 'mapping';
-
+import * as unit from 'unit';
 import * as moment from 'moment';
-import * as unit from './unit';
 
 class MomentField implements Field<moment.Moment> {
   public readonly descriptor: string;

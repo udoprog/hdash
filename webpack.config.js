@@ -22,35 +22,38 @@ const html = new HtmlWebpackPlugin({
 const prod = process.env.NODE_ENV === 'production';
 const plugins = [html];
 
+plugins.push(new ExtractTextPlugin('[name].css'));
+
 if (prod) {
+  plugins.push(new webpack.optimize.UglifyJsPlugin({
+    compress: {
+      warnings: false
+    },
+    output: {
+      comments: false
+    }
+  }));
+
   const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
-  plugins.push(new ExtractTextPlugin('[name].min.css'));
-
-  plugins.push(new webpack.optimize.UglifyJsPlugin({
-    compress: { warnings: false }
-  }));
-
   plugins.push(new OptimizeCssAssetsPlugin({
-    assetNameRegExp: /\.min\.css$/,
+    assetNameRegExp: /\.css$/,
     cssProcessorOptions: { discardComments: { removeAll: true } }
   }));
-} else {
-  plugins.push(new ExtractTextPlugin('[name].css'));
 }
 
 module.exports = {
-  entry: './app/main.tsx',
+  entry: ['babel-polyfill', './app/main.tsx'],
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: prod ? '[name].min.js' : '[name].js',
+    filename: '[name].js',
     chunkFilename: '[id].js'
   },
   module: {
     rules: [{
       test: /\.ts(x?)$/,
       exclude: /node_modules/,
-      use: ['ts-loader']
+      use: [babelLoader, 'ts-loader']
     }, {
       test: /\.js$/,
       exclude: /node_modules/,

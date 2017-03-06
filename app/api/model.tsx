@@ -13,7 +13,7 @@ import EditReferenceDataSource from 'components/EditReferenceDataSource';
 import { CanvasChartModel } from 'components/CanvasChart';
 
 import { PagesContext } from 'api/interfaces';
-import { Instant, InstantType } from './instant';
+import { Instant, InstantType } from 'instant';
 import Request from 'request';
 
 const MAX_ATTEMPTS = 1000;

@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Row, Col, Button } from 'react-bootstrap';
 import { Range } from 'api/model';
-import * as instant from 'api/instant';
-import * as unit from 'api/unit';
-import InstantPicker from './InstantPicker';
+import * as instant from 'instant';
+import * as unit from 'unit';
 import FontAwesome from 'react-fontawesome';
+
+import InstantPicker from './InstantPicker';
 
 function relativeNow(unit: unit.Unit, value: number) {
   return new Range({
