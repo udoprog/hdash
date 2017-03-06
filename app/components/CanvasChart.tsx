@@ -10,6 +10,7 @@ import { Optional } from 'optional';
 import * as moment from 'moment';
 import FontAwesome from 'react-fontawesome';
 import * as steps from 'api/step';
+import Request from 'request';
 
 const TEXT_FONT = '16px Sans';
 
@@ -69,7 +70,7 @@ abstract class CanvasChart<
   /**
    * Pending DataSource query.
    */
-  dataSourceQuery?: Promise<Optional<EmbeddedDataSource>>;
+  dataSourceQuery?: Request<Optional<EmbeddedDataSource>>;
   /**
    * Pending data query.
    */

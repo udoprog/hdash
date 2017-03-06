@@ -1,6 +1,7 @@
 import { Dashboard, DashboardEntry, EmbeddedDataSource, Vis, VisType } from 'api/model';
 import { InjectedRouter } from 'react-router';
 import { Filter } from 'api/filter';
+import Request from 'request';
 import { Optional } from 'optional';
 import { field, types } from 'mapping';
 
@@ -47,31 +48,31 @@ export class DatabaseContent {
  * Primary database.
  */
 export interface Database {
-  me(): Promise<Optional<User>>;
+  me(): Request<Optional<User>>;
 
-  search(filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage>;
+  search(filter: Filter<any>, limit: number, pageToken: Optional<string>): Request<DashboardPage>;
 
-  searchStarred(filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage>;
+  searchStarred(filter: Filter<any>, limit: number, pageToken: Optional<string>): Request<DashboardPage>;
 
-  get(id: string): Promise<Optional<Dashboard>>;
+  get(id: string): Request<Optional<Dashboard>>;
 
-  save(dashboard: Dashboard): Promise<{}>;
+  save(dashboard: Dashboard): Request<{}>;
 
-  setStarred(dashboardId: string, starred: boolean): Promise<{}>;
+  setStarred(dashboardId: string, starred: boolean): Request<{}>;
 
-  getVisualization(visualizationId: string): Promise<Optional<Vis>>;
+  getVisualization(visualizationId: string): Request<Optional<Vis>>;
 
-  getDataSource(dataSourceId: string): Promise<Optional<EmbeddedDataSource>>;
+  getDataSource(dataSourceId: string): Request<Optional<EmbeddedDataSource>>;
 
   /**
    * Export the content of the database.
    */
-  export(): Promise<DatabaseContent>;
+  export(): Request<DatabaseContent>;
 
   /**
    * Import database content.
    */
-  import(content: DatabaseContent): Promise<{}>;
+  import(content: DatabaseContent): Request<{}>;
 }
 
 export interface DashboardPage {

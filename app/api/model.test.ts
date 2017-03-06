@@ -7,6 +7,7 @@ describe('model', () => {
       id: "hello",
       title: "Simple Title",
       metadata: { owner: "foo" },
+      range: { start: { type: 'now' }, end: { type: 'now' } },
       components: [],
       layout: []
     }, { title: "other" });
@@ -16,7 +17,6 @@ describe('model', () => {
     assertModel(model.Component, {
       id: "hello",
       title: "Foo Bar",
-      showTitle: false,
       visualization: { type: 'reference', id: 'a' }
     }, { title: "other" });
   });

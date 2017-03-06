@@ -1,75 +1,68 @@
-import { DatabaseContent } from 'api/interfaces';
-import { encode, decode } from 'mapping';
-import { DEFAULT_BAR_CHART, DEFAULT_LINE_CHART, VisType } from 'api/model';
+import * as interfaces from 'api/interfaces';
+import { clone } from 'mapping';
+import * as model from 'api/model';
+import * as instant from 'api/instant';
+import * as unit from 'api/unit';
 
-const dashboards: any = {
-  "a": {
+const RANGE = new model.Range({
+  start: new instant.StartOf({ unit: unit.Hours, offset: new instant.Duration({ unit: unit.Hours, value: 12 }) }),
+  end: new instant.Now({})
+});
+
+const dashboards: { [key: string]: model.Dashboard } = {
+  "a": new model.Dashboard({
     id: "a",
     title: "Simple Title",
     metadata: { owner: "foo" },
-    range: {
-      start: { type: 'start-of', unit: 'hours', offset: { unit: 'hours', value: 10 } },
-      end: { type: 'now' }
-    },
+    range: RANGE,
     components: [],
     layout: []
-  },
-  "d": {
+  }),
+  "d": new model.Dashboard({
     id: "d",
     title: "Has Visualization",
     metadata: { owner: "bar", relation: "loose" },
-    range: {
-      start: { type: 'start-of', unit: 'hours', offset: { unit: 'hours', value: 10 } },
-      end: { type: 'now' }
-    },
+    range: RANGE,
     components: [
-      {
+      new model.Component({
         id: "a",
         title: "Bar Chart (Referenced)",
-        showTitle: true,
-        visualization: { type: "reference", id: "vis1" }
-      },
-      {
+        visualization: new model.ReferenceVis({ type: "reference", id: "vis1" })
+      }),
+      new model.Component({
         id: "b",
         title: "Bar Chart (Embedded)",
-        showTitle: true,
-        visualization: { type: "reference", id: "vis2" }
-      }
+        visualization: new model.ReferenceVis({ type: "reference", id: "vis2" })
+      })
     ],
     layout: [
       { i: "a", x: 0, y: 0, w: 6, h: 2 },
       { i: "b", x: 6, y: 0, w: 6, h: 2 }
     ]
-  }
+  })
 };
 
 const starred: any = {
   "a": true
 };
 
-const visualizations: any = {
-  "vis1": Object.assign(encode(DEFAULT_BAR_CHART, VisType), {
-    dataSource: { type: "reference", id: "datasource" }
-  }),
-  "vis2": Object.assign(encode(DEFAULT_LINE_CHART, VisType), {
-    dataSource: { type: "embedded", query: "average by role" }
+const visualizations: { [key: string]: model.Vis } = {
+  "vis1": clone(model.DEFAULT_BAR_CHART, { dataSource: new model.ReferenceDataSource({ id: 'datasource' }) }),
+  "vis2": clone(model.DEFAULT_LINE_CHART, { dataSource: new model.EmbeddedDataSource({ query: "average by role" }) }),
+};
+
+const dataSources: { [key: string]: model.EmbeddedDataSource } = {
+  "datasource": new model.EmbeddedDataSource({
+    query: "average by role"
   })
 };
 
-const dataSources: any = {
-  "datasource": {
-    query: "average by role"
-  }
-};
+const user = new interfaces.User({ name: "John Doe", email: "john@doe.com" });
 
-const user = { name: "John Doe", email: "john@doe.com" };
-
-const content = decode({
+export default new interfaces.DatabaseContent({
   dashboards: dashboards,
   starred: starred,
   visualizations: visualizations,
   dataSources: dataSources,
   user: user
-}, DatabaseContent);
-
-export default content;
+});

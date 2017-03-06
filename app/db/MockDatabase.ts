@@ -5,6 +5,7 @@ import { Dashboard, DashboardEntry, Vis, DataSource } from 'api/model';
 import { Optional, absent, of, ofNullable } from 'optional';
 import Initial from './MockDatabaseInitial';
 import { encode, decode } from 'mapping';
+import Request from 'request';
 
 export default class MockDatabase implements Database {
   private content: DatabaseContent;
@@ -34,21 +35,21 @@ export default class MockDatabase implements Database {
     }
   }
 
-  public me(): Promise<Optional<User>> {
-    return Promise.resolve(of(this.content.user as User));
+  public me(): Request<Optional<User>> {
+    return Request.resolve(of(this.content.user as User));
   }
 
-  public get(id: string): Promise<Optional<Dashboard>> {
-    return Promise.resolve(ofNullable(this.content.dashboards[id]));
+  public get(id: string): Request<Optional<Dashboard>> {
+    return Request.resolve(ofNullable(this.content.dashboards[id]));
   }
 
-  public save(dashboard: Dashboard): Promise<{}> {
+  public save(dashboard: Dashboard): Request<{}> {
     this.content.dashboards[dashboard.id] = dashboard;
     this.write();
-    return Promise.resolve({});
+    return Request.resolve({});
   }
 
-  public search(filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage> {
+  public search(filter: Filter<any>, limit: number, pageToken: Optional<string>): Request<DashboardPage> {
     let result: DashboardEntry[] = Object.keys(this.content.dashboards).map(key => {
       let value = this.content.dashboards[key];
 
@@ -63,7 +64,7 @@ export default class MockDatabase implements Database {
     return this.pageResult(result, filter, limit, pageToken);
   }
 
-  public searchStarred(filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage> {
+  public searchStarred(filter: Filter<any>, limit: number, pageToken: Optional<string>): Request<DashboardPage> {
     let result: DashboardEntry[] = Object.keys(this.content.starred).map(key => {
       let value = this.content.dashboards[key];
 
@@ -78,7 +79,7 @@ export default class MockDatabase implements Database {
     return this.pageResult(result, filter, limit, pageToken);
   }
 
-  public pageResult(source: DashboardEntry[], filter: Filter<any>, limit: number, pageToken: Optional<string>): Promise<DashboardPage> {
+  public pageResult(source: DashboardEntry[], filter: Filter<any>, limit: number, pageToken: Optional<string>): Request<DashboardPage> {
     const startIndex = pageToken.map(start => JSON.parse(start)).orElse(0);
 
     source = source.filter(filter.apply.bind(filter));
@@ -91,10 +92,10 @@ export default class MockDatabase implements Database {
       newPageToken = of(JSON.stringify(startIndex + limit));
     }
 
-    return Promise.resolve({ results: sliced, pageToken: newPageToken });
+    return Request.resolve({ results: sliced, pageToken: newPageToken });
   }
 
-  public setStarred(dashboardId: string, starred: boolean): Promise<{}> {
+  public setStarred(dashboardId: string, starred: boolean): Request<{}> {
     if (starred) {
       this.content.starred[dashboardId] = starred;
     } else {
@@ -102,27 +103,27 @@ export default class MockDatabase implements Database {
     }
 
     this.write();
-    return Promise.resolve({});
+    return Request.resolve({});
   }
 
-  public getVisualization(visualizationId: string): Promise<Optional<Vis>> {
-    return new Promise((resolve, _reject) => {
+  public getVisualization(visualizationId: string): Request<Optional<Vis>> {
+    return new Request(new Promise((resolve, _reject) => {
       setTimeout(() => {
         resolve(ofNullable(this.content.visualizations[visualizationId]));
       }, 500);
-    });
+    }));
   }
 
-  public getDataSource(dataSourceId: string): Promise<Optional<DataSource>> {
-    return Promise.resolve(ofNullable(this.content.dataSources[dataSourceId]));
+  public getDataSource(dataSourceId: string): Request<Optional<DataSource>> {
+    return Request.resolve(ofNullable(this.content.dataSources[dataSourceId]));
   }
 
-  public export(): Promise<DatabaseContent> {
-    return Promise.resolve(this.content);
+  public export(): Request<DatabaseContent> {
+    return Request.resolve(this.content);
   }
 
-  public import(content: DatabaseContent): Promise<{}> {
+  public import(content: DatabaseContent): Request<{}> {
     this.content = content;
-    return Promise.resolve({});
+    return Request.resolve({});
   }
 };

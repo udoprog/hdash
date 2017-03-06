@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { Vis, ReferenceVis, VisualOptions, VisComponent } from 'api/model';
-import { Optional, absent, of } from 'optional';
+import { Optional, absent } from 'optional';
 import { PagesContext } from 'api/interfaces';
 import FontAwesome from 'react-fontawesome';
+import Request from 'request';
 
 interface Props {
   vis: ReferenceVis;
@@ -17,11 +18,18 @@ interface State {
 export default class ViewReferenceVis extends React.Component<Props, State> implements VisComponent {
   context: PagesContext;
   visual?: VisComponent;
-  visQuery?: Promise<Optional<Vis>>;
+  visQuery?: Request<Optional<Vis>>;
 
   public static contextTypes: any = {
     db: React.PropTypes.object
   };
+
+  public componentWillUnmount() {
+    if (this.visQuery) {
+      this.visQuery.cancel();
+      this.visQuery = null;
+    }
+  }
 
   constructor(props: Props) {
     super(props);
@@ -71,36 +79,35 @@ export default class ViewReferenceVis extends React.Component<Props, State> impl
       return;
     }
 
+    while (this.visQuery) {
+      await this.visQuery;
+    }
+
     /* do not update if ID is the same */
     if (!this.visual) {
-      while (this.visQuery) {
-        await this.visQuery;
-      }
-
-      await new Promise((resolve, _) => this.setState({ loading: true }, resolve));
+      this.setState({ loading: true });
 
       var visualization: Optional<Vis> = null;
 
       try {
         visualization = await (this.visQuery = this.context.db.getVisualization(vis.id));
+      } catch (e) {
+        if (e === Request.CANCELLED) {
+          return Promise.resolve({});
+        }
+
+        await new Promise((_, reject) => {
+          this.setState({ loading: false }, () => reject(e));
+        });
       } finally {
         this.visQuery = null;
       }
 
-      await visualization.map(visualization => {
-        return new Promise((resolve, _) => this.setState({
-          loading: false,
-          visualization: of(visualization)
-        }, resolve));
-      }).orElseGet(() => {
-        return Promise.reject(new Error('no visualization found for id'));
-      });
+      await new Promise((resolve, _) => {
+        this.setState({ loading: false, visualization: visualization }, resolve);
+      })
     }
 
-    if (this.visual) {
-      return this.visual.refresh(query);
-    }
-
-    return Promise.resolve({});
+    return this.visual ? this.visual.refresh(query) : Promise.resolve({});
   }
 };

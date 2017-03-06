@@ -13,11 +13,6 @@ export class PathError extends Error {
 
 export interface Constructor<T> {
   new (values: Values<T>): T;
-
-  /**
-   * Access prototype.
-   */
-  prototype: T;
 }
 
 export interface Target {
@@ -27,24 +22,18 @@ export interface Target {
   [key: string]: any;
 }
 
-export interface FieldOptions {
-  optional?: boolean;
-}
-
 export interface Field<T> {
-  optional: boolean;
-
   descriptor: string;
 
   decode(value: any, path: Path): T;
 
-  encode(value: T, path: Path): any;
+  encode(value: T, path: Path, consumer: (value: any) => void): void;
 
   equals(a: T, b: T): boolean;
 }
 
 export interface FieldType<T> {
-  toField(options: FieldOptions): Field<T>;
+  toField(): Field<T>;
 }
 
 export class Path {
@@ -93,32 +82,68 @@ interface TypeCheck {
   description: string;
 }
 
+class OptionalField<T> implements Field<Optional<T>> {
+  readonly inner: Field<T>;
+  readonly descriptor: string;
+
+  constructor(inner: Field<T>) {
+    this.inner = inner;
+    this.descriptor = `Optional<${this.inner.descriptor}>`;
+  }
+
+  public decode(input: any, path: Path): Optional<T> {
+    if (input === null || input === undefined) {
+      return absent<T>();
+    }
+
+    return of<T>(this.inner.decode(input, path));
+  }
+
+  public encode(input: Optional<T>, _path: Path, consumer: (value: T) => void) {
+    input.accept(consumer);
+  }
+
+  public equals(a: Optional<T>, b: Optional<T>): boolean {
+    return equals(a, b);
+  }
+}
+
+class OptionalFieldType<T extends Target> implements FieldType<Optional<T>> {
+  public static __ft = true;
+
+  readonly inner: FieldType<T>;
+
+  constructor(inner: FieldType<T>) {
+    this.inner = inner;
+  }
+
+  public toField(): Field<Optional<T>> {
+    return new OptionalField<T>(this.inner.toField());
+  }
+}
+
 class AssignField<T> implements Field<T> {
   private readonly typeCheck: TypeCheck;
-  public readonly optional: boolean;
   public readonly descriptor: string = '=';
 
-  constructor(typeCheck: TypeCheck, optional: boolean) {
+  constructor(typeCheck: TypeCheck) {
     this.typeCheck = typeCheck;
-    this.optional = optional;
   }
 
   public decode(value: any, path: Path): any {
     if (value === undefined || value === null) {
-      if (this.optional) {
-        return absent();
-      }
+      throw path.error('missing value');
     }
 
     if (!this.typeCheck.check(value)) {
       throw path.error(`value has wrong type: ${typeof value}, expected: ${this.typeCheck.description}`);
     }
 
-    return this.optional ? of(value) : value;
+    return value;
   }
 
-  public encode(value: any): any {
-    return value;
+  public encode(value: any, _path: Path, consumer: (value: any) => void) {
+    consumer(value);
   }
 
   public equals(a: any, b: any): boolean {
@@ -135,8 +160,8 @@ class AssignFieldType<T> implements FieldType<T> {
     this.typeCheck = typeCheck;
   }
 
-  toField(options: FieldOptions) {
-    return new AssignField<T>(this.typeCheck, options.optional);
+  toField() {
+    return new AssignField<T>(this.typeCheck);
   }
 }
 
@@ -162,13 +187,11 @@ interface HasType {
 class SubField<T extends Target> implements Field<T> {
   readonly typeFunction: (input: T) => string;
   readonly types: { [s: string]: Field<any> };
-  readonly optional: boolean;
   readonly descriptor: string;
 
-  constructor(typeFunction: (input: T) => string, types: { [s: string]: Field<any> }, optional: boolean) {
+  constructor(typeFunction: (input: T) => string, types: { [s: string]: Field<any> }) {
     this.typeFunction = typeFunction;
     this.types = types;
-    this.optional = optional;
     this.descriptor = '?';
   }
 
@@ -188,7 +211,7 @@ class SubField<T extends Target> implements Field<T> {
     return sub.decode(value, path);
   }
 
-  public encode(value: T, path?: Path): any {
+  public encode(value: T, path: Path, consumer: (value: any) => void) {
     const type = this.typeFunction(value);
     const sub = this.types[type];
 
@@ -197,9 +220,10 @@ class SubField<T extends Target> implements Field<T> {
       throw path.error(`does not correspond to a sub-type: ${type}, expected one of: ${expected}`);
     }
 
-    const values = sub.encode(value, path);
-    values['type'] = type;
-    return values;
+    sub.encode(value, path, values => {
+      values['type'] = type;
+      consumer(values);
+    });
   }
 
   public equals(a: T, b: T): boolean {
@@ -228,27 +252,25 @@ class SubFieldType<T extends Target & HasType> implements FieldType<T> {
     this.types = mapTypes;
   }
 
-  public toField(options: FieldOptions): Field<T> {
+  public toField(): Field<T> {
     const types: { [key: string]: Field<T> } = {};
 
     Object.keys(this.types).forEach(key => {
-      types[key] = this.types[key].toField(options);
+      types[key] = this.types[key].toField();
     });
 
-    return new SubField<T>(this.typeFunction, types, options.optional);
+    return new SubField<T>(this.typeFunction, types);
   }
 }
 
 class OneOfField<T> implements Field<T> {
   readonly field: Field<T>;
   readonly values: T[];
-  readonly optional: boolean;
   readonly descriptor: string;
 
-  constructor(field: Field<T>, values: T[], optional: boolean) {
+  constructor(field: Field<T>, values: T[]) {
     this.field = field;
     this.values = values;
-    this.optional = optional;
     this.descriptor = `[${values.map(v => String(v))}]`;
   }
 
@@ -262,12 +284,12 @@ class OneOfField<T> implements Field<T> {
     return v;
   }
 
-  public encode(value: T, path?: Path): any {
+  public encode(value: T, path: Path, consumer: (value: any) => void) {
     if (this.values.find(expected => this.field.equals(expected, value)) === null) {
       throw path.error(`found value ${value}, but expected one of: ${this.values}`);
     }
 
-    return this.field.encode(value, path);
+    this.field.encode(value, path, consumer);
   }
 
   public equals(a: T, b: T): boolean {
@@ -286,8 +308,8 @@ class OneOfFieldType<T> implements FieldType<T> {
     this.values = values;
   }
 
-  public toField(options: FieldOptions): OneOfField<T> {
-    return new OneOfField<T>(this.type.toField(options), this.values, options.optional);
+  public toField(): OneOfField<T> {
+    return new OneOfField<T>(this.type.toField(), this.values);
   }
 }
 
@@ -298,13 +320,11 @@ interface HasConstant<T> {
 class ConstField<T, U extends HasConstant<T>> implements Field<U> {
   readonly field: Field<T>;
   readonly constants: U[];
-  readonly optional: boolean;
   readonly descriptor: string;
 
-  constructor(field: Field<T>, constants: U[], optional: boolean) {
+  constructor(field: Field<T>, constants: U[]) {
     this.field = field;
     this.constants = constants;
-    this.optional = optional;
     this.descriptor = `[${constants.map(v => String(v.constant))}]`;
   }
 
@@ -319,8 +339,8 @@ class ConstField<T, U extends HasConstant<T>> implements Field<U> {
     return out;
   }
 
-  public encode(value: U, path?: Path): any {
-    return this.field.encode(value.constant, path);
+  public encode(value: U, path: Path, consumer: (value: any) => void) {
+    this.field.encode(value.constant, path, consumer);
   }
 
   public equals(a: U, b: U): boolean {
@@ -339,19 +359,17 @@ class ConstFieldType<T, U extends HasConstant<T>> implements FieldType<U> {
     this.constants = constants;
   }
 
-  public toField(options: FieldOptions): ConstField<T, U> {
-    return new ConstField<T, U>(this.type.toField(options), this.constants, options.optional);
+  public toField(): ConstField<T, U> {
+    return new ConstField<T, U>(this.type.toField(), this.constants);
   }
 }
 
 class ArrayField<T extends Target> implements Field<Array<T>> {
   readonly inner: Field<T>;
-  readonly optional: boolean;
   readonly descriptor: string;
 
-  constructor(inner: Field<T>, optional: boolean) {
+  constructor(inner: Field<T>) {
     this.inner = inner;
-    this.optional = optional;
     this.descriptor = `[${this.inner.descriptor}]`
   }
 
@@ -365,10 +383,14 @@ class ArrayField<T extends Target> implements Field<Array<T>> {
     });
   }
 
-  public encode(value: Array<T>, path: Path): any {
-    return value.map((v: any, index: number) => {
-      return this.inner.encode(v, path.extend(`[${index}]`));
+  public encode(value: Array<T>, path: Path, consumer: (value: any) => void) {
+    const values: any[] = [];
+
+    value.forEach((v: any, index: number) => {
+      this.inner.encode(v, path.extend(`[${index}]`), value => values.push(value));
     });
+
+    consumer(values);
   }
 
   public equals(a: Array<T>, b: Array<T>): boolean {
@@ -391,19 +413,17 @@ class ArrayFieldType<T extends Target> implements FieldType<Array<T>> {
     this.inner = inner;
   }
 
-  public toField(options: FieldOptions): Field<Array<T>> {
-    return new ArrayField<T>(this.inner.toField(options), options.optional);
+  public toField(): Field<Array<T>> {
+    return new ArrayField<T>(this.inner.toField());
   }
 }
 
 class MapField<T extends Target> implements Field<{ [key: string]: T }> {
   readonly value: Field<T>;
-  readonly optional: boolean;
   readonly descriptor: string;
 
-  constructor(value: Field<T>, optional: boolean) {
+  constructor(value: Field<T>) {
     this.value = value;
-    this.optional = optional;
     this.descriptor = `{[key: string]: ${this.value.descriptor}}`;
   }
 
@@ -417,14 +437,14 @@ class MapField<T extends Target> implements Field<{ [key: string]: T }> {
     return output;
   }
 
-  public encode(input: { [s: string]: T }, path: Path): any {
+  public encode(input: { [s: string]: T }, path: Path, consumer: (value: any) => void) {
     const output: { [s: string]: T } = {};
 
     Object.keys(input).forEach(key => {
-      output[key] = this.value.encode(input[key], path.extend(key));
+      this.value.encode(input[key], path.extend(key), value => output[key] = value);
     });
 
-    return output;
+    consumer(output);
   }
 
   public equals(a: T, b: T): boolean {
@@ -441,8 +461,8 @@ class MapFieldType<T extends Target> implements FieldType<{ [key: string]: T }> 
     this.value = value;
   }
 
-  public toField(options: FieldOptions): Field<{ [key: string]: T }> {
-    return new MapField<T>(this.value.toField(options), options.optional);
+  public toField(): Field<{ [key: string]: T }> {
+    return new MapField<T>(this.value.toField());
   }
 }
 
@@ -475,25 +495,16 @@ class ClassField<T extends Target> implements Field<T> {
     return new this.con(values);
   }
 
-  public encode(input: T, path: Path): any {
+  public encode(input: T, path: Path, consumer: (value: any) => void) {
     const values: { [s: string]: any } = {};
     const proto = this.con.prototype;
     const fields = (proto as any).__fields as { [s: string]: Field<any> } || {};
 
     Object.keys(fields).forEach(key => {
-      const field = fields[key];
-      const value = input[key];
-
-      if (field.optional) {
-        (value as Optional<any>).accept(value => {
-          values[key] = field.encode(value, path.extend(key));
-        });
-      } else {
-        values[key] = field.encode(value, path.extend(key));
-      }
+      fields[key].encode(input[key], path.extend(key), (value) => values[key] = value)
     });
 
-    return values;
+    consumer(values);
   }
 
   public equals(a: T, b: T): boolean {
@@ -510,8 +521,8 @@ class ClassFieldType<T extends Target> implements FieldType<T> {
     this.con = con;
   }
 
-  public toField(options: FieldOptions): Field<T> {
-    return new ClassField<T>(this.con, options.optional);
+  public toField(): Field<T> {
+    return new ClassField<T>(this.con);
   }
 }
 
@@ -537,10 +548,10 @@ export function equals<T extends Target>(a: T, b: T): boolean {
   });
 }
 
-export function field<T>(type: ToFieldType<T>, options?: FieldOptions): any {
+export function field<T>(type: ToFieldType<T>): any {
   return function (target: T, fieldKey: any) {
     const fields: { [s: string]: Field<any> } = (target as any).__fields = (target as any).__fields || {};
-    fields[fieldKey] = toField(type).toField(options || {});
+    fields[fieldKey] = toField(type).toField();
   };
 }
 
@@ -548,15 +559,23 @@ export function field<T>(type: ToFieldType<T>, options?: FieldOptions): any {
  * Decode the given object.
  */
 export function decode<T>(input: any, type: ToFieldType<T>): T {
-  const field = toField(type).toField({ optional: false });
+  const field = toField(type).toField();
   const p: Path = new Path(field.descriptor);
   return field.decode(input, p);
 }
 
 export function encode<T extends Target>(input: T, type?: ToFieldType<T>): { [s: string]: any } {
-  const field = (type && toField(type) || toField((<any>input).constructor as Constructor<T>)).toField({ optional: false });
+  const field = (type && toField(type) || toField((<any>input).constructor as Constructor<T>)).toField();
   const p: Path = new Path(field.descriptor);
-  return field.encode(input, p);
+
+  var returnValue = null;
+  field.encode(input, p, value => returnValue = value);
+
+  if (returnValue === null) {
+    throw p.error('encode returned no value');
+  }
+
+  return returnValue;
 }
 
 /**
@@ -604,6 +623,10 @@ export function mutate<T extends Target, K extends keyof T>(input: T, overrides:
 }
 
 export namespace types {
+  export function Optional<T>(inner: ToFieldType<T>) {
+    return new OptionalFieldType<T>(toField<T>(inner));
+  }
+
   export const String: FieldType<string> = new AssignFieldType({
     check: (value: any) => typeof value === 'string',
     description: 'string'

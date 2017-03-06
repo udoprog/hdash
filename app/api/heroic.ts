@@ -120,7 +120,7 @@ export class QueryResponse {
   @field(types.Array(QueryResult))
   readonly result: QueryResult[];
 
-  @field(types.Number, { optional: true })
+  @field(types.Optional(types.Number))
   readonly cadence: Optional<number>;
 
   constructor(values: Values<QueryResponse>) {

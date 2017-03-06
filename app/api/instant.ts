@@ -1,15 +1,13 @@
-import { field, types, Values, FieldType, Field, FieldOptions, Path } from 'mapping';
+import { field, types, Values, FieldType, Field, Path } from 'mapping';
 
 import * as moment from 'moment';
 import * as unit from './unit';
 
 class MomentField implements Field<moment.Moment> {
-  public readonly optional: boolean;
   public readonly descriptor: string;
   private readonly inner: Field<number>;
 
-  constructor(optional: boolean, inner: Field<number>) {
-    this.optional = optional;
+  constructor(inner: Field<number>) {
     this.descriptor = 'Moment';
     this.inner = inner;
   }
@@ -18,8 +16,8 @@ class MomentField implements Field<moment.Moment> {
     return moment(this.inner.decode(value, path));
   }
 
-  encode(value: moment.Moment): any {
-    return value.valueOf();
+  encode(value: moment.Moment, _path: Path, consumer: (value: any) => void) {
+    consumer(value.valueOf());
   }
 
   equals(_a: moment.Moment, _b: moment.Moment): boolean {
@@ -30,8 +28,8 @@ class MomentField implements Field<moment.Moment> {
 class MomentFieldType implements FieldType<moment.Moment> {
   public static __ft: boolean = true;
 
-  toField(options: FieldOptions): MomentField {
-    return new MomentField(options.optional, types.Number.toField(options));
+  toField(): MomentField {
+    return new MomentField(types.Number.toField());
   }
 }
 

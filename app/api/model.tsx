@@ -14,6 +14,7 @@ import { CanvasChartModel } from 'components/CanvasChart';
 
 import { PagesContext } from 'api/interfaces';
 import { Instant, InstantType } from './instant';
+import Request from 'request';
 
 const MAX_ATTEMPTS = 1000;
 const RANGE = 1000000;
@@ -54,7 +55,7 @@ export interface VisualOptions {
 export interface DataSource {
   renderEdit(onChange: (model: this) => void): any;
 
-  toEmbedded(context: PagesContext): Promise<Optional<EmbeddedDataSource>>;
+  toEmbedded(context: PagesContext): Request<Optional<EmbeddedDataSource>>;
 }
 
 export class EmbeddedDataSource implements DataSource {
@@ -79,8 +80,8 @@ export class EmbeddedDataSource implements DataSource {
     );
   }
 
-  toEmbedded(_context: PagesContext): Promise<Optional<EmbeddedDataSource>> {
-    return Promise.resolve(of(this));
+  toEmbedded(_context: PagesContext): Request<Optional<EmbeddedDataSource>> {
+    return Request.resolve(of(this));
   }
 }
 
@@ -106,7 +107,7 @@ export class ReferenceDataSource implements DataSource {
     );
   }
 
-  toEmbedded(context: PagesContext): Promise<Optional<EmbeddedDataSource>> {
+  toEmbedded(context: PagesContext): Request<Optional<EmbeddedDataSource>> {
     return context.db.getDataSource(this.id);
   }
 }
