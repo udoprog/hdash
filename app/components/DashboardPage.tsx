@@ -39,12 +39,13 @@ interface ErrorQueryResult {
 
 type QueryResult = SuccessQueryResult | ErrorQueryResult;
 
+type Menu = 'range' | 'errors' | null;
+
 interface State {
   locked: boolean;
   dashboard: Optional<Dashboard>;
   editComponent: Optional<string>;
-  editRange: boolean;
-  showErrors: boolean;
+  showMenu: Menu;
   queryInProgress: boolean;
   errors: ErrorContext[];
 }
@@ -75,8 +76,7 @@ export default class DashboardPage extends React.Component<Props, State> {
       locked: query.unlocked !== 'true',
       dashboard: absent<Dashboard>(),
       editComponent: ofNullable(query.edit),
-      editRange: query.editRange === 'true',
-      showErrors: query.showErrors === 'true',
+      showMenu: query.menu || null,
       queryInProgress: false,
       errors: [],
     };
@@ -91,14 +91,13 @@ export default class DashboardPage extends React.Component<Props, State> {
   }
 
   private updateUrl(): void {
-    const { locked, editComponent, editRange, showErrors } = this.state;
+    const { locked, editComponent, showMenu } = this.state;
     const { pathname, query } = this.props.location;
     const { router } = this.context;
 
     query.unlocked = !locked ? 'true' : undefined;
     query.edit = editComponent.orElse(undefined);
-    query.editRange = editRange ? 'true' : undefined;
-    query.showErrors = showErrors ? 'true' : undefined;
+    query.menu = showMenu;
 
     router.replace({
       pathname: pathname,
@@ -107,14 +106,14 @@ export default class DashboardPage extends React.Component<Props, State> {
   }
 
   public render() {
-    const { locked, dashboard, editComponent, editRange, showErrors, queryInProgress, errors } = this.state;
+    const { locked, dashboard, editComponent, showMenu, queryInProgress, errors } = this.state;
 
     let title = dashboard
       .map(dashboard => dashboard.title)
       .orElse(`Dashboard with ID '${this.props.params.id}' does not exist`);
 
     const errorsToggle = (
-      <NavItem onClick={() => this.setState({ showErrors: !showErrors }, () => this.updateUrl())} active={showErrors}>
+      <NavItem onClick={() => this.setState({ showMenu: showMenu === 'errors' ? null : 'errors' }, () => this.updateUrl())} active={showMenu === 'errors'}>
         <FontAwesome name="exclamation-triangle" />
         <span className='icon-text'>Errors</span>
         <Badge className='icon-text' pullRight={true}>{errors.length}</Badge>
@@ -122,7 +121,7 @@ export default class DashboardPage extends React.Component<Props, State> {
     );
 
     const rangeToggle = (
-      <NavItem onClick={() => this.setState({ editRange: !editRange }, () => this.updateUrl())} active={editRange}>
+      <NavItem onClick={() => this.setState({ showMenu: showMenu === 'range' ? null : 'range' }, () => this.updateUrl())} active={showMenu === 'range'}>
         <FontAwesome name="clock-o" />
         <span className='icon-text'>
           {dashboard.map(d => {
@@ -137,18 +136,18 @@ export default class DashboardPage extends React.Component<Props, State> {
     );
 
     const editRangeComponent = dashboard.map(d => (
-      <Grid className='range-picker-menu' style={{ display: !editRange && 'none' }}>
+      <Grid className='range-picker-menu' style={{ display: showMenu !== 'range' && 'none' }}>
         <RangePicker range={d.range} onChange={(range: Range) => this.rangeChanged(range)}></RangePicker>
       </Grid>
     )).get();
 
     const showErrorsComponent = (
-      <Grid className='errors-menu' style={{ display: !showErrors && 'none' }}>
+      <Grid className='errors-menu' style={{ display: showMenu !== 'errors' && 'none' }}>
         <div className='errors'>
           <Row className='button-row'>
             <Col sm={12}>
               <Button className='pull-right' bsStyle='primary' onClick={() => {
-                this.setState({ showErrors: false, errors: [] });
+                this.setState({ showMenu: null, errors: [] });
               }}>Clear</Button>
               <div className='clearfix' />
             </Col>
@@ -241,8 +240,8 @@ export default class DashboardPage extends React.Component<Props, State> {
 
           <Nav pullRight>
             {errorsToggle}
-            {query}
             {rangeToggle}
+            {query}
           </Nav>
         </Navbar>
 
