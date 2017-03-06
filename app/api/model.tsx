@@ -161,8 +161,8 @@ export class TextVis implements Vis {
     );
   }
 
-  renderVisual(_onChange: VisualOptions, _ref?: (visual: VisComponent) => void) {
-    return <ViewTextVis textVis={this} />;
+  renderVisual(options: VisualOptions, _ref?: (visual: VisComponent) => void) {
+    return <ViewTextVis textVis={this} options={options} />;
   }
 }
 

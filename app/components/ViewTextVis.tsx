@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { TextVis } from 'api/model';
+import { TextVis, VisualOptions } from 'api/model';
 import { makeHtml } from 'markdown-js';
 
 interface Props {
   textVis: TextVis;
+  options: VisualOptions;
 }
 
 export default class ViewTextVis extends React.Component<Props, {}> {
@@ -23,8 +24,10 @@ export default class ViewTextVis extends React.Component<Props, {}> {
   }
 
   public render(): JSX.Element {
+    const { height } = this.props.options;
+
     return (
-      <div ref={div => this.div = div} />
+      <div className='text-vis' ref={div => this.div = div} style={{ height: height }} />
     );
   }
 }
