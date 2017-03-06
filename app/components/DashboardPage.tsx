@@ -13,6 +13,7 @@ import * as moment from 'moment';
 const ResponsiveReactGridLayout = ReactGridLayout.WidthProvider(ReactGridLayout);
 
 const ROW_HEIGHT = 150;
+const LIST_ROW_HEIGHT = 150;
 
 interface Params {
   id: string
@@ -182,31 +183,26 @@ export default class DashboardPage extends React.Component<Props, State> {
       </NavItem>
     );
 
-    const addComponent = !locked ? (
-      <NavItem onClick={() => this.addComponent()}>
+    const addComponent = (
+      <NavItem onClick={() => this.addComponent()} style={{ display: !locked ? null : 'none' }}>
         <FontAwesome name="plus" />
         <span className='icon-text'>Add Component</span>
       </NavItem>
-    ) : null;
+    );
 
-    const save = !locked ? (
-      <NavItem onClick={() => this.save()}>
+    const save = (
+      <NavItem onClick={() => this.save()} style={{ display: !locked ? null : 'none' }}>
         <FontAwesome name="save" />
         <span className='icon-text'>Save</span>
       </NavItem>
-    ) : null;
+    );
 
-    const query = queryInProgress ? (
-      <NavItem onClick={() => this.query()} disabled={true}>
-        <FontAwesome name='circle-o-notch' spin={true} />
+    const query = (
+      <NavItem onClick={() => this.query()}>
+        <FontAwesome name={queryInProgress ? 'circle-o-notch' : 'play'} spin={!!queryInProgress} />
         <span className='icon-text'>Query</span>
       </NavItem>
-    ) : (
-        <NavItem onClick={() => this.query()}>
-          <FontAwesome name="play" />
-          <span className='icon-text'>Query</span>
-        </NavItem>
-      );
+    );
 
     const main = dashboard.map(dashboard => {
       return editComponent.map(componentId => {
@@ -289,12 +285,12 @@ export default class DashboardPage extends React.Component<Props, State> {
     return (
       <Grid fluid={true}>
         <h1>{title}</h1>
-        {this.renderComponents(locked, dashboard)}
+        {this.renderComponents(locked, dashboard, LIST_ROW_HEIGHT)}
       </Grid >
     );
   }
 
-  private renderComponents(locked: boolean, dashboard: Dashboard) {
+  private renderComponents(locked: boolean, dashboard: Dashboard, height?: number) {
     return dashboard.components.map(component => {
       const buttons = !locked ? (
         <div className="pull-right">
@@ -334,6 +330,7 @@ export default class DashboardPage extends React.Component<Props, State> {
       }
 
       const visualOptions: VisualOptions = {
+        height: height,
         range: dashboard.range,
       };
 
@@ -377,23 +374,31 @@ export default class DashboardPage extends React.Component<Props, State> {
   }
 
   private query() {
+    this.setState({ queryInProgress: true });
+
     this.queryAsync().then((result: QueryResult[]) => {
+      let errors: ErrorContext[] = [];
+
       result.forEach(r => {
         if (r.type === 'error') {
-          this.setState(prev => {
-            return {
-              errors: [{
-                message: 'Issue when running query',
-                error: r.error,
-                timestamp: moment()
-              }].concat(prev.errors).slice(0, 20)
-            };
-          })
+          errors.push({
+            message: 'Issue when running query',
+            error: r.error,
+            timestamp: moment()
+          });
         }
+      })
+
+      this.setState(prev => {
+        return {
+          queryInProgress: false,
+          errors: errors.concat(prev.errors).slice(0, 20)
+        };
       })
     }, error => {
       this.setState(prev => {
         return {
+          queryInProgress: false,
           errors: [{
             message: 'Issue in query batch',
             error: error,
