@@ -135,14 +135,14 @@ export default class DashboardPage extends React.Component<Props, State> {
       </NavItem>
     );
 
-    const editRangeComponent = dashboard.map(d => editRange ? (
-      <Grid className='range-picker-menu'>
+    const editRangeComponent = dashboard.map(d => (
+      <Grid className='range-picker-menu' style={{ display: !editRange && 'none' }}>
         <RangePicker range={d.range} onChange={(range: Range) => this.rangeChanged(range)}></RangePicker>
       </Grid>
-    ) : null).get();
+    )).get();
 
-    const showErrorsComponent = showErrors ? (
-      <Grid className='errors-menu'>
+    const showErrorsComponent = (
+      <Grid className='errors-menu' style={{ display: !showErrors && 'none' }}>
         <div className='errors'>
           <Row className='button-row'>
             <Col sm={12}>
@@ -153,12 +153,10 @@ export default class DashboardPage extends React.Component<Props, State> {
             </Col>
           </Row>
 
-          {errors.length === 0 ?
-            (
-              <Alert bsStyle='info'>
-                No Errors
-            </Alert>
-            ) : null}
+          <Alert bsStyle='info' style={{ display: errors.length === 0 ? null : 'none' }}>
+            <FontAwesome name='star' />
+            <span className='icon-text'>No Errors</span>
+          </Alert>
 
           <ListGroup>
             {errors.map((error, index) => {
@@ -172,7 +170,7 @@ export default class DashboardPage extends React.Component<Props, State> {
           </ListGroup>
         </div>
       </Grid>
-    ) : null;
+    );
 
     const lockToggle = (
       <NavItem title={locked ? "Unlock to Edit" : "Lock"} onClick={() => this.setState({ locked: !locked }, () => {
