@@ -15,7 +15,7 @@ export default class RealDatabase implements Database {
     return Request.reject(new Error("not implemented"));
   }
 
-  public save(_dashboard: Dashboard): Request<{}> {
+  public save(_dashboard: Dashboard): Request<void> {
     return Request.reject(new Error("not implemented"));
   }
 
@@ -27,7 +27,7 @@ export default class RealDatabase implements Database {
     return Request.reject(new Error("not implemented"));
   }
 
-  public setStarred(_dashboardId: string, _started: boolean): Request<{}> {
+  public setStarred(_dashboardId: string, _started: boolean): Request<void> {
     return Request.reject(new Error("not implemented"));
   }
 
@@ -43,7 +43,7 @@ export default class RealDatabase implements Database {
     return Request.reject(new Error("not implemented"));
   }
 
-  public import(_content: DatabaseContent): Request<{}> {
+  public import(_content: DatabaseContent): Request<void> {
     return Request.reject(new Error("not implemented"));
   }
 };

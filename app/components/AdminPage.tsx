@@ -93,7 +93,7 @@ export default class DashboardPage extends React.Component<Props, State> {
         reader.onload = (e: any) => {
           try {
             const content = decode(JSON.parse(e.target.result), DatabaseContent);
-            this.context.db.import(content).then(resolve, reject);
+            this.context.db.import(content).then(() => resolve(), reject);
           } catch (e) {
             reject(e);
           }

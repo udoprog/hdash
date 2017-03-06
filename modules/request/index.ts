@@ -28,11 +28,18 @@ export default class Request<T> {
     this.cancelled = true;
   }
 
-  static resolve<T>(value: T): Request<T> {
+  static resolve(): Request<void>;
+  static resolve<T>(value?: T): Request<T>;
+
+  static resolve<T>(value?: T): Request<T> | Request<void> {
+    if (!value) {
+      return new Request<void>(Promise.resolve());
+    }
+
     return new Request<T>(Promise.resolve(value));
   }
 
-  static reject<T>(error: Error): Request<T> {
+  static reject<T>(error: Error): Request<T | void> {
     return new Request<T>(Promise.reject(error));
   }
 }

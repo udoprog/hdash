@@ -56,9 +56,9 @@ export interface Database {
 
   get(id: string): Request<Optional<Dashboard>>;
 
-  save(dashboard: Dashboard): Request<{}>;
+  save(dashboard: Dashboard): Request<void>;
 
-  setStarred(dashboardId: string, starred: boolean): Request<{}>;
+  setStarred(dashboardId: string, starred: boolean): Request<void>;
 
   getVisualization(visualizationId: string): Request<Optional<Vis>>;
 
@@ -72,7 +72,7 @@ export interface Database {
   /**
    * Import database content.
    */
-  import(content: DatabaseContent): Request<{}>;
+  import(content: DatabaseContent): Request<void>;
 }
 
 export interface DashboardPage {

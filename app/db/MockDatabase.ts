@@ -43,10 +43,10 @@ export default class MockDatabase implements Database {
     return Request.resolve(ofNullable(this.content.dashboards[id]));
   }
 
-  public save(dashboard: Dashboard): Request<{}> {
+  public save(dashboard: Dashboard): Request<void> {
     this.content.dashboards[dashboard.id] = dashboard;
     this.write();
-    return Request.resolve({});
+    return Request.resolve();
   }
 
   public search(filter: Filter<any>, limit: number, pageToken: Optional<string>): Request<DashboardPage> {
@@ -95,7 +95,7 @@ export default class MockDatabase implements Database {
     return Request.resolve({ results: sliced, pageToken: newPageToken });
   }
 
-  public setStarred(dashboardId: string, starred: boolean): Request<{}> {
+  public setStarred(dashboardId: string, starred: boolean): Request<void> {
     if (starred) {
       this.content.starred[dashboardId] = starred;
     } else {
@@ -103,7 +103,7 @@ export default class MockDatabase implements Database {
     }
 
     this.write();
-    return Request.resolve({});
+    return Request.resolve();
   }
 
   public getVisualization(visualizationId: string): Request<Optional<Vis>> {
@@ -122,8 +122,8 @@ export default class MockDatabase implements Database {
     return Request.resolve(this.content);
   }
 
-  public import(content: DatabaseContent): Request<{}> {
+  public import(content: DatabaseContent): Request<void> {
     this.content = content;
-    return Request.resolve({});
+    return Request.resolve();
   }
 };
