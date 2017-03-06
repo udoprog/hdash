@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { decode, field, clone, types, Constructor, Values } from 'mapping';
 import { Optional, ofNullable, of } from 'optional';
+import EditTextVis from 'components/EditTextVis';
+import ViewTextVis from 'components/ViewTextVis';
 import EditBarChart from 'components/EditBarChart';
 import ViewBarChart from 'components/ViewBarChart';
 import EditLineChart from 'components/EditLineChart';
@@ -133,6 +135,37 @@ export interface Vis {
   renderVisual(onChange: VisualOptions, ref?: (visual: VisComponent) => void): any;
 }
 
+export class TextVis implements Vis {
+  static type = 'text';
+  static font = 'font';
+  static description = 'Text';
+
+  get type(): string {
+    return TextVis.type;
+  }
+
+  @field(types.String)
+  content: string;
+
+  constructor(values: Values<TextVis>) {
+    this.content = values.content;
+  }
+
+  typeTitle(): string {
+    return "Text";
+  }
+
+  renderEdit(onChange: (model: TextVis) => void): any {
+    return (
+      <EditTextVis textVis={this} onChange={onChange} />
+    );
+  }
+
+  renderVisual(_onChange: VisualOptions, _ref?: (visual: VisComponent) => void) {
+    return <ViewTextVis textVis={this} />;
+  }
+}
+
 export class LineChart implements CanvasChartModel, Vis {
   static type = 'line-chart';
   static font = 'line-chart';
@@ -262,6 +295,7 @@ export class ReferenceVis implements Vis {
 export const VisType = types.SubTypes<Vis>([
   LineChart,
   BarChart,
+  TextVis,
   ReferenceVis
 ]);
 
@@ -440,6 +474,10 @@ export const DEFAULT_BAR_CHART = decode({
   dataSource: DEFAULT_EMBEDDED_DATA_SOURCE
 }, BarChart);
 
+export const DEFAULT_TEXT_VIS = decode({
+  content: "# Title\nSome Text"
+}, TextVis);
+
 export interface HasType {
   type: string;
 }
@@ -464,5 +502,6 @@ export const DATA_SOURCE_TYPES: [DataSourceConstructor, DataSource & HasType][] 
 export const VISUALIZATION_TYPES: [VisualizationConstructor, Vis & HasType][] = [
   [ReferenceVis, DEFAULT_REFERENCE],
   [LineChart, DEFAULT_LINE_CHART],
-  [BarChart, DEFAULT_BAR_CHART]
+  [BarChart, DEFAULT_BAR_CHART],
+  [TextVis, DEFAULT_TEXT_VIS]
 ];

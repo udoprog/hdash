@@ -13,7 +13,7 @@ const babelOptions = {
     'stage-0'
   ]
 };
-
+ 
 const babelLoader = { loader: 'babel-loader', options: babelOptions };
 const html = new HtmlWebpackPlugin({
   template: path.resolve(__dirname, 'app/index.html')
