@@ -12,8 +12,8 @@ import * as moment from 'moment';
 
 const ResponsiveReactGridLayout = ReactGridLayout.WidthProvider(ReactGridLayout);
 
-const ROW_HEIGHT = 150;
-const LIST_ROW_HEIGHT = 150;
+const ROW_HEIGHT = 80;
+const LIST_ROW_HEIGHT = 160;
 
 interface Params {
   id: string
