@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Grid, Navbar, Nav, NavItem, ButtonGroup, Button } from 'react-bootstrap';
+import { Grid, Navbar, Nav, NavItem, ButtonGroup, Button, Badge, ListGroup, ListGroupItem } from 'react-bootstrap';
 import FontAwesome from 'react-fontawesome';
 import { PagesContext, RouterContext } from 'api/interfaces';
 import { Dashboard, Component, LayoutEntry, Range, VisualOptions, VisComponent } from 'api/model';
@@ -8,6 +8,7 @@ import ReactGridLayout from 'react-grid-layout';
 import EditComponent from 'components/EditComponent';
 import { RouteComponentProps } from 'react-router';
 import RangePicker from 'components/RangePicker';
+import * as moment from 'moment';
 
 const ResponsiveReactGridLayout = ReactGridLayout.WidthProvider(ReactGridLayout);
 
@@ -17,15 +18,34 @@ interface Params {
   id: string
 }
 
+interface ErrorContext {
+  message: string;
+  error: Error;
+  timestamp: moment.Moment;
+}
+
 interface Props extends RouteComponentProps<Params, {}> {
 }
+
+interface SuccessQueryResult {
+  type: 'success';
+}
+
+interface ErrorQueryResult {
+  type: 'error';
+  error: Error;
+}
+
+type QueryResult = SuccessQueryResult | ErrorQueryResult;
 
 interface State {
   locked: boolean;
   dashboard: Optional<Dashboard>;
   editComponent: Optional<string>;
   editRange: boolean;
+  showErrors: boolean;
   queryInProgress: boolean;
+  errors: ErrorContext[];
 }
 
 export default class DashboardPage extends React.Component<Props, State> {
@@ -38,7 +58,7 @@ export default class DashboardPage extends React.Component<Props, State> {
    * When focusing on a single component.
    */
   visual?: VisComponent;
-  queryInProgress: Promise<any>;
+  queryInProgress: Promise<QueryResult[]>;
 
   public static contextTypes: any = {
     db: React.PropTypes.object,
@@ -55,7 +75,9 @@ export default class DashboardPage extends React.Component<Props, State> {
       dashboard: absent<Dashboard>(),
       editComponent: ofNullable(query.edit),
       editRange: query.editRange === 'true',
+      showErrors: query.showErrors === 'true',
       queryInProgress: false,
+      errors: [],
     };
 
     this.visuals = {};
@@ -68,13 +90,14 @@ export default class DashboardPage extends React.Component<Props, State> {
   }
 
   private updateUrl(): void {
-    const { locked, editComponent, editRange } = this.state;
+    const { locked, editComponent, editRange, showErrors } = this.state;
     const { pathname, query } = this.props.location;
     const { router } = this.context;
 
     query.unlocked = !locked ? 'true' : undefined;
     query.edit = editComponent.orElse(undefined);
     query.editRange = editRange ? 'true' : undefined;
+    query.showErrors = showErrors ? 'true' : undefined;
 
     router.replace({
       pathname: pathname,
@@ -83,11 +106,19 @@ export default class DashboardPage extends React.Component<Props, State> {
   }
 
   public render() {
-    const { locked, dashboard, editComponent, editRange, queryInProgress } = this.state;
+    const { locked, dashboard, editComponent, editRange, showErrors, queryInProgress, errors } = this.state;
 
     let title = dashboard
       .map(dashboard => dashboard.title)
       .orElse(`Dashboard with ID '${this.props.params.id}' does not exist`);
+
+    const errorsToggle = (
+      <NavItem onClick={() => this.setState({ showErrors: !showErrors }, () => this.updateUrl())} active={showErrors}>
+        <FontAwesome name="error" />
+        <span className='icon-text'>Errors</span>
+        <Badge className='icon-text'>{errors.length}</Badge>
+      </NavItem>
+    );
 
     const rangeToggle = (
       <NavItem onClick={() => this.setState({ editRange: !editRange }, () => this.updateUrl())} active={editRange}>
@@ -109,6 +140,25 @@ export default class DashboardPage extends React.Component<Props, State> {
         <RangePicker range={d.range} onChange={(range: Range) => this.rangeChanged(range)}></RangePicker>
       </Grid>
     ) : null).get();
+
+    const showErrorsComponent = showErrors ? (
+      <Grid className='range-picker-menu'>
+        <ListGroup>
+          {errors.map((error, index) => {
+            if (index > 3) {
+              return false;
+            }
+
+            return (
+              <ListGroupItem>
+                <h4>{error.message} as {error.timestamp.format()}</h4>
+                <pre><code>{error.error.stack}</code></pre>
+              </ListGroupItem>
+            );
+          })}
+        </ListGroup>
+      </Grid>
+    ) : null;
 
     const lockToggle = (
       <NavItem title={locked ? "Unlock to Edit" : "Lock"} onClick={() => this.setState({ locked: !locked }, () => {
@@ -182,10 +232,15 @@ export default class DashboardPage extends React.Component<Props, State> {
           </Nav>
 
           <Nav pullRight>
+            {errorsToggle}
             {query}
             {rangeToggle}
           </Nav>
         </Navbar>
+
+        <div>
+          {showErrorsComponent}
+        </div>
 
         <div>
           {editRangeComponent}
@@ -309,28 +364,66 @@ export default class DashboardPage extends React.Component<Props, State> {
     })
   }
 
-  private async query(): Promise<{}> {
+  private query() {
+    this.queryAsync().then((result: QueryResult[]) => {
+      result.forEach(r => {
+        if (r.type === 'error') {
+          this.setState(prev => {
+            return {
+              errors: [{
+                message: 'Issue when running query',
+                error: r.error,
+                timestamp: moment()
+              }].concat(prev.errors)
+            };
+          })
+        }
+      })
+    }, error => {
+      this.setState(prev => {
+        return {
+          errors: [{
+            message: 'Issue in query batch',
+            error: error,
+            timestamp: moment()
+          }].concat(prev.errors)
+        };
+      })
+    });
+  }
+
+  private async queryAsync(): Promise<QueryResult[]> {
     if (this.queryInProgress) {
-      return Promise.resolve({});
+      return Promise.resolve([]);
     }
 
-    var promise;
+    var promise: Promise<QueryResult[]>;
 
     if (this.visual) {
-      promise = this.visual.refresh(true);
+      promise = this.visual.refresh(true).then(result => {
+        return [{ result: result }];
+      }, error => {
+        return [{ error: error }];
+      });
     } else {
-      promise = Promise.all(Object.keys(this.visuals).map(key => {
-        return this.visuals[key].refresh(true);
+      promise = Promise.all(Object.keys(this.visuals).map<Promise<QueryResult>>(key => {
+        return this.visuals[key].refresh(true).then(result => {
+          return { type: 'success', result: result };
+        }, error => {
+          return { type: 'error', error: error };
+        });
       }));
     }
 
+    let result;
+
     try {
-      await (this.queryInProgress = promise);
+      result = await (this.queryInProgress = promise);
     } finally {
       this.queryInProgress = null;
     }
 
-    return Promise.resolve({});
+    return Promise.resolve(result);
   }
 
   private addComponent() {

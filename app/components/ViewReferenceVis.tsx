@@ -103,9 +103,15 @@ export default class ViewReferenceVis extends React.Component<Props, State> impl
         this.visQuery = null;
       }
 
-      await new Promise((resolve, _) => {
-        this.setState({ loading: false, visualization: visualization }, resolve);
-      })
+      await new Promise((resolve, reject) => {
+        this.setState({ loading: false, visualization: visualization }, () => {
+          visualization.accept(_ => {
+            resolve();
+          }, () => {
+            reject(new Error(`no visualization with id '${vis.id}'`));
+          })
+        });
+      });
     }
 
     return this.visual ? this.visual.refresh(query) : Promise.resolve({});
