@@ -12,7 +12,8 @@ describe('heroic', () => {
   it('should handle Query', () => {
     assertModel(heroic.Query, {
       range: { type: "absolute", start: 0, end: 1000 },
-      query: "average by host"
+      query: "average by host",
+      options: { ticksGoal: 30 }
     }, { query: "foo" });
   });
 });

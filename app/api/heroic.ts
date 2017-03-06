@@ -48,7 +48,7 @@ export const RangeType = types.SubTypes<Range>([
 export class Sampling {
   @field(types.Number)
   readonly size: number;
-  @field(types.Number)
+  @field(types.String)
   readonly unit: string;
 
   constructor(values: Values<Sampling>) {
