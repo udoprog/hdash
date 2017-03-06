@@ -35,7 +35,7 @@ export default class ViewReferenceVis extends React.Component<Props, State> impl
     super(props);
 
     this.state = {
-      loading: true,
+      loading: false,
       visualization: absent<Vis>()
     };
   }

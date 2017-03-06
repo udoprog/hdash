@@ -92,7 +92,7 @@ abstract class CanvasChart<
     this.drawn = this.initialDrawState();
 
     this.state = {
-      queryInProgress: true,
+      queryInProgress: false,
       width: 0,
       height: 0,
       ok: true
@@ -147,13 +147,13 @@ abstract class CanvasChart<
       }}>
         <div style={{ display: "block", width: "100%", height: "100%" }}>
           <div className="query-feedback">
-            {queryInProgress ? <div className='in-progress'>
+            <div className='in-progress' style={{ display: queryInProgress ? null : 'none' }}>
               <FontAwesome name='circle-o-notch' spin={true} />
-            </div> : null}
+            </div>
 
-            {!ok ? <div className='error'>
+            <div className='error' style={{ display: !ok ? null : 'none' }}>
               <FontAwesome name='exclamation-triangle' />
-            </div> : null}
+            </div>
           </div>
 
           <div style={{ display: "block", width: "100%", height: "100%" }}>
@@ -295,7 +295,7 @@ abstract class CanvasChart<
    */
   protected checkDrawState(): boolean {
     const {
-      xScale,
+              xScale,
       yScale,
       result,
       stacked,
@@ -305,7 +305,7 @@ abstract class CanvasChart<
     } = this.next;
 
     const {
-      xScale: drawnXScale,
+              xScale: drawnXScale,
       yScale: drawnYScale,
       result: drawnResult,
       stacked: drawnStacked,

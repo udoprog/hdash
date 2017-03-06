@@ -114,9 +114,9 @@ export default class DashboardPage extends React.Component<Props, State> {
 
     const errorsToggle = (
       <NavItem onClick={() => this.setState({ showErrors: !showErrors }, () => this.updateUrl())} active={showErrors}>
-        <FontAwesome name="error" />
+        <FontAwesome name="exclamation-triangle" />
         <span className='icon-text'>Errors</span>
-        <Badge className='icon-text'>{errors.length}</Badge>
+        <Badge className='icon-text' pullRight={true}>{errors.length}</Badge>
       </NavItem>
     );
 

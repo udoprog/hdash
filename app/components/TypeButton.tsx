@@ -20,7 +20,7 @@ interface Props extends ButtonProps {
 
 export default class VisTypeButton extends React.Component<Props, {}> {
   public render() {
-    const {instance, model, onChangeType, onClick, ...extra} = this.props;
+    const { instance, model, onChangeType, onClick, ...extra } = this.props;
 
     return (
       <Button
@@ -31,7 +31,7 @@ export default class VisTypeButton extends React.Component<Props, {}> {
         {...extra}
       >
         <FontAwesome name={model.font} />
-        <span>&nbsp;&nbsp;{model.description}</span>
+        <span className='icon-text hidden-xs'>{model.description}</span>
       </Button>
     );
   }
