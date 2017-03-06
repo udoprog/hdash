@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { PagesContext } from 'api/interfaces';
 import { Component, Vis, HasType, Range, VisComponent } from 'api/model';
-import { Row, Col, Grid, Button, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
+import { Grid, Button, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import EditVis from './EditVis';
 import { mutate } from 'mapping';
 import FontAwesome from 'react-fontawesome';
@@ -38,14 +38,10 @@ export default class EditComponent extends React.Component<Props, State> impleme
 
     return (
       <Grid>
-        <Row>
-          <Col sm={12}>
-            <FormGroup>
-              <ControlLabel label="title">Title</ControlLabel>
-              <FormControl type="text" value={component.title} onChange={(e: any) => this.mutate({ title: e.target.value })} />
-            </FormGroup>
-          </Col>
-        </Row>
+        <FormGroup>
+          <ControlLabel label="title">Title</ControlLabel>
+          <FormControl type="text" value={component.title} onChange={(e: any) => this.mutate({ title: e.target.value })} />
+        </FormGroup>
 
         <EditVis
           vis={component.visualization}
@@ -53,24 +49,24 @@ export default class EditComponent extends React.Component<Props, State> impleme
           onChange={visualization => this.changeVisualization(visualization)}
           ref={visual => this.visual = visual} />
 
-        <Row>
-          <Col sm={12}>
-            <Button bsStyle="primary" onClick={() => this.back()}>
-              <FontAwesome name="arrow-left" />
-              <span className='icon-text'>Back</span>
-            </Button>
+        <Button bsStyle="primary" onClick={() => this.back()}>
+          <FontAwesome name="arrow-left" />
+          <span className='icon-text'>Back</span>
+        </Button>
 
-            <Button onClick={() => this.visual && this.visual.refresh(true)}>
-              <FontAwesome name='play' />
-              <span className='icon-text'>Query</span>
-            </Button>
-          </Col>
-        </Row>
+        <Button onClick={() => this.refresh(true)}>
+          <FontAwesome name='play' />
+          <span className='icon-text'>Query</span>
+        </Button>
       </Grid>
     );
   }
 
   public refresh(query?: boolean): Promise<void> {
+    if (!this.visual) {
+      return Promise.resolve();
+    }
+
     return this.visual.refresh(query);
   }
 

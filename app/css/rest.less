@@ -35,4 +35,24 @@ body {
     top: 10px;
     font-size: @loading-font-size;
   }
+
+  .error {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: @loading-font-size;
+    color: @state-danger-text;
+  }
+}
+
+.button-row {
+  margin-top: @range-picker-margin;
+  margin-bottom: @range-picker-margin;
+}
+
+.errors-menu {
+  .errors {
+    background-color: @body-bg;
+    border-bottom: 1px solid @table-border-color;
+  }
 }

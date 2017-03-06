@@ -27,6 +27,7 @@ interface State {
   queryInProgress: boolean;
   width: number;
   height: number;
+  ok: boolean;
 }
 
 export interface HasModel<T> {
@@ -93,7 +94,8 @@ abstract class CanvasChart<
     this.state = {
       queryInProgress: true,
       width: 0,
-      height: 0
+      height: 0,
+      ok: true
     }
   }
 
@@ -123,16 +125,16 @@ abstract class CanvasChart<
   public componentDidMount() {
     this.ctx = this.canvas.getContext('2d');
     this.receiveProps(this.props);
-    this.refresh();
+    this.redraw();
   }
 
   public componentWillReceiveProps(nextProps: P) {
     this.receiveProps(nextProps);
-    this.refresh();
+    this.redraw();
   }
 
   public render() {
-    const { queryInProgress, width, height } = this.state;
+    const { ok, queryInProgress, width, height } = this.state;
     const { height: fixedHeight } = this.props.visualOptions;
 
     return (
@@ -140,13 +142,17 @@ abstract class CanvasChart<
         this.next.width = dimension.width;
         this.next.height = fixedHeight || dimension.height;
         this.setState({ width: this.next.width, height: this.next.height }, () => {
-          this.refresh();
+          this.redraw();
         });
       }}>
         <div style={{ display: "block", width: "100%", height: "100%" }}>
           <div className="query-feedback">
             {queryInProgress ? <div className='in-progress'>
               <FontAwesome name='circle-o-notch' spin={true} />
+            </div> : null}
+
+            {!ok ? <div className='error'>
+              <FontAwesome name='exclamation-triangle' />
             </div> : null}
           </div>
 
@@ -162,6 +168,18 @@ abstract class CanvasChart<
    * Run a new query.
    */
   public async refresh(reload?: boolean): Promise<void> {
+    this.setState({ ok: true })
+
+    return this.doRefresh(reload).then(result => {
+      this.setState({ ok: true })
+      return result;
+    }, error => {
+      this.setState({ ok: false })
+      throw error;
+    });
+  }
+
+  private async doRefresh(reload?: boolean): Promise<void> {
     const { lastFetcheDataSource } = this;
     const { model } = this.props;
 
@@ -194,7 +212,7 @@ abstract class CanvasChart<
 
     // no data source loaded yet
     if (!currentDataSource || !currentDataSource.query) {
-      return Promise.resolve();
+      return Promise.reject(new Error('no datasource'));
     }
 
     /* always wait for data to load */
@@ -217,8 +235,8 @@ abstract class CanvasChart<
       }, Query);
 
       // already updating
-      if (this.dataQuery) {
-        return Promise.resolve();
+      while (this.dataQuery) {
+        await this.dataQuery;
       }
 
       this.setState({

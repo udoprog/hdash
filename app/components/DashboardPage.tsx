@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Grid, Navbar, Nav, NavItem, ButtonGroup, Button, Badge, ListGroup, ListGroupItem } from 'react-bootstrap';
+import { Row, Col, Grid, Navbar, Nav, NavItem, ButtonGroup, Button, Badge, ListGroup, ListGroupItem, Alert } from 'react-bootstrap';
 import FontAwesome from 'react-fontawesome';
 import { PagesContext, RouterContext } from 'api/interfaces';
 import { Dashboard, Component, LayoutEntry, Range, VisualOptions, VisComponent } from 'api/model';
@@ -142,21 +142,35 @@ export default class DashboardPage extends React.Component<Props, State> {
     ) : null).get();
 
     const showErrorsComponent = showErrors ? (
-      <Grid className='range-picker-menu'>
-        <ListGroup>
-          {errors.map((error, index) => {
-            if (index > 3) {
-              return false;
-            }
+      <Grid className='errors-menu'>
+        <div className='errors'>
+          <Row className='button-row'>
+            <Col sm={12}>
+              <Button className='pull-right' bsStyle='primary' onClick={() => {
+                this.setState({ showErrors: false, errors: [] });
+              }}>Clear</Button>
+              <div className='clearfix' />
+            </Col>
+          </Row>
 
-            return (
-              <ListGroupItem>
-                <h4>{error.message} at {error.timestamp.format()}</h4>
-                <pre><code>{error.error.stack}</code></pre>
-              </ListGroupItem>
-            );
-          })}
-        </ListGroup>
+          {errors.length === 0 ?
+            (
+              <Alert bsStyle='info'>
+                No Errors
+            </Alert>
+            ) : null}
+
+          <ListGroup>
+            {errors.map((error, index) => {
+              return (
+                <ListGroupItem key={index}>
+                  <h4>{error.message} at {error.timestamp.format()}</h4>
+                  <pre><code>{error.error.stack}</code></pre>
+                </ListGroupItem>
+              );
+            })}
+          </ListGroup>
+        </div>
       </Grid>
     ) : null;
 
@@ -374,7 +388,7 @@ export default class DashboardPage extends React.Component<Props, State> {
                 message: 'Issue when running query',
                 error: r.error,
                 timestamp: moment()
-              }].concat(prev.errors)
+              }].concat(prev.errors).slice(0, 20)
             };
           })
         }
@@ -386,7 +400,7 @@ export default class DashboardPage extends React.Component<Props, State> {
             message: 'Issue in query batch',
             error: error,
             timestamp: moment()
-          }].concat(prev.errors)
+          }].concat(prev.errors).slice(0, 20)
         };
       })
     });
