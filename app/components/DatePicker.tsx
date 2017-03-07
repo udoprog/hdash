@@ -3,6 +3,8 @@ import * as moment from 'moment';
 import { Button } from 'react-bootstrap';
 import FontAwesome from 'react-fontawesome';
 
+import 'less/DatePicker.less';
+
 interface Props {
   moment: moment.Moment;
   onChange: (moment: moment.Moment) => void;

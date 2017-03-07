@@ -10,6 +10,8 @@ import { RouteComponentProps } from 'react-router';
 import RangePicker from 'components/RangePicker';
 import * as moment from 'moment';
 
+import css from './DashboardPage.module.less';
+
 const ResponsiveReactGridLayout = ReactGridLayout.WidthProvider(ReactGridLayout);
 
 const ROW_HEIGHT = 80;
@@ -230,7 +232,7 @@ export default class DashboardPage extends React.Component<Props, State> {
     }).get();
 
     return (
-      <div>
+      <div className={css.className}>
         <Navbar collapseOnSelect staticTop={true}>
           <Nav>
             {lockToggle}
@@ -264,7 +266,7 @@ export default class DashboardPage extends React.Component<Props, State> {
         <h1>{title}</h1>
 
         <ResponsiveReactGridLayout
-          className="layout"
+          className='layout'
           draggableHandle=".titlebar"
           layout={dashboard.layout}
           cols={12}

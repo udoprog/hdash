@@ -7,6 +7,8 @@ import FontAwesome from 'react-fontawesome';
 
 import InstantPicker from './InstantPicker';
 
+import css from './RangePicker.module.less';
+
 function relativeNow(unit: unit.Unit, value: number) {
   return new Range({
     start: new instant.Relative({
@@ -114,7 +116,7 @@ export default class RangePicker extends React.Component<Props, State> {
     const quickRangeWidth = 12 / COLS.length;
 
     return (
-      <Row className='range-picker'>
+      <Row className={css.className}>
         <Col sm={12}>
           <Row>
             <Col sm={4}>

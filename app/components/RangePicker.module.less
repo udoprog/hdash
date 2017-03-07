@@ -1,10 +1,10 @@
+@import '~less/variables';
+
 @range-picker-margin: floor((@grid-gutter-width / 2));
 
-.range-picker-menu {
-  .range-picker {
-    background-color: @body-bg;
-    border-bottom: 1px solid @table-border-color;
-  }
+:local .className :global {
+  background-color: @body-bg;
+  border-bottom: 1px solid @table-border-color;
 
   ul.quick-range-list {
     list-style: none;

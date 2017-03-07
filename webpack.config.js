@@ -13,7 +13,7 @@ const babelOptions = {
     'stage-0'
   ]
 };
- 
+
 const babelLoader = { loader: 'babel-loader', options: babelOptions };
 const html = new HtmlWebpackPlugin({
   template: path.resolve(__dirname, 'app/index.html')
@@ -43,7 +43,10 @@ if (prod) {
 }
 
 module.exports = {
-  entry: ['babel-polyfill', './app/main.tsx'],
+  entry: [
+    'babel-polyfill',
+    './app/main.tsx'
+  ],
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
@@ -59,11 +62,25 @@ module.exports = {
       exclude: /node_modules/,
       use: [babelLoader]
     }, {
-      test: /\.less$/,
+      test: /\.module\.less$/,
       exclude: /node_modules/,
       use: ExtractTextPlugin.extract({
-        fallback: 'style-loader',
-        use: ['css-loader', 'less-loader']
+        use: [
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true
+            }
+          },
+          'less-loader'
+        ]
+      })
+    }, {
+      test: /\.less$/,
+      exclude: /node_modules/,
+      include: path.resolve(__dirname, 'app/less'),
+      use: ExtractTextPlugin.extract({
+        use: 'css-loader!less-loader'
       })
     }, {
       test: /\.(png|woff|woff2|eot|ttf|svg)$/,
@@ -74,7 +91,9 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
     modules: [
-      path.resolve(__dirname, "app"), path.resolve(__dirname, "modules"), "node_modules"
+      path.resolve(__dirname, 'app'),
+      path.resolve(__dirname, 'modules'),
+      path.resolve(__dirname, 'node_modules')
     ]
   },
   devtool: 'source-map'

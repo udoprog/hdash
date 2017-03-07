@@ -23,14 +23,16 @@ if (hot) {
 
   /* add react hot loader to all rules using ts-loader */
   config.module.rules.forEach(rule => {
-    if (rule.use.some && rule.use.some(u => u === 'ts-loader')) {
-      rule.use = ['react-hot-loader/webpack'].concat(rule.use);
-    }
+    if (rule.use) {
+      if (rule.use.some && rule.use.some(u => u === 'ts-loader')) {
+        rule.use = ['react-hot-loader/webpack'].concat(rule.use);
+      }
 
-    var babelLoader = rule.use.find && rule.use.find(u => u.loader && u.loader === 'babel');
+      var babelLoader = rule.use.find && rule.use.find(u => u.loader && u.loader === 'babel');
 
-    if (babelLoader) {
-      babelLoader.options.plugins = ['react-hot-loader/babel'];
+      if (babelLoader) {
+        babelLoader.options.plugins = ['react-hot-loader/babel'];
+      }
     }
   });
 }
